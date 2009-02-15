@@ -2,6 +2,9 @@
 
 from __future__ import division
 
+class ContinueI(Exception): pass
+class BreakI(Exception): pass
+
 def orpy(name):
     def dec(f):
         def t(self, *args, **kwargs):
@@ -11,6 +14,18 @@ def orpy(name):
                 return getattr(self, name)(*args, **kwargs)
         return t
     return dec
+
+def clear_screen():
+    import os
+    if os.name == "posix":
+        # Unix/Linux/MacOS/BSD/etc
+        os.system('clear')
+    elif os.name in ("nt", "dos", "ce"):
+        # DOS/Windows
+        os.system('CLS')
+    else:
+        # Fallback for other operating systems.
+        print '\n' * 100
 
 class OrObject(object):
     py2np = {
@@ -44,14 +59,20 @@ class OrObject(object):
         if classobj:
             self.set("$$class", classobj)
 
-    def __getattr(self, name):
-        return self.__dict__("dict")[name]
+    def __getattr__(self, name):
+        return self.__dict__["dict"][name]
 
     def get(self, key):
         return self.dict[key]
 
     def set(self, key, value):
         self.dict[key] = value
+
+    def __str__(self):
+        if "$$python" in self.dict:
+            return str(self.get("$$python"))
+        else:
+            return "<" + str(self.get("$$class")) + " " + self.get("$$name") + ">"
 
     def __repr__(self):
         if "$$python" in self.dict:
@@ -74,7 +95,9 @@ class OrObject(object):
             pass
         
     @classmethod
-    def from_py(cls, obj):
+    def from_py(cls, obj, override=False):
+        if isinstance(obj, cls) and not override: return obj
+        
         if hasattr(obj, "__name__"):
             n = obj.__name__
         else:
@@ -129,18 +152,27 @@ class InheritDict:
         return key in self.dict or self.parent and key in self.parent
 
     def keys(self):
-        return list(self.dict.keys()) + self.parent.keys()
+        if self.parent:
+            return list(self.dict.keys()) + self.parent.keys()
+        else:
+            return list(self.dict.keys())
 
 def simpleop(f, name):
-    def t(*args):
-        if all("$$python" in i.dict for i in args):
+    def t(*args, **kwargs):
+        if all(hasattr(i, "dict") and "$$python" in i.dict for i in args):
             args = [i.get("$$python") for i in args]
-            return OrObject.from_py(f(*args))
+            for i in kwargs:
+                kwargs[i] = kwargs[i].get("$$python")
+            return OrObject.from_py(f(*args, **kwargs))
+        elif any(not hasattr(i, "dict") for i in args):
+            return OrObject.from_py(f(*args, **kwargs))
         else:
+            print args[0]
             try:
-                return a.get("$$" + name)(b)
+                return args[0].get("$$" + name)(*args[1:], **kwargs)
             except:
-                return b.get("$$r_" + name)(a)
+                args2 = [args[0]] + list(args[2:])
+                return args[1].get("$$r_" + name)(*args2, **kwargs)
     return t
 
 add = simpleop(lambda x, y: x + y, "add")
@@ -150,6 +182,7 @@ div = simpleop(lambda x, y: x / y, "div")
 exp = simpleop(lambda x, y: x ** y, "exp")
 floor = simpleop(lambda x, y: x // y, "floor")
 mod = simpleop(lambda x, y: x % y, "mod")
+divis = simpleop(lambda x, y: y % x == 0, "divis")
 or_ = simpleop(lambda x, y: x or y, "or")
 and_ = simpleop(lambda x, y: x and y, "and")
 not_ = simpleop(lambda x: not x, "not")
@@ -169,15 +202,23 @@ uplus = simpleop(lambda x: +x, "uplus")
 uminus = simpleop(lambda x: -x, "uminus")
 
 def call(obj, *args, **kwargs):
-    if all("$$python" in i.dict for i in args) and all("$$python" in i.dict for k, i in kwargs.items()):
+    if all(hasattr(i, "dict") and "$$python" in i.dict for i in args) and all("$$python" in i.dict for k, i in kwargs.items()):
         args = [i.get("$$python") for i in args]
         for i in kwargs:
             kwargs[i] = kwargs[i].get("$$python")
         obj = obj.get("$$python")
         
-        obj(*args, **kwargs)
+        return OrObject.from_py(obj(*args, **kwargs))
     else:
-        obj.get("$$call")(*args, **kwargs)
+        return obj.get("$$call")(*args, **kwargs)
 
-getattr_ = simpleop(lambda x, y: getattr(x, y), "getattr")
-getindex_ = simpleop(lambda x, y: x[y], "getindex")
+def getattr_(x, y):
+    return OrObject.from_py(x.get(y))
+
+def indexer(x, y):
+    if type(y) == type(()):
+        return map(lambda y: x[y], y)
+    else:
+        return x[y]
+
+getindex_ = simpleop(indexer, "getindex")

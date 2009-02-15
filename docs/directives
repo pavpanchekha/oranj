@@ -1,0 +1,27 @@
+Oranj directives are special commands to the interpreter. There are no
+fundamental differences between directives and other statements, except
+that directives usually either should not be present in a program or
+significantly change the function of the interpreter.
+
+All directives take the form
+
+#!xxxxxxx
+
+Where the directive name takes the place of xxxxxxx. The following directives
+are implemented:
+
+* clear
+  Clears the screen. Particularly useful in the interactive console. PLEASE
+  do not use as a method of clearing the screen within your program.
+
+* drop
+  Drop down to an oranj shell. This is useful to debug your scripts:
+
+  if bad_thing {
+      term << "Dropping down to shell. Why is bad_thing true?"
+      #!drop
+  }
+
+* pydrop
+  Drop down to a python shell. This is useful for deep debugging or, even more
+  likely, debugging the interpreter itself.

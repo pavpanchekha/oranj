@@ -7,6 +7,7 @@ import sys
 tokens = [
     "STRING", "DEC", "INT", "BOOL", "NIL", "IDENT", "PLUSPLUS", "MINUSMINUS",
     "SLASHSLASH", "GE", "LE", "NE", "EQ", "LTLT", "GTGT", "DOTDOTDOT", "EQOP",
+    "NEWLINE", "PROCDIR"
 ]
 
 # PUNCTUATION is never used
@@ -14,8 +15,8 @@ tokens = [
 def t_BOOL(t):
     r"true|false"
 
-    t.value = (t.value == "true")
-    return ("BOOL", t)
+    t.value = ("BOOL", t.value == "true")
+    return t
 
 def t_NIL(t):
     r"nil"
@@ -79,9 +80,18 @@ def t_IDENT(t):
 
 t_ignore = " \t\f\v\r"
 
-def t_newline(t):
-    r"\n+"
+def t_NEWLINE(t):
+    r"([\n;]\s*)+"
     t.lexer.lineno += t.value.count("\n")
+    return t
+
+def t_PROCDIR(t):
+    r"\#![a-zA-Z0-9]*"
+    return t
+
+def t_COMMENT(t):
+    r"\#.*"
+    return
 
 def t_error(t):
     print "Error (line %d): Illegal character `%s`" % (t.lexer.lineno, t.value)
@@ -89,25 +99,42 @@ def t_error(t):
 
 # Deal with reserved words
 reserved = {}
-for i in ("mod", "and", "or", "not", "in", "is", "catch", "class", "else", "elif", "finally", "for", "fn", "yield", "if", "return", "throw", "try", "while", "with", "del", "extern", "import", "break", "continue", "as", "assert"):
+for i in ("mod", "and", "or", "not", "in", "is", "catch", "class", "else", "elif", "finally", "for", "fn", "yield", "if", "return", "throw", "try", "while", "with", "del", "extern", "import", "break", "continue", "as", "assert", "inf"):
     reserved[i] = i.upper()
 tokens += reserved.values()
 
-literals = "%()[]{}@,:.`=;#?+-*/^|<>"
+literals = "%()[]{}@,:.`;#?+-*/^|<>"
 
 t_PLUSPLUS = r"\+\+"
 t_MINUSMINUS = r"\-\-"
 t_SLASHSLASH = r"\/\/"
+t_DOTDOTDOT = r"\.\.\."
+t_EQOP = r"(\+|\-|\^|\/|\/\/|\*|<<|>>)?\=(?!\=)"
 t_LTLT = r"\<\<"
 t_GTGT = r"\>\>"
 t_LE = r"\<\="
 t_GE = r"\>\=|\=\>"
 t_NE = r"\!\="
 t_EQ = r"\=\="
-t_DOTDOTDOT = r"\.\.\."
-t_EQOP = r"(\+|\-|\^|\/|\/\/|\*|mod|and|or|<<|>>)?\="
 
 lex.lex()
+
+def parse(s):
+    lex.input(s)
+    return list(iter(lex.token, None))
+
+def isdone(s):
+    l = parse(s)
+    
+    count = [0, 0, 0]
+    for i in l:
+        if i.value == "{": count[2] += 1
+        elif i.value == "}": count[2] -= 1
+        elif i.value == "[": count[1] += 1
+        elif i.value == "]": count[1] -= 1
+        elif i.value == "(": count[0] += 1
+        elif i.value == ")": count[0] -= 1
+    return all(i <= 0 for i in count)
 
 if __name__ == "__main__":
     if "-t" in sys.argv:
@@ -116,11 +143,13 @@ if __name__ == "__main__":
     else:
         while True:
             try:
-                lex.input(raw_input("lex> "))
+                lex.input(raw_input("lex> ") + "\n")
                 for tok in iter(lex.token, None):
                     if len(tok.type) == 1:
                         print "'" + tok.type + "'",
                     else:
                         print "|" + tok.type + "|",
-            except (KeyBoardInterrupt, EOFError):
-                pass
+                print
+            except (KeyboardInterrupt, EOFError):
+                print
+                break

@@ -25,3 +25,13 @@ YAY
 >>> output(a)
 10
 
+# break
+>>> a = 0
+>>> while 1 {break}
+>>> output("DONE")
+DONE
+
+# while forever
+>>> while {break}
+>>> output("DONE")
+DONE

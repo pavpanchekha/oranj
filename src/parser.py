@@ -37,6 +37,11 @@ def p_primitive_IDENT(p):
 
     p[0] = ("IDENT", p[1])
 
+def p_procdir(p):
+    """procdir : PROCDIR"""
+
+    p[0] = ("PROCDIR", (p[1][2:]).lower())
+    
 def p_literal_list(p):
     """literal : '[' list_items ']'
                | '[' list_items ',' ']'
@@ -344,13 +349,14 @@ def p_expression_test(p):
 
 def p_statement(p):
     """statement : expression
-                     | var_s
-                     | flow_s
-                     | assert_s
-                     | block_s
-                     | import_s
-                     | assignment
-                     | declaration"""
+                 | var_s
+                 | flow_s
+                 | assert_s
+                 | block_s
+                 | import_s
+                 | assignment
+                 | declaration
+                 | procdir"""
 
     p[0] = p[1]
 
@@ -483,12 +489,14 @@ def p_else(p):
         p[0] = ["ELSE", p[2]]
 
 def p_block(p):
-    """block : '{' statements '}'"""
+    """block : '{' statements '}'
+             | literal"""
     
     if len(p) == 4:
         p[0] = p[2]
     else:
-        p[0] = p[1]
+        if p[1][0] not in ("DICT", "SET"): raise yacc.SyntaxError
+        p[0] = p[1][1]
 
 def p_while_s(p):
     """while_s : WHILE expression block else

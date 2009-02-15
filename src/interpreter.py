@@ -10,6 +10,8 @@ import intplib
 
 import lexer
 
+class DropI(Exception): pass
+
 debug = False
 
 builtin = InheritDict()
@@ -22,6 +24,8 @@ builtin.update({
     "Inputable": OrObject.from_py(lib.Inputable),
     "Outputable": OrObject.from_py(lib.Outputable),
     "Terminal": OrObject.from_py(lib.Terminal),
+    "repr": OrObject.from_py(repr),
+    "join": OrObject.from_py(lib.join),
 })
 
 class Interpreter(object):
@@ -92,6 +96,15 @@ class Interpreter(object):
                 return self.curr[tree[1]]
             else:
                 raise AttributeError("Variable " + tree[1] + " does not exist")
+        elif tree[0] == "PROCDIR":
+            if tree[1] == "drop":
+                run_console(self)
+            elif tree[1] == "clear":
+                intplib.clear_screen()
+            elif tree[1] == "pydrop":
+                import os
+                os.environ["PYTHONINSPECT"] = "1"
+                raise DropI
         elif tree[0] == "PRIMITIVE":
             if tree[1][0] == "STRING":
                 a = tree[1][1]
@@ -220,7 +233,7 @@ class Interpreter(object):
                 for v in zip(*vals):
                     try:
                         for n, vv in zip(names, v):
-                            self.curr[n] = vv
+                            self.curr[n] = OrObject.from_py(vv)
                         self.run(tree[2])
                     except ContinueI, e:
                         if e.args != () and e.args[0] > 1:
@@ -263,6 +276,7 @@ class Interpreter(object):
             try:
                 r = func(var, *args, **kwargs)
             except TypeError:
+                raise
                 raise TypeError("Unsupported opperation: " + tree[0])
             else:
                 if not isinstance(r, OrObject):
@@ -272,9 +286,49 @@ class Interpreter(object):
                     return var
                 else:
                     return r
-                
+
+def run_console(intp):
+    def completer(text, state=0):
+        return [i for i in intp.curr.names if i.startswith(text)]
+    
+    readline.set_completer(completer)
+    
+    try:
+        t = ""
+        while t != "exit":
+            t = raw_input("oranj> ") + "\n"
+            while not lexer.isdone(t):
+                t += raw_input("     > ") + "\n"
+
+#                print t
+            p = analyze.parse(t)
+
+            try:
+                r = intp.run(p)
+                if r == None: pass
+                elif isinstance(r, OrObject) and "$$python" in r.dict and r.get("$$python") == None: pass
+                else:
+                    print r
+            except DropI: raise
+            except Exception, e:
+                traceback.print_exc()
+    except (KeyboardInterrupt, EOFError):
+        print
+        sys.exit()
+    except DropI:
+        print "Dropping down to python console. Call undrop() to return."
+
+def run(s, intp):
+    try:
+        intp.run(analyze.parse(s))
+    except DropI:
+        return
+
 if __name__ == "__main__":
     intp = Interpreter(builtin)
+
+    def undrop():
+        run_console(intp)
 
     argv = sys.argv[:]
     if "-d" in argv:
@@ -283,35 +337,9 @@ if __name__ == "__main__":
     
     if len(argv) > 1:
         if "-c" in argv:
-            intp.run(analyze.parse(sys.stdin.read()))
+            run(sys.stdin.read(), intp)
         else:
             #TODO: argument parsing code
-            p = analyze.parse(open(sys.argv[1]).read())
-            intp.run(p)
+            run(open(sys.argv[1]).read(), intp)
     else:
-
-        def completer(text, state=0):
-            return [i for i in intp.curr.names if i.startswith(text)]
-
-        readline.set_completer(completer)
-        
-        try:
-            t = ""
-            while t != "exit":
-                t = raw_input("oranj> ") + "\n"
-                while not lexer.isdone(t):
-                    t += raw_input("     > ") + "\n"
-
-#                print t
-                p = analyze.parse(t)
-
-                try:
-                    r = intp.run(p)
-                    if r == None: pass
-                    elif isinstance(r, OrObject) and "$$python" in r.dict and r.get("$$python") == None: pass
-                    else:
-                        print r
-                except Exception, e:
-                    traceback.print_exc()
-        except (KeyboardInterrupt, EOFError):
-            print
+        run_console(intp)

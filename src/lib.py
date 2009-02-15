@@ -74,6 +74,9 @@ input = term.read
 output = term.write
 error = term.error
 
+def join(arr, s):
+    return s.join(map(str, arr))
+
 class Integer(long):
     def __init__(self, value):
         if type(value) == type(""):

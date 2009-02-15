@@ -1,20 +1,15 @@
 
 
 * Interpreter
-** Do operators right
-   PLEASE
-*** ++/-- Need thought
+** ++/-- Need thought
     a[0]++ should work
-** Indexing
-   Requires either a special case or its own function to deal with
-   a[1,2,3] -> [a[1], a[2], a[3]]
 ** Cache links
    To implement extern with del:
    extern a
    del a
    Should delete the external version.
-** Implement break/continue/return/throw/yield
-   Because I should
+** Implement return/throw/yield
+   Probably as exceptions
 ** Implement import
    This'll be tricky
 ** Str primitives

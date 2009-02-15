@@ -13,6 +13,6 @@ while curr < 100 {
     primes.append(curr)
 }
 
-for p in primes {
-    output(p)
-}
+output(join(primes, ", "))
+
+#!drop
