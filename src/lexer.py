@@ -7,7 +7,7 @@ import sys
 tokens = [
     "STRING", "DEC", "INT", "BOOL", "NIL", "IDENT", "PLUSPLUS", "MINUSMINUS",
     "SLASHSLASH", "GE", "LE", "NE", "EQ", "LTLT", "GTGT", "DOTDOTDOT", "EQOP",
-    "NEWLINE", "PROCDIR"
+    "NEWLINE", "PROCDIR", "INT2"
 ]
 
 # PUNCTUATION is never used
@@ -36,14 +36,14 @@ def t_STRING(t):
     return t # TODO: Implement String class
 
 def t_INT2(t):
-    r"""(?<![\.eE]|\d)(?:(?:\s*[0-9])+)(?!\s*\.|\d)"""
+    r"""(?<![\.eE]|\d)(?:(?:[ \t]*[0-9])+)(?![ \t]*\.|\d|\w)"""
 
     t.value = ("INT", t.value.replace(" ", ""), 10)
     t.type = "INT"
     return t
 
 def t_INT(t):
-    r"""(?<![\.eE]|\d)(?:0(?:\w))(?:(?:\s*[0-9a-zA-Z])+)(?!\s*\.|\d)"""
+    r"""(?<![\.eE]|\d)(?:0(?:\w))(?:(?:[ \t]*[0-9a-zA-Z])+)(?![ \t]*\.|\d|\w)"""
 
     if t.value[0] == "0":
         try:
@@ -67,7 +67,7 @@ def t_INT(t):
     return t # TODO: Implement Integer class
 
 def t_DEC(t):
-    r"(?P<number>(?:(?:\s*[0-9])+\.(?:\s*[0-9])+)|(?:\.(?:\s*[0-9])+)|(?:(?:\s*[0-9])+\.))(?P<exponent>(?:[eE][+-]?(?:\s*[0-9])*)?)"
+    r"(?P<number>(?:(?:[ \t]*[0-9])+\.(?:[ \t]*[0-9])+)|(?:\.(?:[ \t]*[0-9])+)|(?:(?:[ \t]*[0-9])+\.))(?P<exponent>(?:[eE][+-]?(?:[ \t]*[0-9])*)?)"
 
     t.value = t.value.lower()
     if "e" in t.value:

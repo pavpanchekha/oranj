@@ -10,6 +10,20 @@
 1
 100000000000000000000000
 
+# Other bases
+>>> term << 0b11
+>>> term << 0h11
+>>> term << 0a11
+>>> term << 0o11
+>>> term << 0d11
+>>> term << 0s11
+3
+17
+37
+9
+11
+18
+
 # Decimals
 ## Note that decimals should be rendered with three digits of precision in
 ## oranj
@@ -21,3 +35,4 @@
 0.000
 1.000
 0.100
+
