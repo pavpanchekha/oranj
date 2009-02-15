@@ -35,8 +35,15 @@ def t_STRING(t):
 
     return t # TODO: Implement String class
 
+def t_INT2(t):
+    r"""(?<![\.eE]|\d)(?:(?:\s*[0-9])+)(?!\s*\.|\d)"""
+
+    t.value = ("INT", t.value.replace(" ", ""), 10)
+    t.type = "INT"
+    return t
+
 def t_INT(t):
-    r"""(?<![\.eE]|\d)(?:0(?:\w))?(?:(?:\s*[0-9a-zA-Z])+)(?!\s*\.|\d)"""
+    r"""(?<![\.eE]|\d)(?:0(?:\w))(?:(?:\s*[0-9a-zA-Z])+)(?!\s*\.|\d)"""
 
     if t.value[0] == "0":
         try:

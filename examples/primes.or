@@ -1,7 +1,8 @@
 primes = [2]
 curr = 2
 
-max = input("Maximum? ", int)
+#max = input("Maximum? ", int)
+max = 1000
 
 while curr < max {
     curr += 1
