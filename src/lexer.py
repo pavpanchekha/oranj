@@ -36,9 +36,9 @@ def t_STRING(t):
     return t # TODO: Implement String class
 
 def t_INT(t):
-    r"""(?<![\.eE]|\d)(?:0(?:\w))?(?:(?:\s*[0-9])+)(?!\s*\.|\d)"""
+    r"""(?<![\.eE]|\d)(?:0(?:\w))?(?:(?:\s*[0-9a-zA-Z])+)(?!\s*\.|\d)"""
 
-    if t.value[0] == 0:
+    if t.value[0] == "0":
         try:
             base = {
                 "d": 10,
@@ -47,10 +47,10 @@ def t_INT(t):
                 "a": 36,
                 "o": 8,
                 "s": 17,
-                }[t[1]]
+                }[t.value[1]]
         except:
             base = 10
-            print "Error (line %d): Illegal base %s" % (t.lexer.lineno, t[1])
+            print "Error (line %d): Illegal base %s" % (t.lexer.lineno, t.value[1])
 
         t.value = t.value[2:]
     else:

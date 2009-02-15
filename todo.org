@@ -20,6 +20,3 @@
 * Parser
 ** Setattr/setindex
    C&P some code and I'll be good
-* Lexer
-** Fix 0b101001001
-   It renders as base 10

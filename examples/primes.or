@@ -1,7 +1,9 @@
 primes = [2]
 curr = 2
 
-while curr < 100 {
+max = input("Maximum? ", int)
+
+while curr < max {
     curr += 1
     
     for p in primes {
@@ -15,4 +17,5 @@ while curr < 100 {
 
 output(join(primes, ", "))
 
-#!drop
+# Uncomment to drop down to console after finishing.
+##!drop

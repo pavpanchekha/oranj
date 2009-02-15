@@ -1,0 +1,23 @@
+
+
+#!python ../src/interpreter.py -c
+
+## Test literal syntax
+
+# Integers
+>>> term << 1
+>>> term << 100000000000000000000000
+1
+100000000000000000000000
+
+# Decimals
+## Note that decimals should be rendered with three digits of precision in
+## oranj
+>>> term << 1.0
+>>> term << 0.0
+>>> term << 1.
+>>> term << .1
+1.000
+0.000
+1.000
+0.100

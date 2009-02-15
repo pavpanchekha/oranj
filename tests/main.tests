@@ -1,4 +1,5 @@
-#!python interpreter.py -c
+
+#!python ../src/interpreter.py -c
 
 ## Test input and output fascilities
 
