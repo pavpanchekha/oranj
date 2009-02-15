@@ -1,0 +1,9 @@
+# The output function outputs text to the console
+# We'll use it here to pray to the gods of programming
+
+output("Hello, World!")
+
+# Now lets test some basic math
+output("Does 17 divide 51 evenly?", 17|51)
+output("What's 17 to the 17th power?", 17^17)
+output("Now, is that over 9,000?", 17^17 > 9 000)

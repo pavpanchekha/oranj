@@ -1,0 +1,11 @@
+#!python interpreter.py
+
+## Test input and output fascilities
+
+# output() function
+>>> output(5 ^ 15)
+30517578125
+
+# term variable
+>>> term << 5 ^ 15
+30517578125

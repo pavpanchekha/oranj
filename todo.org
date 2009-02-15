@@ -1,0 +1,30 @@
+
+
+* Interpreter
+** Do operators right
+   PLEASE
+*** ++/-- Need thought
+    a[0]++ should work
+** Indexing
+   Requires either a special case or its own function to deal with
+   a[1,2,3] -> [a[1], a[2], a[3]]
+** Cache links
+   To implement extern with del:
+   extern a
+   del a
+   Should delete the external version.
+** Implement break/continue/return/throw/yield
+   Because I should
+** Implement import
+   This'll be tricky
+** Str primitives
+*** Extra escapes
+    Documented in code
+*** Escapes only if not r""
+    Duh
+* Parser
+** Setattr/setindex
+   C&P some code and I'll be good
+* Lexer
+** Fix 0b101001001
+   It renders as base 10

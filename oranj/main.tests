@@ -1,0 +1,27 @@
+#!python interpreter.py -c
+
+## Test input and output fascilities
+
+# output() function
+>>> output(5 ^ 15)
+30517578125
+
+# term variable
+>>> term << 5 ^ 15
+30517578125
+
+# if
+>>> a = 0
+>>> if a == 0 {
+>>> output("YAY")
+>>> } else {
+>>> output("NAY")
+>>> }
+YAY
+
+# while loop
+>>> a = 0
+>>> while a < 10 {a = a + 1}
+>>> output(a)
+10
+

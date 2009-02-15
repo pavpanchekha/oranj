@@ -1,0 +1,19 @@
+factorial = fn(n) {
+    int p = 1
+    
+    for i in n {
+        p *= i + 1
+    }
+    
+    return p
+}
+
+choose = fn(n, k) {
+    dec r = 1
+    for i in k {
+        r *= (n - i) / (i + 1)
+    }
+    
+    return int(r)
+}
+

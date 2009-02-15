@@ -1,0 +1,15 @@
+comb = import("combinatorics")
+
+pascal = fn(int row=10) {
+    assert row >= 0
+    list p = list(row + 1)
+    
+    for i in row+1 {
+        p[i] = []
+        for (j in i+1) {
+            p[i].append(comb.choose(i, j))
+        }
+    }
+    
+    return(p)
+}

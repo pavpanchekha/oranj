@@ -1,0 +1,20 @@
+term << "HI"
+
+primes = [2]
+curr = 2
+
+while curr < 1000 {
+    curr += 1
+    
+    for p in primes {
+        if p | curr {
+            continue 2
+        }
+    }
+
+    primes.append(curr)
+}
+
+for p in primes {
+    term << p
+}
