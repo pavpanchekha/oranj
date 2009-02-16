@@ -1,6 +1,6 @@
 
 
-#!python ../src/interpreter.py -c
+#!../oranj -c
 
 ## Test literal syntax
 
@@ -29,10 +29,48 @@
 ## oranj
 >>> term << 1.0
 >>> term << 0.0
+## Not a decimal
 >>> term << 1.
 >>> term << .1
 1.000
 0.000
-1.000
+1
 0.100
 
+# Arithmetic
+>>> term << 42 + 17
+>>> term << 42 - 17
+>>> term << 42 * 17
+>>> term << 42 / 17
+>>> term << 42 ^ 17
+59
+25
+714
+2.470
+3937657486715347520027492352
+
+# Order of operations
+>>> term << (1 + 2) / (3 + 4) + 5
+>>> term << (4 + 10 / 2) / 9
+>>> term << 3 - (5 - (7 + 1)) ^ 2 * (-5) + 3
+5.428
+1
+51
+
+# Logic
+>>> term << (5 == 17)
+>>> term << (5 != 17)
+>>> term << (5 < 17)
+>>> term << (5 > 17)
+>>> term << (5 <= 17)
+>>> term << (5 >= 17)
+>>> term << (5 => 17)
+>>> term << (5 =< 17)
+False
+True
+True
+False
+True
+False
+False
+True

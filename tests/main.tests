@@ -1,5 +1,5 @@
 
-#!python ../src/interpreter.py -c
+#!../oranj -c
 
 ## Test input and output fascilities
 

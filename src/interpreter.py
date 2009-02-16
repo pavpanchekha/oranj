@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import analyze
 import sys
 import lib
@@ -48,8 +50,9 @@ class Interpreter(object):
         "<": intplib.lt,
         ">": intplib.gt,
         "<=": intplib.le,
-        ">=": intplib.le,
+        ">=": intplib.ge,
         "=>": intplib.ge,
+        "=<": intplib.le,
         "==": intplib.eq,
         "!=": intplib.ne,
         "<<": intplib.output,
@@ -112,9 +115,9 @@ class Interpreter(object):
                     a = a.replace(k, v)
                 return OrObject.from_py(a)
             elif tree[1][0] == "DEC":
-                return OrObject.from_py(decimal.Decimal(tree[1][1]))
+                return OrObject.from_py(lib.Decimal(tree[1][1]))
             elif tree[1][0] == "INT":
-                return OrObject.from_py(int(tree[1][1], tree[1][2]))
+                return OrObject.from_py(lib.Integer(tree[1][1], tree[1][2]))
             elif tree[1][0] == "BOOL":
                 return OrObject.from_py(tree[1][1])
             elif tree[1][0] == "NIL":
