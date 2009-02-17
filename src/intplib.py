@@ -1,15 +1,5 @@
 #!/usr/bin/env python
 
-def orpy(name):
-    def dec(f):
-        def t(self, *args, **kwargs):
-            if "$$python" in self.dict:
-                f(self.get("$$python"), *args, **kwargs)
-            else:
-                return getattr(self, name)(*args, **kwargs)
-        return t
-    return dec
-
 def clear_screen():
     import os
     if os.name == "posix":
@@ -23,29 +13,6 @@ def clear_screen():
         print '\n' * 100
 
 class OrObject(object):
-    py2np = {
-        "__init__": "$$new",
-        "__del__": "$$del",
-        # Implement __str__ somehow
-        "__lt__": "$$lt",
-        "__le__": "$$le",
-        "__gt__": "$$gt",
-        "__ge__": "$$ge",
-        "__eq__": "$$eq",
-        "__ne__": "$$ne",
-        "__call__": "$$call",
-        "__contains__": "$$in",
-        "__add__": "$$add",
-        "__sub__": "$$sub",
-        "__mul__": "$$mus",
-        "__pow__": "$$exp",
-        "__truediv__": "$$div",
-        "__floordiv__": "$$floor",
-        "__mod__": "$$mod",
-        "read": "$$output",
-        "write": "$$input",
-    }
-
     def __init__(self, name="", classobj=None):
         self.dict = {}
 
@@ -54,11 +21,14 @@ class OrObject(object):
         if classobj:
             self.set("$$class", classobj)
 
-    def __getattr__(self, name):
-        return self.__dict__["dict"][name]
-
+    def ispy(self):
+        return "$$python" in self.dict
+    
     def get(self, key):
-        return self.dict[key]
+        if key in self.dict:
+            return self.dict[key]
+        elif self.ispy():
+            return getattr(self.get("$$python"), key)
 
     def set(self, key, value):
         self.dict[key] = value
@@ -106,15 +76,11 @@ class OrObject(object):
         np = cls(n, c)
 
         for i in dir(obj):
-            if i in ("__name__", "__class__"):
+            if i.startswith("_") or i.startswith("im_") or i == "mro" or i.startswith("func_"):
                 continue
-            elif i in cls.py2np:
-                np.set(cls.py2np[i], getattr(obj, i))
-            elif i.startswith("__") and i.endswith("__"):
-                np.set("$$" + i[2:-2], getattr(obj, i))
-            else:
-                #TODO: make this recursive
-                np.set(i, getattr(obj, i))
+            
+            np.set(i, cls.from_py(getattr(obj, i)))
+        
         np.set("$$python", obj)
         return np
 
@@ -217,3 +183,36 @@ def indexer(x, y):
         return x[y]
 
 getindex_ = simpleop(indexer, "getindex")
+
+op_names = {
+    "+": add,
+    "-": sub,
+    "*": mul,
+    "^": exp,
+    "/": div,
+    "//": floor,
+    "|": divis,
+    "mod": mod,
+    "OR": or_,
+    "AND": and_,
+    "NOT": not_,
+    "IN": in_,
+    "NOT IN": not_in,
+    "IS": is_,
+    "IS NOT": is_not,
+    "<": lt,
+    ">": gt,
+    "<=": le,
+    ">=": ge,
+    "=>": ge,
+    "=<": le,
+    "==": eq,
+    "!=": ne,
+    "<<": output,
+    ">>": input,
+    "U+": uplus,
+    "U-": uminus,
+    "CALL": call,
+    "ATTR": getattr_,
+    "INDEX": getindex_,
+}

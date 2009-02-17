@@ -16,39 +16,6 @@ class DropI(Exception): pass
 debug = False
 
 class Interpreter(object):
-    op_names = {
-        "+": intplib.add,
-        "-": intplib.sub,
-        "*": intplib.mul,
-        "^": intplib.exp,
-        "/": intplib.div,
-        "//": intplib.floor,
-        "|": intplib.divis,
-        "mod": intplib.mod,
-        "OR": intplib.or_,
-        "AND": intplib.and_,
-        "NOT": intplib.not_,
-        "IN": intplib.in_,
-        "NOT IN": intplib.not_in,
-        "IS": intplib.is_,
-        "IS NOT": intplib.is_not,
-        "<": intplib.lt,
-        ">": intplib.gt,
-        "<=": intplib.le,
-        ">=": intplib.ge,
-        "=>": intplib.ge,
-        "=<": intplib.le,
-        "==": intplib.eq,
-        "!=": intplib.ne,
-        "<<": intplib.output,
-        ">>": intplib.input,
-        "U+": intplib.uplus,
-        "U-": intplib.uminus,
-        "CALL": intplib.call,
-        "ATTR": intplib.getattr_,
-        "INDEX": intplib.getindex_,
-    }
-
     str_escapes = {
         r"\\": "\\",
         "\\\n": "",
@@ -212,14 +179,13 @@ class Interpreter(object):
             v1 = self.run(tree[1])
             v2 = tree[2][1]
             return intplib.getattr_(v1, v2)
-        elif tree[0] in self.op_names:
+        elif tree[0] in intplib.op_names:
             args = []
             kwargs = {}
+            
             for i in tree[2:]:
                 if i[0] == "UNWRAPKW":
-                    kwargs.update(self.run(i[1]).get("$$python"))
-                    # TODO: remove dependence on python
-                    # Applies to all
+                    kwargs.update(self.run(i[1]))
                 elif i[0] == "KW":
                     kwargs[self.run(i[1])] = self.run(i[2])
                 elif i[0] == "UNWRAP":
@@ -229,7 +195,7 @@ class Interpreter(object):
                 
             args = [self.run(i) for i in tree[2:]]
             var = self.run(tree[1])
-            func = self.op_names[tree[0]]
+            func = intplib.op_names[tree[0]]
             
             if debug:
                 print var, func, args, kwargs
