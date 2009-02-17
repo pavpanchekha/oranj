@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import division
-
-class ContinueI(Exception): pass
-class BreakI(Exception): pass
-
 def orpy(name):
     def dec(f):
         def t(self, *args, **kwargs):

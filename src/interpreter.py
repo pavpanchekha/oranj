@@ -2,33 +2,18 @@
 
 import analyze
 import sys
-import lib
-import decimal
-import readline
 import traceback
 
-from intplib import OrObject, InheritDict, ContinueI, BreakI
+import builtin
 import intplib
+OrObject = intplib.OrObject
+import lib
 
-import lexer
-
+class ContinueI(Exception): pass
+class BreakI(Exception): pass
 class DropI(Exception): pass
 
 debug = False
-
-builtin = InheritDict()
-builtin.update({
-    "int": OrObject.from_py(lib.Integer),
-    "term": OrObject.from_py(lib.term),
-    "input": OrObject.from_py(lib.input),
-    "output": OrObject.from_py(lib.output),
-    "error": OrObject.from_py(lib.error),
-    "Inputable": OrObject.from_py(lib.Inputable),
-    "Outputable": OrObject.from_py(lib.Outputable),
-    "Terminal": OrObject.from_py(lib.Terminal),
-    "repr": OrObject.from_py(repr),
-    "join": OrObject.from_py(lib.join),
-})
 
 class Interpreter(object):
     op_names = {
@@ -83,48 +68,21 @@ class Interpreter(object):
         # \xhh
     }
 
-    def __init__(self, g=InheritDict(builtin)):
+    def __init__(self, g=intplib.InheritDict(builtin.builtin)):
         self.glob = g
-        self.curr = InheritDict(self.glob)
+        self.curr = intplib.InheritDict(self.glob)
         self.types = {}
 
     def run(self, tree):
+        if len(tree) == 0: return
+
+        if type(tree[0]) == type("") and hasattr(self, "h" + tree[0]):
+            return getattr(self, "h" + tree[0])(tree[1:])
+        
         if type(tree) == type([]):
-            j = OrObject.from_py(None)
             for i in tree:
                 j = self.run(i)
             return j
-        elif tree[0] == "IDENT":
-            if tree[1] in self.curr:
-                return self.curr[tree[1]]
-            else:
-                raise AttributeError("Variable " + tree[1] + " does not exist")
-        elif tree[0] == "PROCDIR":
-            if tree[1] == "drop":
-                run_console(self)
-            elif tree[1] == "clear":
-                intplib.clear_screen()
-            elif tree[1] == "pydrop":
-                import os
-                os.environ["PYTHONINSPECT"] = "1"
-                raise DropI
-        elif tree[0] == "PRIMITIVE":
-            if tree[1][0] == "STRING":
-                a = tree[1][1]
-                for k, v in self.str_escapes.keys():
-                    a = a.replace(k, v)
-                return OrObject.from_py(a)
-            elif tree[1][0] == "DEC":
-                return OrObject.from_py(lib.Decimal(tree[1][1]))
-            elif tree[1][0] == "INT":
-                return OrObject.from_py(lib.Integer(tree[1][1], tree[1][2]))
-            elif tree[1][0] == "BOOL":
-                return OrObject.from_py(tree[1][1])
-            elif tree[1][0] == "NIL":
-                return OrObject.from_py(None)
-            elif tree[1][0] == "INF":
-                return OrObject.from_py(lib.Infinity)
-            return None
         elif tree[0] == "SLICE":
             return OrObject.from_py(slice(*[self.run(i).get("$$python") for i in tree[1:]]))
         elif tree[0] == "LIST":
@@ -143,7 +101,7 @@ class Interpreter(object):
             for i in tree[1]:
                 r[self.run(i[0])] = self.run(i[1])
             return OrObject.from_py(r)
-        elif tree[0] in ("+=", "-=", "^=", "/=", "//=", "*=", "mod=", "and=", "or=", "<<=", ">>=", "="):
+        elif tree[0] == "=":
             vals = map(self.run, tree[2])
             for i, v in zip(tree[1], vals):
                 self.curr[i[1]] = v
@@ -290,15 +248,73 @@ class Interpreter(object):
                 else:
                     return r
 
+    def hIDENT(self, (var,)):
+        if var in self.curr:
+            return self.curr[var]
+        else:
+            raise AttributeError("Variable %s does not exist" % var)
+
+    def hPROCDIR(self, (cmd,)):
+        if cmd == "drop":
+            run_console(self)
+        elif cmd == "clear":
+            intplib.clear_screen()
+        elif cmd == "exit":
+            sys.exit()
+        elif cmd == "pydrop":
+            import os
+            global undrop
+            
+            os.environ["PYTHONINSPECT"] = "1"
+            
+            def undrop():
+                run_console(self)
+                
+            raise DropI
+
+    def hPRIMITIVE(self, (val,)):
+        if tree[1][0] == "STRING":
+            a = val[1]
+            for k, v in self.str_escapes.keys():
+                a = a.replace(k, v)
+            return OrObject.from_py(a)
+        elif val[0] == "DEC":
+            return OrObject.from_py(lib.Decimal(val[1]))
+        elif val[0] == "INT":
+            return OrObject.from_py(lib.Integer(val[1], val[2]))
+        elif val[0] == "BOOL":
+            return OrObject.from_py(val[1])
+        elif val[0] == "NIL":
+            return OrObject.from_py(None)
+        elif val[0] == "INF":
+            return OrObject.from_py(lib.Infinity)
+
+
+        
 def run_console(intp):
-    def completer(text, state=0):
-        return [i for i in intp.curr.names if i.startswith(text)]
+    import lexer
     
-    readline.set_completer(completer)
+    try:
+        import readline
+        def completer(text, state=0):
+            if text:
+                m = [i for i in intp.curr.keys() if i.startswith(text)]
+            else:
+                m = intp.curr.keys()[:]
+
+            try:
+                return m[state]
+            except IndexError:
+                return None
+        
+        readline.set_completer(completer)
+        readline.parse_and_bind("tab: complete")
+    except ImportError:
+        pass
     
     try:
         t = ""
-        while t != "exit":
+        while True:
             t = raw_input("oranj> ") + "\n"
             while not lexer.isdone(t):
                 t += raw_input("     > ") + "\n"
@@ -328,10 +344,7 @@ def run(s, intp):
         return
 
 if __name__ == "__main__":
-    intp = Interpreter(builtin)
-
-    def undrop():
-        run_console(intp)
+    intp = Interpreter()
 
     argv = sys.argv[:]
     if "-d" in argv:

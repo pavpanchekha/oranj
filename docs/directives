@@ -25,3 +25,6 @@ are implemented:
 * pydrop
   Drop down to a python shell. This is useful for deep debugging or, even more
   likely, debugging the interpreter itself.
+
+* exit
+  Exits the oranj program or shell.
