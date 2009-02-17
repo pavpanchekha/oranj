@@ -273,7 +273,7 @@ class Interpreter(object):
             raise DropI
 
     def hPRIMITIVE(self, (val,)):
-        if tree[1][0] == "STRING":
+        if val[0] == "STRING":
             a = val[1]
             for k, v in self.str_escapes.keys():
                 a = a.replace(k, v)
