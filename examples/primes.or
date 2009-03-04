@@ -17,6 +17,3 @@ while curr < max {
 }
 
 output(join(primes, ", "))
-
-# Uncomment to drop down to console after finishing.
-##!drop

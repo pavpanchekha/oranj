@@ -65,9 +65,11 @@ class Terminal(Inputable, Outputable, object):
 
         sys.stdout.write(sep.join(map(str, args)))
         sys.stdout.write(str(end))
+        return self
 
     def error(self, *args):
         sys.stderr.write("\n".join(map(repr, args)) + "\n")
+        return self
 
 term = Terminal()
 input = term.read
@@ -88,7 +90,7 @@ class Integer(long):
 
     def __cmp__(self, other):
         if type(other) != Integer:
-            return 1
+            return self._val.__cmp__(other)
         return self._val.__cmp__(other._val)
         
     def __div__(self, other):
@@ -133,14 +135,17 @@ def add_func_int(i):
         try:
             return Integer(getattr(int, i)(*args, **kwargs))
         except:
-            return NotImplemented
+            try:
+                return Integer(getattr(long, i)(*args, **kwargs))
+            except:
+                return NotImplemented
     
     setattr(Integer, i, t)
     
 for i in ["abs", "add", "and", "divmod", "float", "floordiv", "index", \
-              "invert", "lshift", "mod", "mul", "neg", "or", "pos", "pow", "radd", "rand", \
-              "rdivmod", "rfloordiv", "rlshift", "rmod", "rmul", "ror", "rpow", \
-              "rrshift", "rshift", "rsub", "rxor", "sub", "xor"]:
+          "invert", "lshift", "mod", "mul", "neg", "or", "pos", "pow", "radd", "rand", \
+          "rdivmod", "rfloordiv", "rlshift", "rmod", "rmul", "ror", "rpow", \
+          "rrshift", "rshift", "rsub", "rxor", "sub", "xor"]:
 
     add_func_int(i)
 

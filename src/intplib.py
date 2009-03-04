@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+class ReturnI(Exception): pass
+
 def clear_screen():
     import os
     if os.name == "posix":
@@ -101,7 +103,7 @@ class InheritDict:
                 self[key] = a # Cache lookup
                 return a
             except TypeError:
-                raise AttributeError("Key not in InheritDict")
+                raise AttributeError("Key not in InheritDict: " + key)
 
     def __setitem__(self, key, value):
         self.dict[key] = value
@@ -163,7 +165,7 @@ uplus = simpleop(lambda x: +x, "uplus")
 uminus = simpleop(lambda x: -x, "uminus")
 
 def call(obj, *args, **kwargs):
-    if all(hasattr(i, "dict") and "$$python" in i.dict for i in args) and all("$$python" in i.dict for k, i in kwargs.items()):
+    if all(hasattr(i, "dict") and "$$python" in i.dict for i in args) and all("$$python" in i.dict for k, i in kwargs.items()) and obj.ispy():
         args = [i.get("$$python") for i in args]
         for i in kwargs:
             kwargs[i] = kwargs[i].get("$$python")
@@ -212,7 +214,73 @@ op_names = {
     ">>": input,
     "U+": uplus,
     "U-": uminus,
-    "CALL": call,
-    "ATTR": getattr_,
-    "INDEX": getindex_,
+    "GETATTR": getattr_,
+    "GETINDEX": getindex_,
 }
+
+class Function(OrObject):
+    def __init__(self, intp, arglist, block, doc="", rettype=""):
+        OrObject.__init__(self)
+        self.set("$$doc", doc)
+        self.set("$$call", self.__call__)
+        self.set("$$class", "fn")
+        self.set("$$name", "[anon]")
+        
+        self.arglist = arglist
+        self.realargs = len([True for i in arglist if i[0] == "ARG"])
+        self.rettype = rettype
+        self.block = block
+        self.intp = intp
+    
+    def __call__(self, *args, **kwargs):
+        cntx = InheritDict(self.intp.cntx[-1])
+        self.intp.cntx.append(cntx)
+        
+        argp = 0
+        
+        if len(args) == self.realargs:
+            # Yay, easy scenario
+            for i in self.arglist:
+                if i[0] == "ARG":
+                    if len(i) in (2, 4):
+                        cntx[i[1][1]] = args[argp]
+                    elif len(i) in (3, 5):
+                        cntx[i[2][1]] = args[argp]
+                    argp += 1
+        elif len(args) < self.realargs:    
+            # Awww
+            skip = len(arglist) - len(args)
+            
+            for i in self.arglist:
+                if i[0] == "ARG":
+                    if len(i) in (4, 5) and skip:
+                        skip -= 1
+                        continue
+                    elif len(i) in (2, 4):
+                        cntx[i[1][1]] = args[argp]
+                    elif len(i) in (3, 5):
+                        cntx[i[2][1]] = args[argp]
+                    argp += 1
+        else:
+            # Also awww
+            extra = len(arglist) - len(args)
+            
+            for i in self.arglist:
+                if i[0] == "ARG":
+                    if len(i) in (2, 4):
+                        cntx[i[1][1]] = args[argp]
+                    elif len(i) in (3, 5):
+                        cntx[i[2][1]] = args[argp]
+                    argp += 1
+                elif i[0] == "UNWRAPABLE":
+                    cntx[i[1][1]] = args[argp:argp+extra]
+                    argp += extra
+        
+        try:
+            self.intp.run(self.block)
+        except ReturnI, e:
+            if e.args:
+                a = list(e.args) if len(e.args) > 1 else e.args[0]
+                return OrObject.from_py(a)
+            else:
+                return

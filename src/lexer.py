@@ -7,10 +7,8 @@ import sys
 tokens = [
     "STRING", "DEC", "INT", "BOOL", "NIL", "IDENT", "PLUSPLUS", "MINUSMINUS",
     "SLASHSLASH", "GE", "LE", "NE", "EQ", "LTLT", "GTGT", "DOTDOTDOT", "EQOP",
-    "NEWLINE", "PROCDIR", "INT2"
+    "NEWLINE", "PROCDIR", "PROCBLOCK"
 ]
-
-# PUNCTUATION is never used
 
 def t_BOOL(t):
     r"true|false"
@@ -80,7 +78,7 @@ def t_DEC(t):
     return t # TODO: Implement Decimal class
 
 def t_IDENT(t):
-    r"(?:^|\b)(?P<value>[a-zA-Z0-9$_]+)(?:\b|$)"
+    r"(?P<value>[a-zA-Z0-9\$_]+)"
 
     t.type = reserved.get(t.value, 'IDENT') # Taken from http://github.com/alex/alex-s-language/
     return t
@@ -93,7 +91,25 @@ def t_NEWLINE(t):
     return t
 
 def t_PROCDIR(t):
-    r"\#![a-zA-Z0-9]*"
+    r"\#![a-zA-Z0-9\s]*"
+    t.value = ["PROCDIR", t.value[2:].split()]
+    return t
+
+def t_PROCBLOCK(t):
+    r"\#![a-zA-Z0-9\s]*\{(.|\n)*\#!\s*\}"
+    
+    def process_body(s):
+        if s[0] == "\n":
+            s = s[1:]
+        t = s[:s.find["\n"]]
+        ws = t.find(t.strip())
+        
+        s = s.split("\n")
+        for i, v in enumerate(s):
+            if v.startswith(ws):
+                s[i] = v[len(ws)+1:]
+    
+    t.value = ["PROCBLOCK", t.value[2:t.value.find("{")].strip().split(), process_body(t.value[t.value.find("{")+1:t.value.find("#!")])]
     return t
 
 def t_COMMENT(t):

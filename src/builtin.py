@@ -4,10 +4,7 @@ import lib
 import intplib
 
 def expose(obj):
-    if isinstance(obj, intplib.OrObject):
-        return obj
-    else:
-        return intplib.OrObject.from_py(obj)
+    return intplib.OrObject.from_py(obj)
     
 builtin = intplib.InheritDict()
 builtin.update({
@@ -21,4 +18,5 @@ builtin.update({
 
         "repr": expose(repr),
         "join": expose(lib.join),
+        "range": expose(range),
 })

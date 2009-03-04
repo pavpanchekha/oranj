@@ -8,19 +8,10 @@ import pprint # Because parse trees get hairy
 import sys
 import terminal
 
-errors = 0
+class ParseError(Exception): pass
 
 term = terminal.TerminalController()
-
 start = "statements"
-
-precedence = (
-    ("left", "+", "-"),
-    ("left", "*", "/", "MOD"),
-    ("left", "^"),
-    ("left", "MINUSMINUS", "PLUSPLUS"),
-    ("right", "UMINUS", "UPLUS"),
-)
 
 def p_primitive(p):
     """primitive : DEC
@@ -29,18 +20,11 @@ def p_primitive(p):
                  | NIL
                  | BOOL
                  | INF"""
-
-    p[0] = ("PRIMITIVE", p[1])
+    p[0] = ["PRIMITIVE", p[1]]
 
 def p_primitive_IDENT(p):
     """ident : IDENT"""
-
-    p[0] = ("IDENT", p[1])
-
-def p_procdir(p):
-    """procdir : PROCDIR"""
-
-    p[0] = ("PROCDIR", (p[1][2:]).lower())
+    p[0] = ["IDENT", p[1]]
     
 def p_literal_list(p):
     """literal : '[' list_items ']'
@@ -48,28 +32,28 @@ def p_literal_list(p):
                | '[' ']'"""
 
     if len(p) == 3:
-        p[0] = ("LIST", [])
+        p[0] = ["LIST", []]
     else:
-        p[0] = ("LIST", p[2])
+        p[0] = ["LIST", p[2]]
 
 def p_literal_alist(p):
     """literal : '[' hash_items ']'
                | '[' hash_items ',' ']'"""
-    p[0] = ("TABLE", p[2])
+    p[0] = ["TABLE", p[2]]
 
 def p_literal_set(p):
     """literal : '{' list_items '}'
                | '{' list_items ',' '}'"""
-    p[0] = ("SET", p[2])
+    p[0] = ["SET", p[2]]
 
 def p_literal_dict(p):
     """literal : '{' hash_items '}'
                | '{' hash_items ',' '}'
                | '{' '}'"""
     if len(p) == 3:
-        p[0] = ("DICT", [])
+        p[0] = ["DICT", []]
     else:
-        p[0] = ("DICT", p[2])
+        p[0] = ["DICT", p[2]]
 
 def p_list_items(p):
     """list_items : list_items ',' expression
@@ -96,7 +80,7 @@ def p_test_or(p):
                | test_and"""
 
     if len(p) == 4:
-        p[0] = ("OR", p[1], p[3])
+        p[0] = ["OP", "OR", p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -105,7 +89,7 @@ def p_test_and(p):
                 | test_not"""
 
     if len(p) == 4:
-        p[0] = ("AND", p[1], p[3])
+        p[0] = ["OP", "AND", p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -114,7 +98,7 @@ def p_test_not(p):
                 | test_in"""
 
     if len(p) == 3:
-        p[0] = ("NOT", p[2])
+        p[0] = ["OP", "NOT", p[2]]
     else:
         p[0] = p[1]
 
@@ -125,9 +109,9 @@ def p_test_in(p):
                | test_type"""
 
     if len(p) == 4:
-        p[0] = (p[2], p[1], p[3])
+        p[0] = ["OP", p[2], p[1], p[3]]
     elif len(p) == 5:
-        p[0] = ("NOT IN", p[1], p[4])
+        p[0] = ["OP", "NOT IN", p[1], p[4]]
     else:
         p[0] = p[1]
 
@@ -137,9 +121,9 @@ def p_test_type(p):
                  | test_comp"""
 
     if len(p) == 4:
-        p[0] = ("IS", p[1], p[3])
+        p[0] = ["OP", "IS", p[1], p[3]]
     elif len(p) == 5:
-        p[0] = ("IS NOT", p[1], p[4])
+        p[0] = ["OP", "IS NOT", p[1], p[4]]
     else:
         p[0] = p[1]
 
@@ -153,9 +137,7 @@ def p_test_comp(p):
                  | test_io"""
 
     if len(p) == 4:
-        p[0] = (p[2], p[1], p[3])
-    elif len(p) == 5:
-        p[0] = (p[2] + p[3], p[1], p[4])
+        p[0] = ["OP", p[2], p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -165,7 +147,7 @@ def p_test_io(p):
                | test_pm"""
 
     if len(p) == 4:
-        p[0] = (p[2], p[1], p[3])
+        p[0] = ["OP", p[2], p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -175,17 +157,7 @@ def p_test_pm(p):
                | test_mdmf"""
 
     if len(p) == 4:
-        if p[1][0] == "PRIMITIVE" and p[2][0] == "PRIMITIVE":
-            a = p[1][1]
-            b = p[2][1]
-            
-            if p[2] == "+":
-                c = a+b
-            elif p[2] == "-":
-                c = a-b
-            p[0] = ("PRIMITIVE", c)
-            return
-        p[0] = (p[2], p[1], p[3])
+        p[0] = ["OP", p[2], p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -197,36 +169,21 @@ def p_test_mdmf(p):
                  | test_un"""
 
     if len(p) > 2:
-        if p[1][0] == "PRIMITIVE" and p[2][0] == "PRIMITIVE":
-            a = p[1][1]
-            b = p[2][1]
-            
-            if p[2] == "*":
-                c = a*b
-            elif p[2] == "/":
-                c = a/b
-            elif p[2] == "//":
-                c = a//b
-            else:
-                c = a % b
-
-            p[0] = ("PRIMITIVE", c)
-            return
-        p[0] = (p[2], p[1], p[3])
+        p[0] = ["OP", p[2], p[1], p[3]]
     else:
         p[0] = p[1]
 
 def p_test_un(p):
-    """test_un : test_un PLUSPLUS
-               | test_un MINUSMINUS
-               | '-' test_un %prec UMINUS
-               | '+' test_un %prec UPLUS
+    """test_un : loc PLUSPLUS
+               | loc MINUSMINUS
+               | '-' test_un
+               | '+' test_un
                | test_exp"""
 
     if len(p) == 3 and p[2] in ("++", "--"):
-        p[0] = (p[2], p[1])
+        p[0] = ["OP", p[2], p[1]]
     elif p[1] in ("+", "-"):
-        p[0] = ("U"+p[1], p[2])
+        p[0] = ["OP", "U"+p[1], p[2]]
     else:
         p[0] = p[1]
 
@@ -235,10 +192,7 @@ def p_test_exp(p):
                 | test_call"""
 
     if len(p) == 4:
-        if p[1][0] == "PRIMITIVE" and p[2][0] == "PRIMITIVE":
-            p[0] = ("PRIMTIVE", p[1][1] ** p[2][1])
-        else:
-            p[0] = ("^", p[1], p[3])
+        p[0] = ["OP", "^", p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -248,14 +202,14 @@ def p_test_call(p):
                  | test_attr"""
 
     if len(p) >= 5:
-        p[0] = tuple(["CALL", p[1]] + p[3])
+        p[0] = ["CALL", p[1]] + p[3]
     else:
         p[0] = p[1]
 
 def p_arglist(p):
     """arglist : arglist ',' arg
                | arg
-               |"""
+               | """
 
     if len(p) == 1:
         p[0] = []
@@ -264,28 +218,30 @@ def p_arglist(p):
     else:
         p[0] = p[1] + [p[3]]
 
-def p_arg(p):
-    """arg : expression
-           | ident '=' expression
-           | '*' ident
-           | '*' '*' ident"""
+def p_arg_expr(p):
+    """arg : expression"""
+    p[0] = p[1]
 
-    if len(p) == 2:
-        p[0] = p[1]
-    elif len(p) == 4:
-        if p[1] == "*":
-            p[0] = ("UNWRAPKW", p[3])
-        else:
-            p[0] = ("KW", p[1], p[3])
-    else:
-        p[0] = ("UNWRAP", p[2])
+def p_arg_kw(p):
+    """arg : IDENT EQOP expression"""
+    if p[2] != "=":
+        raise SyntaxError("Dude, what the fuck are you doing?!")
+    p[0] = ["KW", p[1], p[3]]
+
+def p_arg_mult(p):
+    """arg : '*' expression"""
+    p[0] = ["UNWRAP", p[2]]
+
+def p_arg_kwmult(p):
+    """arg : '*' '*' expression"""
+    p[0] = ["UNWRAPKW", p[3]]
 
 def p_test_attr(p):
     """test_attr : test_attr '.' test_sub
                  | test_sub"""
 
     if len(p) == 4:
-        p[0] = ("ATTR", p[1], p[3])
+        p[0] = ["GETATTR", p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -297,7 +253,7 @@ def p_test_sub(p):
     if len(p) >= 5:
         if len(p[3]) == 1:
             p[3] = p[3][0]
-        p[0] = ("INDEX", p[1], p[3])
+        p[0] = ["OP", "GETINDEX", p[1], p[3]]
     else:
         p[0] = p[1]
 
@@ -310,17 +266,39 @@ def p_index(p):
     else:
         p[0] = p[1] + [p[3]]
 
-def p_indice(p):
+def p_indice3(p):
     """indice : expression ':' expression ':' expression
-              | expression ':' expression
-              | expression
+              | ':' expression ':' expression
+              | expression ':' ':' expression
+              | ':' ':' expression"""
+    
+    p[0] = ["SLICE", ["INT", "0", 10], ["INT", "-1", 10], p[-1]]
+    if len(p) == 6:
+        p[1] = p[1]
+        p[2] = p[3]
+    elif len(p) == 5 and p[1] == ":":
+        p[2] = p[2]
+    elif len(p) == 5:
+        p[1] = p[1]
+    
+def p_indice2(p):
+    """indice : expression ':' expression
+              | ':' expression
+              | expression ':'"""
+    
+    if len(p) == 4:
+        p[0] = ["SLICE", p[1], p[3]]
+    elif p[1] == ":":
+        p[0] = ["SLICE", ["INT", "0", 10], p[2]]
+    else:
+        p[0] = ["SLICE", p[1], ["INT", "-1", 10]]
+
+def p_indice1(p):
+    """indice : expression
               | DOTDOTDOT
               |"""
-    if len(p) == 6:
-        p[0] = ("SLICE", p[1], p[3], p[5]) # TODO: Slice class
-    elif len(p) == 4:
-        p[0] = ("SLICE", p[1], p[3])
-    elif len(p) == 2:
+    
+    if len(p) == 2:
         p[0] = p[1]
     else:
         p[0] = None
@@ -328,10 +306,8 @@ def p_indice(p):
 def p_test_basis(p):
     """test_basis : primitive
                   | literal
-                  | ident""" # Should be ident, but god hates you
-    
-    if type(p[1]) == type([]):
-        p[1] = p[1][0]
+                  | ident
+                  | fn"""
 
     p[0] = p[1]
 
@@ -356,32 +332,73 @@ def p_statement(p):
                  | import_s
                  | assignment
                  | declaration
-                 | procdir"""
+                 | PROCDIR
+                 | PROCBLOCK"""
 
     p[0] = p[1]
 
+def p_loc(p):
+    """loc : IDENT
+           | loc '[' index ']'
+           | loc '[' index ',' ']'
+           | loc '.' IDENT"""
+    
+    if len(p) == 2:
+        p[0] = p[1]
+    elif len(p) == 4:
+        p[0] = ["SETATTR", p[1], p[3]]
+    else:
+        p[0] = ["SETINDEX", p[1], p[3]]
+
+def p_assignment_single(p):
+    """assignment : IDENT EQOP expression"""
+    
+    t = ["ASSIGN1", p[1], p[3]]
+    
+    if p[2] != "=":
+        s = p[1]
+        if type(s) == type(""):
+            s = ["IDENT", s]
+        elif s[0] == "SETATTR":
+            s[0] = "GETATTR"
+        elif s[0] == "SETINDEX":
+            s[0] = "GETINDEX"
+    
+        t[2] = ["OP", p[2][:-1], s, p[3]]
+    
+    p[0] = t
+
 def p_assignment(p):
-    """assignment : many_idents EQOP comma_list"""
+    """assignment : loc ',' locs EQOP expression ',' comma_list"""
 
     if len(p[1]) < len(p[3]):
-        raise yacc.SyntaxError
+        raise SyntaxError("SyntaxError", "Too many values on right side of assignment")
 
-    p[0] = (p[2], p[1], p[3])
+    p[0] = [p[4], [p[1]] + p[3], [p[5]] + p[7]]
 
 def p_declaration(p):
     """declaration : ident assignment"""
 
-    p[0] = ("DECLARE", p[1], p[2])
+    p[0] = ["DECLARE", p[1], p[2]]
 
 def p_var_s(p):
-    """var_s : DEL many_idents
-             | EXTERN many_idents"""
+    """var_s : DEL locs
+             | EXTERN idents"""
 
-    p[0] = (p[1].upper(), p[2])
+    p[0] = [p[1].upper(), p[2]]
 
-def p_many_idents(p):
-    """many_idents : many_idents ',' ident
-                   | ident"""
+def p_idents(p):
+    """idents : idents ',' ident
+              | ident"""
+
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_locs(p):
+    """locs : locs ',' loc
+            | loc"""
 
     if len(p) == 2:
         p[0] = [p[1]]
@@ -397,7 +414,7 @@ def p_flow_s(p):
               | YIELD comma_list
               | YIELD comma_list ','"""
 
-    p[0] = (p[1].upper(), p[2])
+    p[0] = [p[1].upper(), p[2]]
 
 def p_flow_item(p):
     """flow_item : expression
@@ -419,16 +436,16 @@ def p_comma_list(p):
 
 def p_import_s(p):
     """import_s : IMPORT import_items
-                | IMPORT import_items AS ident"""
+                | IMPORT import_items AS IDENT"""
 
     if len(p) == 3:
-        p[0] = (p[1], p[2])
+        p[0] = [p[1], p[2]]
     else:
-        p[0] = (p[1], p[2], p[3])
+        p[0] = [p[1], p[2], p[4]]
 
 def p_import_items(p):
-    """import_items : ident '.' import_items
-                    | ident
+    """import_items : IDENT '.' import_items
+                    | IDENT
                     | '*'"""
 
     if len(p) == 4:
@@ -443,9 +460,9 @@ def p_assert_s(p):
                 | ASSERT expression ',' expression"""
 
     if len(p) == 3:
-        p[0] = ("ASSERT", p[2])
+        p[0] = ["ASSERT", p[2]]
     else:
-        p[0] = ("ASSERT", p[2], p[4])
+        p[0] = ["ASSERT", p[2], p[4]]
 
 def p_block_s(p):
     """block_s : if_s
@@ -463,7 +480,7 @@ def p_block_s(p):
 def p_if_s(p):
     """if_s : if_if if_elifs else"""
 
-    p[0] = tuple(p[1] + p[2] + p[3])
+    p[0] = p[1] + p[2] + p[3]
 
 def p_if_if(p):
     """if_if : IF expression block"""
@@ -495,7 +512,7 @@ def p_block(p):
     if len(p) == 4:
         p[0] = p[2]
     else:
-        if p[1][0] not in ("DICT", "SET"): raise yacc.SyntaxError
+        if p[1][0] not in ("DICT", "SET"): raise SyntaxError("That's a " + p[1][0].lower() + ", not a block.")
         p[0] = p[1][1]
 
 def p_while_s(p):
@@ -503,19 +520,19 @@ def p_while_s(p):
                | WHILE block else"""
 
     if len(p) == 5:
-        p[0] = tuple(["WHILE", p[2], p[3]] + p[4])
+        p[0] = ["WHILE", p[2], p[3]] + p[4]
     else:
-        p[0] = tuple(["WHILE", p[2]] + p[3])
+        p[0] = ["WHILE", p[2]] + p[3]
 
 def p_for_s(p):
-    """for_s : FOR many_idents IN comma_list block else"""
+    """for_s : FOR locs IN comma_list block else"""
 
-    p[0] = tuple(["FOR", (p[2], p[4]), p[5]] + p[6])
+    p[0] = ["FOR", (p[2], p[4]), p[5]] + p[6]
 
 def p_try_s(p):
     """try_s : try_try try_catch else"""
 
-    p[0] = tuple(p[1] + p[2] + p[3])
+    p[0] = p[1] + p[2] + p[3]
 
 def p_try_try(p):
     """try_try : TRY block"""
@@ -547,15 +564,65 @@ def p_statements(p):
     else:
         p[0] = p[1] + [p[3]]
 
+def p_rettype(p):
+    """rettype : IDENT
+               | NIL"""
+    
+    p[0] = p[1] if p[1] != None else "nil"
+
+def p_fn1(p):
+    """fn : FN STRING '(' arg_defs ')' rettype block"""
+    p[0] = [["FN", p[4], p[7], p[2][1], p[6]]]
+
+def p_fn2(p):
+    """fn : FN '(' arg_defs ')' rettype block"""
+    p[0] = [["FN", p[3], p[6], "", p[5]]]
+
+def p_fn3(p):
+    """fn : FN STRING '(' arg_defs ')' block"""
+    p[0] = [["FN", p[4], p[6], p[2][1], ""]]
+
+def p_fn4(p):
+    """fn : FN '(' arg_defs ')' block"""
+    p[0] = [["FN", p[3], p[5], "", ""]]
+
+def p_arg_defs(p):
+    """arg_defs : arg_defs ',' arg_def
+                | arg_def
+                | """
+
+    if len(p) == 1:
+        p[0] = []
+    elif len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_arg_def_expr(p):
+    """arg_def : expression
+               | IDENT expression"""
+    p[0] = ["ARG"] + p[1:]
+
+def p_arg_def_kw(p):
+    """arg_def : IDENT '=' expression
+               | IDENT IDENT '=' expression"""
+    p[0] = ["ARG"] + p[1:]
+
+def p_arg_def_mult(p):
+    """arg_def : '*' IDENT"""
+    p[0] = ["UNWRAPABLE", p[2]]
+
+def p_arg_def_kwmult(p):
+    """arg_def : '*' '*' IDENT"""
+    p[0] = ["UNWRAPABLEKW", p[3]]
+
 def p_error(t):
-    global errors
-
     try:
-        print term.render("${RED}SyntaxError (line %d, col %d):${NORMAL} The %s confuses me" % (t.lineno, t.lexpos + 1, repr(t.value).lower()))
-    except AttributeError:
-        print term.render("${RED}SyntaxError${NORMAL}")
-
-    errors += 1
+        e = Exception("SyntaxError (line %d, col %d)", "The %s confuses me" % (t.lineno, t.lexpos + 1, repr(t.value).lower()))
+    except:
+        e = Exception("SyntaxError")
+    
+    handle_error(e)
 
 yacc.yacc()
 
@@ -563,14 +630,18 @@ def parse(s):
     global errors
     errors = 0
 
-
-    r = yacc.parse(s)
     try:
         r = yacc.parse(s)
-    except:
-        raise Exception("Parsing error occurred")
-    if errors: raise Exception("Parsing error occurred")
+    except SyntaxError, e:
+        handle_error(e)
+    
+    if errors: raise ParseError("Parsing error occurred")
     return r
+
+def handle_error(e):
+    global errors
+    print term.render("${RED}%s${NORMAL}" % e.args[0] + "" if len(e.args) == 1 else ": " + " ".join(e.args[1:]))
+    errors += 1
 
 def _test(s):
     global errors
@@ -579,17 +650,17 @@ def _test(s):
     if type(y) == type([]) and len(y) > 1:
         errors += 1
 
-    if errors:
-        print term.render("${RED}${BOLD}%d error%s" % (errors, "s" if errors > 1 else ""))
-    else:
+    if not errors:
         pprint.pprint(y[0])
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
         y = parse(open(sys.argv[1]).read())
     else:
-        try:
-            while True:
+        while True:
+            try:
                 _test(raw_input("parse> ") + "\n")
-        except (EOFError, KeyboardInterrupt):
-            print
+            except (EOFError, KeyboardInterrupt):
+                break
+            except ParseError:
+                continue

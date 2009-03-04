@@ -1,0 +1,22 @@
+
+#!../oranj -c
+
+## Functions are fun
+
+# Basic function
+>>> a = fn () {}
+
+# Output
+>>> a = fn () {term << "YAY"}
+>>> a()
+YAY
+
+# Return
+>>> a = fn () {return "YAY"}
+>>> term << a()
+YAY
+
+# Documentation
+>>> a = fn "YAY" () {}
+>>> term << a.$$doc
+YAY

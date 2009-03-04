@@ -1,8 +1,6 @@
 
 
 * Interpreter
-** ++/-- Need thought
-    a[0]++ should work
 ** Cache links
    To implement extern with del:
    extern a
@@ -17,6 +15,6 @@
     Documented in code
 *** Escapes only if not r""
     Duh
-* Parser
+** Function calls are horribly wrong
+** Find out why some additions break
 ** Setattr/setindex
-   C&P some code and I'll be good
