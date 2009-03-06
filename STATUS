@@ -1,6 +1,7 @@
 Currently, mu-oranj (MicroOranj) works, in that oranj understands all
 arithmetic, conditional, and looping constructs. Soon, exceptions will be
-implemented, and then I can move on to addings functions and classes.
+implemented. Functions are now implemented and as soon as I get classes done,
+I'll begin to focus on the bugs that annoy us all.
 
 Work is also progressing on the test suite, located in the tests subdirectory.
 These are run with the tests tool that I am developing in parallel.

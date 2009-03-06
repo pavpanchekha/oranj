@@ -79,7 +79,7 @@ error = term.error
 def join(arr, s):
     return s.join(map(str, arr))
 
-class Integer(long):
+class Integer:
     def __init__(self, value, base=10):
         if type(value) == type(""):
             value = value.replace(" ", "")
@@ -90,7 +90,13 @@ class Integer(long):
 
     def __cmp__(self, other):
         if type(other) != Integer:
-            return self._val.__cmp__(other)
+            try:
+                return self._val.__cmp__(other)
+            except:
+                try:
+                    return other.__cmp__(self._val)
+                except:
+                    return NotImplemented
         return self._val.__cmp__(other._val)
         
     def __div__(self, other):
@@ -118,7 +124,10 @@ class Integer(long):
         return s
 
     def __coerce__(self, other):
-        return other.__coerce__(self)
+        if isinstance(other, decimal.Decimal):
+            return (self / 1, other)
+        else:
+            return other.__coerce__(self._val)
 
 def get_val(i):
     if hasattr(i, "_val"):

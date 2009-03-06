@@ -385,7 +385,7 @@ def p_var_s(p):
     """var_s : DEL locs
              | EXTERN idents"""
 
-    p[0] = [p[1].upper(), p[2]]
+    p[0] = [p[1].upper()] + p[2]
 
 def p_idents(p):
     """idents : idents ',' ident

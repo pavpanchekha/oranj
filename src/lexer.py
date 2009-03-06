@@ -7,7 +7,7 @@ import sys
 tokens = [
     "STRING", "DEC", "INT", "BOOL", "NIL", "IDENT", "PLUSPLUS", "MINUSMINUS",
     "SLASHSLASH", "GE", "LE", "NE", "EQ", "LTLT", "GTGT", "DOTDOTDOT", "EQOP",
-    "NEWLINE", "PROCDIR", "PROCBLOCK"
+    "NEWLINE", "PROCDIR", "PROCBLOCK", "INF"
 ]
 
 def t_BOOL(t):
@@ -20,6 +20,16 @@ def t_NIL(t):
     r"nil"
 
     t.value = None
+    return t
+
+def t_INF(t):
+    r"[-+]?[ \t]*inf"
+    
+    if t.value[0] in "+-":
+        t.value = ("INF", t.value[0])
+    else:
+        t.value = ("INF", "+")
+    
     return t
 
 def t_STRING(t):
@@ -81,6 +91,8 @@ def t_IDENT(t):
     r"(?P<value>[a-zA-Z0-9\$_]+)"
 
     t.type = reserved.get(t.value, 'IDENT') # Taken from http://github.com/alex/alex-s-language/
+    if t.value == "inf":
+        t.value = ("INF", "+")
     return t
 
 t_ignore = " \t\f\v\r"
@@ -92,7 +104,7 @@ def t_NEWLINE(t):
 
 def t_PROCDIR(t):
     r"\#![a-zA-Z0-9\s]*"
-    t.value = ["PROCDIR", t.value[2:].split()]
+    t.value = ["PROCDIR"] + t.value[2:].split()
     return t
 
 def t_PROCBLOCK(t):
@@ -122,7 +134,7 @@ def t_error(t):
 
 # Deal with reserved words
 reserved = {}
-for i in ("mod", "and", "or", "not", "in", "is", "catch", "class", "else", "elif", "finally", "for", "fn", "yield", "if", "return", "throw", "try", "while", "with", "del", "extern", "import", "break", "continue", "as", "assert", "inf"):
+for i in ("mod", "and", "or", "not", "in", "is", "catch", "class", "else", "elif", "finally", "for", "fn", "yield", "if", "return", "throw", "try", "while", "with", "del", "extern", "import", "break", "continue", "as", "assert"):
     reserved[i] = i.upper()
 tokens += reserved.values()
 

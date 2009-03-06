@@ -45,30 +45,12 @@ class Interpreter(object):
         if len(tree) == 0: return
 
         if type(tree[0]) == type("") and hasattr(self, "h" + tree[0]):
-            return getattr(self, "h" + tree[0])(tree[1:])
+            return getattr(self, "h" + tree[0])(*tree[1:])
         
         if type(tree[0]) == type([]):
             for i in tree:
                 j = self.run(i)
             return j
-        elif tree[0] == "DEL":
-            for i in tree[1]:
-                i = i[1]
-                t = self.curr
-                while i not in t.dict:
-                    t = t.parent
-                    if t == None:
-                        raise NameError(i + " is not a valid variable")
-                del t[i]
-        elif tree[0] == "EXTERN":
-            for i in tree[1]:
-                i = i[1]
-                t = self.curr
-                while i not in t.dict:
-                    t = t.parent
-                    if t == None:
-                        raise NameError(i + " is not a valid variable")
-                self.curr[i] = t[i]
         elif tree[0] == "ASSERT":
             val = self.run(tree[1])
             if not val:
@@ -216,32 +198,30 @@ class Interpreter(object):
 
                 return r
 
-    def hLIST(self, (vars,)):
+    def hLIST(self, vars):
         return OrObject.from_py(map(self.run, vars))
 
-    def hSET(self, (vars,)):
+    def hSET(self, vars):
         return OrObject.from_py(set(map(self.run, r)))
     
-    def hTABLE(self, (vars,)):
+    def hTABLE(self, vars):
         #TODO
         pass
 
-    def hDICT(self, (vars,)):
+    def hDICT(self, vars):
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
         return OrObject.from_py(dict(vars))
 
-    def hSLICE(self, stops):
+    def hSLICE(self, *stops):
         return OrObject.from_py(slice(*[self.run(i).get("$$python") for i in stops]))
     
-    def hIDENT(self, (var,)):
+    def hIDENT(self, var):
         if var in self.curr:
             return self.curr[var]
         else:
             raise AttributeError("Variable %s does not exist" % var)
 
-    def hPROCDIR(self, (cmd,)):
-        args = cmd[1:]
-        cmd = cmd[0]
+    def hPROCDIR(self, cmd, *args):
         
         if cmd == "drop":
             run_console(self)
@@ -262,7 +242,7 @@ class Interpreter(object):
                 
             raise DropI
 
-    def hPRIMITIVE(self, (val,)):
+    def hPRIMITIVE(self, val):
         if val[0] == "STRING":
             a = val[1]
             for k, v in self.str_escapes.keys():
@@ -277,30 +257,47 @@ class Interpreter(object):
         elif val[0] == "NIL":
             return OrObject.from_py(None)
         elif val[0] == "INF":
-            return OrObject.from_py(lib.Infinity)
+            if val[1] == "-":
+                return OrObject.from_py(-lib.Infinity)
+            else:
+                return OrObject.from_py(lib.Infinity)
 
-    def hASSIGN(self, (idents, vals)):
+    def hASSIGN(self, idents, vals):
         vals = map(self.run, vals)
         
         for i, v in zip(idents, vals):
             self.curr[i] = v
     
-    def hASSIGN1(self, (ident, val)):
+    def hASSIGN1(self, ident, val):
         val = self.run(val)
         self.curr[ident] = val
 
-    def hDECLARE(self, (type, (idents, vals))):
+    def hDECLARE(self, type, (idents, vals)):
         for i in idents:
             self.types[i] = type
             
         self.hASSIGN((idents, vals))
 
-    def hFN(self, (args, block, doc, rettype)):
+    def hFN(self, args, block, doc, rettype):
         return intplib.Function(self, args, block, doc, rettype)
     
     def hRETURN(self, *args):
         args = map(self.run, args)
         raise intplib.ReturnI(*args)
+    
+    def hDEL(self, *vars):
+        for i in vars:
+            i = i[1]
+            if i not in self.curr:
+                raise NameError(i + " is not a valid variable")
+            del t[i]
+
+    def hEXTERN(self, *vars):
+        for i in vars:
+            i = i[1]
+            if i not in self.curr.parent:
+                raise NameError(i + " is not a valid variable")
+            self.curr[i] = t[i]
 
 def run_console(intp):
     import lexer
