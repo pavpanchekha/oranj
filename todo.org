@@ -6,15 +6,13 @@
    extern a
    del a
    Should delete the external version.
-** Implement return/throw/yield
+** Implement throw/yield
    Probably as exceptions
 ** Implement import
    This'll be tricky
-** Str primitives
-*** Extra escapes
-    Documented in code
-*** Escapes only if not r""
-    Duh
 ** Function calls are horribly wrong
-** Find out why some additions break
 ** Setattr/setindex
+
+* Library
+** Lexical scoping
+** Make inf singleton

@@ -1,76 +1,74 @@
 
-
-#!../oranj -c
+#!../oranj -r
 
 ## Test literal syntax
 
 # Integers
->>> term << 1
->>> term << 100000000000000000000000
+>>> io << 1
 1
+>>> io << 100000000000000000000000
 100000000000000000000000
 
 # Other bases
->>> term << 0b11
->>> term << 0h11
->>> term << 0a11
->>> term << 0o11
->>> term << 0d11
->>> term << 0s11
+>>> io << 0b11
 3
+>>> io << 0h11
 17
+>>> io << 0a11
 37
+>>> io << 0o11
 9
+>>> io << 0d11
 11
+>>> io << 0s11
 18
 
 # Decimals
 ## Note that decimals should be rendered with three digits of precision in
 ## oranj
->>> term << 1.0
->>> term << 0.0
-## Not a decimal
->>> term << 1.
->>> term << .1
+>>> io << 1.0
 1.000
+>>> io << 0.0
 0.000
-1
+>>> io << 1.
+1.000
+>>> io << .1
 0.100
 
 # Arithmetic
->>> term << 42 + 17
->>> term << 42 - 17
->>> term << 42 * 17
->>> term << 42 / 17
->>> term << 42 ^ 17
+>>> io << 42 + 17
 59
+>>> io << 42 - 17
 25
+>>> io << 42 * 17
 714
+>>> io << 42 / 17
 2.470
+>>> io << 42 ^ 17
 3937657486715347520027492352
 
 # Order of operations
->>> term << (1 + 2) / (3 + 4) + 5
->>> term << (4 + 10 / 2) / 9
->>> term << 3 - (5 - (7 + 1)) ^ 2 * (-5) + 3
+>>> io << (1 + 2) / (3 + 4) + 5
 5.428
+>>> io << (4 + 10 / 2) / 9
 1
+>>> io << 3 - (5 - (7 + 1)) ^ 2 * (-5) + 3
 51
 
 # Logic
->>> term << (5 == 17)
->>> term << (5 != 17)
->>> term << (5 < 17)
->>> term << (5 > 17)
->>> term << (5 <= 17)
->>> term << (5 >= 17)
->>> term << (5 => 17)
->>> term << (5 =< 17)
+>>> io << (5 == 17)
 False
+>>> io << (5 != 17)
 True
+>>> io << (5 < 17)
 True
+>>> io << (5 > 17)
 False
+>>> io << (5 <= 17)
 True
+>>> io << (5 >= 17)
 False
+>>> io << (5 => 17)
 False
+>>> io << (5 =< 17)
 True

@@ -1,22 +1,27 @@
 
-#!../oranj -c
+#!../oranj -r
 
 ## Functions are fun
 
 # Basic function
 >>> a = fn () {}
 
-# Output
->>> a = fn () {term << "YAY"}
+# Running
+>>> a = fn () {io << "YAY"}
 >>> a()
 YAY
 
 # Return
 >>> a = fn () {return "YAY"}
->>> term << a()
+>>> io << a()
 YAY
+
+# Arguments
+>>> a = fn (i) {return i ^ 17}
+>>> io << a(2)
+131072
 
 # Documentation
 >>> a = fn "YAY" () {}
->>> term << a.$$doc
+>>> io << a.$$doc
 YAY

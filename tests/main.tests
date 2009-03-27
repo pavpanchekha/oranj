@@ -1,5 +1,5 @@
 
-#!../oranj -c
+#!../oranj -r
 
 ## Test input and output fascilities
 
@@ -7,32 +7,32 @@
 >>> output(5 ^ 15)
 30517578125
 
-# term variable
->>> term << 5 ^ 15
+# io variable
+>>> io << 5 ^ 15
 30517578125
 
 # if
 >>> a = 0
 >>> if a == 0 {
->>> output("YAY")
+>>> io << "YAY"
 >>> } else {
->>> output("NAY")
+>>> io << "NAY"
 >>> }
 YAY
 
 # while loop
 >>> a = 0
 >>> while a < 10 {a = a + 1}
->>> output(a)
+>>> io << a
 10
 
 # break
 >>> a = 0
 >>> while 1 {break}
->>> output("DONE")
+>>> io << "DONE"
 DONE
 
 # while forever
 >>> while {break}
->>> output("DONE")
+>>> io << "DONE"
 DONE

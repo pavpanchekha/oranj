@@ -10,6 +10,21 @@ tokens = [
     "NEWLINE", "PROCDIR", "PROCBLOCK", "INF"
 ]
 
+# WARNING: t_STRING ***must*** be first in the list of functions.
+# Because otherwise \n will refer to something else.
+# Oh, and add one to whatever subgroup you think you refer to.
+
+def t_STRING(t):
+    r"""[a-z]*((['"])(?:\3\3)?)(?:\\\3|[^\2])*?\2"""
+
+    i = 0
+    while t.value[i].isspace(): i += 1
+    prefix = t.value[:i]
+    data = t.value[i:].strip("\"\'")
+    t.value = ("STRING", data, prefix)
+
+    return t # TODO: Implement String class
+
 def t_BOOL(t):
     r"true|false"
 
@@ -31,17 +46,6 @@ def t_INF(t):
         t.value = ("INF", "+")
     
     return t
-
-def t_STRING(t):
-    r"""[a-z]*((['"])(?:\3\3)?)(?:\\\2|[^\2])*?\2"""
-
-    i = 0
-    while t.value[i].isspace(): i += 1
-    prefix = t.value[:i]
-    data = t.value[i:].strip("\"\'")
-    t.value = ("STRING", data, prefix)
-
-    return t # TODO: Implement String class
 
 def t_INT2(t):
     r"""(?<![\.eE]|\d)(?:(?:[ \t]*[0-9])+)(?![ \t]*\.|\d|\w)"""
@@ -100,15 +104,21 @@ t_ignore = " \t\f\v\r"
 def t_NEWLINE(t):
     r"([\n;]\s*)+"
     t.lexer.lineno += t.value.count("\n")
+
+    if not hasattr(t.lexer, "subcol"):
+        t.lexer.subcol = {}
+
+    t.lexer.subcol[t.lexer.lineno] = t.lexpos
+    
     return t
 
 def t_PROCDIR(t):
-    r"\#![a-zA-Z0-9\s]*"
+    r"\#![a-zA-Z0-9 \t]+"
     t.value = ["PROCDIR"] + t.value[2:].split()
     return t
 
 def t_PROCBLOCK(t):
-    r"\#![a-zA-Z0-9\s]*\{(.|\n)*\#!\s*\}"
+    r"\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}"
     
     def process_body(s):
         if s[0] == "\n":
@@ -129,8 +139,7 @@ def t_COMMENT(t):
     return
 
 def t_error(t):
-    print "Error (line %d): Illegal character `%s`" % (t.lexer.lineno, t.value)
-    t.lexer.skip(1)
+    print "Error (line %d): Illegal character `%s`" % (t.lexer.lineno, repr(t.value)[1:-1])
 
 # Deal with reserved words
 reserved = {}
@@ -157,6 +166,9 @@ lex.lex()
 
 def parse(s):
     lex.input(s)
+    global in_put
+    in_put = s
+    
     return list(iter(lex.token, None))
 
 def isdone(s):

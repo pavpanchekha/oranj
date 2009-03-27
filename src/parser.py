@@ -111,7 +111,7 @@ def p_test_in(p):
     if len(p) == 4:
         p[0] = ["OP", p[2], p[1], p[3]]
     elif len(p) == 5:
-        p[0] = ["OP", "NOT IN", p[1], p[4]]
+        p[0] = ["OP", "NOT", ["OP", "IN", p[1], p[4]]]
     else:
         p[0] = p[1]
 
@@ -123,7 +123,7 @@ def p_test_type(p):
     if len(p) == 4:
         p[0] = ["OP", "IS", p[1], p[3]]
     elif len(p) == 5:
-        p[0] = ["OP", "IS NOT", p[1], p[4]]
+        p[0] = ["OP", "NOT", ["OP", "IS", p[1], p[4]]]
     else:
         p[0] = p[1]
 
@@ -237,17 +237,17 @@ def p_arg_kwmult(p):
     p[0] = ["UNWRAPKW", p[3]]
 
 def p_test_attr(p):
-    """test_attr : test_attr '.' test_sub
-                 | test_sub"""
+    """test_attr : test_call '.' IDENT
+                 | test_idx"""
 
     if len(p) == 4:
         p[0] = ["GETATTR", p[1], p[3]]
     else:
         p[0] = p[1]
 
-def p_test_sub(p):
-    """test_sub : test_sub '[' index ']'
-                | test_sub '[' index ',' ']'
+def p_test_idx(p):
+    """test_idx : test_call '[' index ']'
+                | test_call '[' index ',' ']'
                 | test_basis"""
 
     if len(p) >= 5:
@@ -272,7 +272,7 @@ def p_indice3(p):
               | expression ':' ':' expression
               | ':' ':' expression"""
     
-    p[0] = ["SLICE", ["INT", "0", 10], ["INT", "-1", 10], p[-1]]
+    p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], ["PRIMITIVE", ["INT", "-1", 10]]]
     if len(p) == 6:
         p[1] = p[1]
         p[2] = p[3]
@@ -284,16 +284,19 @@ def p_indice3(p):
 def p_indice2(p):
     """indice : expression ':' expression
               | ':' expression
-              | expression ':'"""
+              | expression ':'
+              | ':'"""
     
     if len(p) == 4:
         p[0] = ["SLICE", p[1], p[3]]
-    elif p[1] == ":":
-        p[0] = ["SLICE", ["INT", "0", 10], p[2]]
+    elif p[1] == ":" and len(p) == 3:
+        p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10], p[2]]]
+    elif len(p) == 3:
+        p[0] = ["SLICE", p[1], ["PRIMITIVE", ["INT", "-1", 10]]]
     else:
-        p[0] = ["SLICE", p[1], ["INT", "-1", 10]]
+        p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], ["PRIMITIVE", ["INT", "-1", 10]]]
 
-def p_indice1(p):
+def p_indice(p):
     """indice : expression
               | DOTDOTDOT
               |"""
@@ -522,7 +525,7 @@ def p_while_s(p):
     if len(p) == 5:
         p[0] = ["WHILE", p[2], p[3]] + p[4]
     else:
-        p[0] = ["WHILE", p[2]] + p[3]
+        p[0] = ["WHILE", None, p[2]] + p[3]
 
 def p_for_s(p):
     """for_s : FOR locs IN comma_list block else"""
@@ -618,18 +621,27 @@ def p_arg_def_kwmult(p):
 
 def p_error(t):
     try:
-        e = Exception("SyntaxError (line %d, col %d)", "The %s confuses me" % (t.lineno, t.lexpos + 1, repr(t.value).lower()))
+        e = Exception("SyntaxError (line %d, col %d)" % (t.lineno, getcol(t)), "The %s confuses me" % repr(t.value).lower())
     except:
-        e = Exception("SyntaxError")
+        raise
+        e = Exception("SyntaxError", "No idea where though.")
     
     handle_error(e)
 
 yacc.yacc()
 
+def getcol(tok):
+    l = in_put.rfind("\n", 0, tok.lexpos)
+    if l < 0:
+        l = 0
+    return (tok.lexpos - l) + 1
+
 def parse(s):
     global errors
     errors = 0
-
+    global in_put
+    in_put = s
+    
     try:
         r = yacc.parse(s)
     except SyntaxError, e:
@@ -640,7 +652,7 @@ def parse(s):
 
 def handle_error(e):
     global errors
-    print term.render("${RED}%s${NORMAL}" % e.args[0] + "" if len(e.args) == 1 else ": " + " ".join(e.args[1:]))
+    print term.render("${RED}%s${NORMAL}" % e.args[0] + ("" if len(e.args) == 1 else (": " + " ".join(e.args[1:]))))
     errors += 1
 
 def _test(s):
