@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
-from __future__ import division
-
 import ply.yacc as yacc
 from lexer import tokens, literals
-import pprint # Because parse trees get hairy
-import sys
 import terminal
 
 class ParseError(Exception): pass
@@ -666,6 +662,9 @@ def _test(s):
         pprint.pprint(y[0])
 
 if __name__ == "__main__":
+    import pprint # Because parse trees get hairy
+    import sys
+    
     if len(sys.argv) == 2:
         y = parse(open(sys.argv[1]).read())
     else:

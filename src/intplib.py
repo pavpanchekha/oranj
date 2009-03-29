@@ -26,6 +26,7 @@ def simpleop(f, name):
                 args2 = [args[0]] + list(args[2:])
                 return args[1].get("$$r_" + name)(*args2)
         except:
+            raise
             if all(isinstance(i, OrObject) and i.ispy() for i in args):
                 try:
                     return f(*args)
@@ -56,8 +57,8 @@ le = simpleop(operator.le, "le")
 ge = simpleop(operator.ge, "ge")
 ne = simpleop(operator.ne, "ne")
 eq = simpleop(operator.eq, "eq")
-input = simpleop(lambda x, y: x.read(y), "input")
-output = simpleop(lambda x, y: x.write(y), "output")
+input = simpleop(lambda x, y: x.input(y), "input")
+output = simpleop(lambda x, y: x.output(y), "output")
 uplus = simpleop(operator.pos, "uplus")
 uminus = simpleop(operator.neg, "uminus")
 

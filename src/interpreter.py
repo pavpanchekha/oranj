@@ -18,7 +18,10 @@ class DropI(Exception): pass
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
 
-    def __init__(self, g=intplib.InheritDict(builtin.builtin)):
+    def __init__(self, g=None):
+        if not g:
+            g = intplib.InheritDict(builtin.builtin)
+        
         self.cntx = [g, intplib.InheritDict(g)]
         self.types = {}
 
@@ -84,9 +87,9 @@ class Interpreter(object):
         return OrObject.from_py(slice(*[self.run(i).topy() for i in stops]))
     
     def hIDENT(self, var):
-        if var in self.curr:
+        try:
             return self.curr[var]
-        else:
+        except AttributeError:
             raise AttributeError("Variable %s does not exist" % var)
 
     def hPROCDIR(self, cmd, *args):
@@ -122,10 +125,7 @@ class Interpreter(object):
         elif val[0] == "NIL":
             return OrObject.from_py(None)
         elif val[0] == "INF":
-            if val[1] == "-":
-                return -number.inf
-            else:
-                return number.inf
+            return number.inf
 
     def hASSIGN(self, idents, vals):
         vals = map(self.run, vals)
@@ -309,9 +309,9 @@ def run_console(intp):
             t = raw_input("oranj> ") + "\n"
             while not lexer.isdone(t):
                 t += raw_input("     > ") + "\n"
-            p = analyze.parse(t)
 
             try:
+                p = analyze.parse(t)
                 r = intp.run(p)
                 if r == None: pass
                 elif r.ispy() and r.topy() == None: pass
@@ -326,11 +326,13 @@ def run_console(intp):
     except DropI:
         print "Dropping down to python console. Call undrop() to return."
 
-def run(s, intp):
+def run(s, intp=Interpreter()):
     try:
-        intp.run(analyze.parse(s))
+        return intp.run(analyze.parse(s))
     except DropI:
         run_console(intp)
+
+builtin.builtin["eval"] = OrObject.from_py(run)
 
 def go():
     intp = Interpreter()

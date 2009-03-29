@@ -4,12 +4,11 @@ import types
 
 class File(OrObject):
     def __init__(self, fname, mode="r"):
-        OrObject.__init__(self)
-        self.set("$$class", "File")
-        self.set("$$input", Function.new(self.input))
-        self.set("$$output", Function.new(self.output))
-        self.set("read", Function.new(self.read))
-        self.set("write", Function.new(self.write))
+        OrObject.__init__(self, "", File)
+        self.set("$$input", Function(self.input))
+        self.set("$$output", Function(self.output))
+        self.set("read", Function(self.read))
+        self.set("write", Function(self.write))
 
 
         if type(fname) == type(""):

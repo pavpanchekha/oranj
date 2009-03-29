@@ -34,11 +34,11 @@ def t_BOOL(t):
 def t_NIL(t):
     r"nil"
 
-    t.value = None
+    t.value = ("NIL")
     return t
 
 def t_INF(t):
-    r"[-+]?[ \t]*inf"
+    r"inf"
     
     if t.value[0] in "+-":
         t.value = ("INF", t.value[0])

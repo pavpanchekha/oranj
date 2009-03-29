@@ -1,18 +1,15 @@
 from orobject import OrObject
 from function import Function
 import sys
-import functools
 
 class Console(OrObject):
     def __init__(self, fin=sys.stdin, fout=sys.stdout, ferr=sys.stderr):
-        OrObject.__init__(self)
-        self.set("$$class", "Console")
-        self.set("$$name", "cons")
-        self.set("$$input", Function.new(self.input))
-        self.set("$$output", Function.new(self.output))
-        self.set("read", Function.new(self.read))
-        self.set("write", Function.new(self.write))
-        self.set("error", Function.new(self.error))
+        OrObject.__init__(self, "cons", Console)
+        self.set("$$input", Function(self.input))
+        self.set("$$output", Function(self.output))
+        self.set("read", Function(self.read))
+        self.set("write", Function(self.write))
+        self.set("error", Function(self.error))
 
         self.fin = fin
         self.fout = fout
@@ -85,20 +82,18 @@ class Console(OrObject):
 
 class IO(OrObject):
     def __init__(self, **binds):
-        OrObject.__init__(self)
+        OrObject.__init__(self, "io", IO)
         self.__bound = binds
         self.bind(binds.items()[0][0])
 
-        self.set("$$name", "io")
-        self.set("$$class", "IO")
-        self.set("$$input", self.input)
-        self.set("$$output", self.output)
-        self.set("read", self.read)
-        self.set("write", self.write)
-        self.set("error", self.error)
-        self.set("bind", Function.new(self.bind))
-        self.set("register", Function.new(self.register))
-        self.set("get", Function.new(self.get_reg))
+        self.set("$$input", Function(self.input))
+        self.set("$$output", Function(self.output))
+        self.set("read", Function(self.read))
+        self.set("write", Function(self.write))
+        self.set("error", Function(self.error))
+        self.set("bind", Function(self.bind))
+        self.set("register", Function(self.register))
+        self.set("get", Function(self.get_reg))
         
     def ispy(self): return False
     def topy(self): return NotImplemented

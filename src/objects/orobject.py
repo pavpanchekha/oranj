@@ -18,18 +18,18 @@ class OrObject(object):
         if self.ispy():
             return self.dict["$$python"]
         else:
-            print self, self.dict
-            return NotImplemented()
+            return NotImplemented
     
     def get(self, key):
-        if key in self.dict:
+        try:
             return self.dict[key]
-        elif self.ispy():
-            try:
-                return getattr(self.topy(), key)
-            except:
-                pass
-        raise AttributeError(key + " is not an attribute of " + repr(self))
+        except KeyError:
+            if self.ispy():
+                try:
+                    return getattr(self.topy(), key)
+                except:
+                    pass
+            raise AttributeError(key + " is not an attribute of " + repr(self))
 
     def set(self, key, value):
         self.dict[key] = value
@@ -38,15 +38,18 @@ class OrObject(object):
         if "$$python" in self.dict:
             return str(self.get("$$python"))
         else:
-            return "<" + str(self.get("$$class")) + " " + self.get("$$name") + ">"
+            return "<" + \
+                (str(self.get("$$class").__name__) + " ") if "$$class" in self.dict else "" + \
+                str(self.get("$$name")) if "$$name" in self.dict else "" + \
+                ">"
 
     def __repr__(self):
         return self.__str__()
 
     def __nonzero__(self):
-        if "$$python" in self.dict:
+        try:
             return bool(self.get("$$python"))
-        else:
+        except KeyError:
             # TODO: implement bool
             return True
 
@@ -72,14 +75,14 @@ class OrObject(object):
         if isinstance(obj, cls) and not override: return obj
         if type(obj) in cls.overrides:
             return cls.overrides[type(obj)](obj)
-        
+
         n = obj.__name__ if hasattr(obj, "__name__") else ""
-        c = obj.__class__ if hasattr(obj, "__class__") else ""
+        c = type(obj) if hasattr(obj, "__class__") else ""
         np = cls(n, c)
 
-        for i in dir(obj):
-            if not any(map(i.startswith, ("_", "im_", "func_"))) and i != "mro":
-                np.set(i, cls.from_py(getattr(obj, i)))
+        #for i in dir(obj):
+        #    if not any(map(i.startswith, ("_", "im_", "func_"))) and i != "mro":
+        #        np.set(i, cls.from_py(getattr(obj, i)))
         
         np.set("$$python", obj)
         return np

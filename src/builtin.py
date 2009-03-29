@@ -9,25 +9,43 @@ import types
 import intplib
 import lib
 
-def expose(obj):
-    if hasattr(obj, "__call__"):
-        return Function.new(obj)
-    else:
-        return OrObject.from_py(obj)
+expose = OrObject.from_py
     
 builtin = intplib.InheritDict()
 builtin.update({
-        "int": expose(lib.toint),
-        "num": expose(Number),
-        
-        "io": console.io,
-        "file": expose(File),
-        "input": Function.new(console.input),
-        "output": Function.new(console.output),
-        "error": Function.new(console.error),
+    "int": expose(lib.toint),
+    "num": expose(Number),
+    
+    "io": expose(console.io),
+    "file": expose(File),
+    "input": expose(console.input),
+    "output": expose(console.output),
+    "error": expose(console.error),
 
-        "repr": expose(repr),
-        "join": expose(lib.join),
-        "range": expose(range),
-        "pytype": expose(type),
+    "repr": expose(repr),
+    "join": expose(lib.join),
+    "range": expose(range),
+    "type": expose(lib.typeof),
+    
+    "dir": expose(lib.dirof),
+    "reverse": expose(reversed),
+    "sort": expose(sorted),
+    "chr": expose(unichr),
 })
+
+stolen_builtins = [
+    'abs', 'all', 'any', 'bool', 'callable', #buffer
+    'classmethod', 'cmp', 'coerce', #chr (not as unichr)
+    'dict', 'divmod', 'enumerate', #delattr
+    'exit', 'filter', # frozenset
+    'hash', 'id', #get/hasattr
+    'iter', 'len', 'list',
+    'map', 'max', 'min', 'ord', # object
+    'range', 'repr', #property
+    'round', 'set', 'slice', 'staticmethod', #setattr
+    'str', 'sum', 'unicode', #super
+    'zip'
+]
+
+for i in stolen_builtins:
+    builtin[i] = expose(__builtins__[i])

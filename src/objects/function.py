@@ -4,22 +4,34 @@ import types
 
 class ReturnI(Exception): pass
 class Function(OrObject):
-    def __init__(self, intp, arglist, block, doc="", rettype=""):
-        OrObject.__init__(self)
-        self.set("$$doc", doc)
-        self.set("$$call", self.__call__)
-        self.set("$$class", "fn")
-        self.set("$$name", "[anon]")
-        
-        self.arglist = arglist
-        self.realargs = len([True for i in arglist if i[0] == "ARG"])
-        self.rettype = rettype
-        self.block = block
-        self.intp = intp
+    class_name = "fn"
     
+    def __init__(self, intp, arglist=None, block=None, doc="", rettype=""):
+        if arglist is None:
+            self.fn = intp
+            OrObject.__init__(self, self.fn.__name__, Function)
+            self.set("$$doc", self.fn.__doc__)
+            self.set("$$call", self.fn)
+        else:
+            OrObject.__init__(self, "[anon]", Function)
+            self.set("$$doc", doc)
+            self.set("$$call", self._call__)
+            
+            self.arglist = arglist
+            self.realargs = len([True for i in arglist if i[0] == "ARG"])
+            self.rettype = rettype
+            self.block = block
+            self.intp = intp
+            self.cntx = InheritDict(intp.curr)
+
     def __call__(self, *args, **kwargs):
-        cntx = InheritDict(self.intp.cntx[-1])
-        self.intp.cntx.append(cntx)
+        if hasattr(self, "intp"):
+            return self._call__(*args, **kwargs)
+        else:
+            return self.fn(*args, **kwargs)
+    
+    def _call__(self, *args, **kwargs):
+        self.intp.cntx.append(self.cntx)
         
         argp = 0
         
@@ -28,9 +40,9 @@ class Function(OrObject):
             for i in self.arglist:
                 if i[0] == "ARG":
                     if len(i) in (2, 4):
-                        cntx[i[1][1]] = args[argp]
+                        self.cntx[i[1][1]] = args[argp]
                     elif len(i) in (3, 5):
-                        cntx[i[2][1]] = args[argp]
+                        self.cntx[i[2][1]] = args[argp]
                     argp += 1
         elif len(args) < self.realargs:    
             # Awww
@@ -42,9 +54,9 @@ class Function(OrObject):
                         skip -= 1
                         continue
                     elif len(i) in (2, 4):
-                        cntx[i[1][1]] = args[argp]
+                        self.cntx[i[1][1]] = args[argp]
                     elif len(i) in (3, 5):
-                        cntx[i[2][1]] = args[argp]
+                        self.cntx[i[2][1]] = args[argp]
                     argp += 1
         else:
             # Also awww
@@ -53,12 +65,12 @@ class Function(OrObject):
             for i in self.arglist:
                 if i[0] == "ARG":
                     if len(i) in (2, 4):
-                        cntx[i[1][1]] = args[argp]
+                        self.cntx[i[1][1]] = args[argp]
                     elif len(i) in (3, 5):
-                        cntx[i[2][1]] = args[argp]
+                        self.cntx[i[2][1]] = args[argp]
                     argp += 1
                 elif i[0] == "UNWRAPABLE":
-                    cntx[i[1][1]] = args[argp:argp+extra]
+                    self.cntx[i[1][1]] = args[argp:argp+extra]
                     argp += extra
         
         try:
@@ -69,20 +81,10 @@ class Function(OrObject):
                 return OrObject.from_py(a)
             else:
                 return
+        finally:
+            self.intp.cntx.pop()
 
-    @classmethod
-    def new(cls, fnc):
-        b = OrObject()
-        b.fnc = fnc
-        b.set("$$doc", fnc.__doc__)
-        b.set("$$call", fnc)
-        b.set("$$python", fnc)
-        b.set("$$class", "fn")
-        b.set("$$name", fnc.__name__)
-        
-        return b
-
-OrObject.register(Function.new, types.BuiltinFunctionType,
+OrObject.register(Function, types.BuiltinFunctionType,
     types.BuiltinMethodType, types.ClassType, types.FunctionType,
     types.GeneratorType, types.LambdaType, types.MethodType,
     types.UnboundMethodType)
