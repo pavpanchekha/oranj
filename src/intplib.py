@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 from objects.orobject import OrObject
-from objects.function import Function, ReturnI
-from objects.inheritdict import InheritDict
+from objects.function import Function
 import operator
 
 def clear_screen():
@@ -17,7 +16,7 @@ def clear_screen():
         # Fallback for other operating systems.
         print '\n' * 100
 
-def simpleop(f, name):
+def simpleop(f, name, try_noconv=True):
     def t(*args):
         try:
             try:
@@ -26,14 +25,15 @@ def simpleop(f, name):
                 args2 = [args[0]] + list(args[2:])
                 return args[1].get("$$r_" + name)(*args2)
         except:
-            raise
-            if all(isinstance(i, OrObject) and i.ispy() for i in args):
-                try:
-                    return f(*args)
-                except:
-                    raise
-                    args = [i.topy() for i in args]
-                    return OrObject.from_py(f(*args))
+            if all(hasattr(i, "ispy") and i.ispy() for i in args):
+                if try_noconv:
+                    try:
+                        return f(*args)
+                    except:
+                        pass
+                
+                args = [i.topy() for i in args]
+                return OrObject.from_py(f(*args))
             else:
                 return NotImplemented
     return t
@@ -51,12 +51,12 @@ and_ = simpleop(operator.and_, "and")
 not_ = simpleop(operator.not_, "not")
 in_ = simpleop(lambda x, y: x in y, "in")
 is_ = simpleop(isinstance, "is")
-lt = simpleop(operator.lt, "lt")
-gt = simpleop(operator.gt, "gt")
-le = simpleop(operator.le, "le")
-ge = simpleop(operator.ge, "ge")
-ne = simpleop(operator.ne, "ne")
-eq = simpleop(operator.eq, "eq")
+lt = simpleop(operator.lt, "lt", False)
+gt = simpleop(operator.gt, "gt", False)
+le = simpleop(operator.le, "le", False)
+ge = simpleop(operator.ge, "ge", False)
+ne = simpleop(operator.ne, "ne", False)
+eq = simpleop(operator.eq, "eq", False)
 input = simpleop(lambda x, y: x.input(y), "input")
 output = simpleop(lambda x, y: x.output(y), "output")
 uplus = simpleop(operator.pos, "uplus")
@@ -73,7 +73,7 @@ def call(obj, *args, **kwargs):
             obj = obj.topy()
             
             return OrObject.from_py(obj(*args, **kwargs))
-
+        
 def getattr_(x, y):
     return OrObject.from_py(x.get(y))
 

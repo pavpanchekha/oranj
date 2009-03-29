@@ -1,17 +1,18 @@
 from orobject import OrObject
 from inheritdict import InheritDict
+import functools
 import types
 
 class ReturnI(Exception): pass
 class Function(OrObject):
     class_name = "fn"
-    
+
     def __init__(self, intp, arglist=None, block=None, doc="", rettype=""):
         if arglist is None:
             self.fn = intp
             OrObject.__init__(self, self.fn.__name__, Function)
             self.set("$$doc", self.fn.__doc__)
-            self.set("$$call", self.fn)
+            self.set("$$call", self.__call__)
         else:
             OrObject.__init__(self, "[anon]", Function)
             self.set("$$doc", doc)
@@ -24,11 +25,28 @@ class Function(OrObject):
             self.intp = intp
             self.cntx = InheritDict(intp.curr)
 
+    def ispy(self): return not hasattr(self, "intp")
+    def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
+            
     def __call__(self, *args, **kwargs):
         if hasattr(self, "intp"):
             return self._call__(*args, **kwargs)
         else:
-            return self.fn(*args, **kwargs)
+            try:
+                return self.fn(*args, **kwargs)
+            except:
+                pass
+            
+            if all(hasattr(i, "ispy") and i.ispy() for i in args) \
+                    and all(hasattr(i, "ispy") and i.ispy() for k, i in kwargs.items()):
+
+                args = [i.topy() for i in args]
+                for i in kwargs:
+                    kwargs[i] = kwargs[i].topy()
+
+                return OrObject.from_py(self.fn(*args, **kwargs))
+
+            return NotImplemented
     
     def _call__(self, *args, **kwargs):
         self.intp.cntx.append(self.cntx)
@@ -87,4 +105,4 @@ class Function(OrObject):
 OrObject.register(Function, types.BuiltinFunctionType,
     types.BuiltinMethodType, types.ClassType, types.FunctionType,
     types.GeneratorType, types.LambdaType, types.MethodType,
-    types.UnboundMethodType)
+    types.UnboundMethodType, "a".__add__.__class__) # "a".__add__.__class__ -> method-wrapper type

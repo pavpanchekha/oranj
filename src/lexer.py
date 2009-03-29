@@ -138,7 +138,7 @@ def t_PROCBLOCK(t):
 
     txt = t.value
     pstart = txt.find("{")
-    pend = txt.find("#!", 2)
+    pend = txt.rfind("#!", 2)
     
     header = txt[2:pstart].strip()
     body = txt[pstart+1:pend]

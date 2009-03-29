@@ -24,16 +24,16 @@
 18
 
 # Decimals
-## Note that decimals should be rendered with three digits of precision in
-## oranj
+## Note that decimals should be rendered with up to six digits of
+## precision in oranj
 >>> io << 1.0
-1.000
+1
 >>> io << 0.0
-0.000
+0
 >>> io << 1.
-1.000
+1
 >>> io << .1
-0.100
+0.1
 
 # Arithmetic
 >>> io << 42 + 17
@@ -43,13 +43,13 @@
 >>> io << 42 * 17
 714
 >>> io << 42 / 17
-2.470
+2.470588
 >>> io << 42 ^ 17
 3937657486715347520027492352
 
 # Order of operations
 >>> io << (1 + 2) / (3 + 4) + 5
-5.428
+5.428571
 >>> io << (4 + 10 / 2) / 9
 1
 >>> io << 3 - (5 - (7 + 1)) ^ 2 * (-5) + 3

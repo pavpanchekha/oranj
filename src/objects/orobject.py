@@ -15,9 +15,9 @@ class OrObject(object):
         return "$$python" in self.dict
 
     def topy(self):
-        if self.ispy():
+        try:
             return self.dict["$$python"]
-        else:
+        except KeyError:
             return NotImplemented
     
     def get(self, key):
@@ -26,7 +26,7 @@ class OrObject(object):
         except KeyError:
             if self.ispy():
                 try:
-                    return getattr(self.topy(), key)
+                    return OrObject.from_py(getattr(self.topy(), key))
                 except:
                     pass
             raise AttributeError(key + " is not an attribute of " + repr(self))
@@ -40,11 +40,14 @@ class OrObject(object):
         else:
             return "<" + \
                 (str(self.get("$$class").__name__) + " ") if "$$class" in self.dict else "" + \
-                str(self.get("$$name")) if "$$name" in self.dict else "" + \
+                (str(self.get("$$name")) if "$$name" in self.dict else "") + \
                 ">"
 
     def __repr__(self):
-        return self.__str__()
+        if "$$python" in self.dict:
+            return repr(self.get("$$python"))
+        else:
+            return self.__str__()
 
     def __nonzero__(self):
         try:
@@ -71,8 +74,9 @@ class OrObject(object):
             cls.overrides[i] = new
     
     @classmethod
-    def from_py(cls, obj, override=False):
-        if isinstance(obj, cls) and not override: return obj
+    def from_py(cls, obj, rich=True):
+        """ rich means that __x__ methods will be copied """
+        if isinstance(obj, cls): return obj
         if type(obj) in cls.overrides:
             return cls.overrides[type(obj)](obj)
 
@@ -80,9 +84,15 @@ class OrObject(object):
         c = type(obj) if hasattr(obj, "__class__") else ""
         np = cls(n, c)
 
-        #for i in dir(obj):
-        #    if not any(map(i.startswith, ("_", "im_", "func_"))) and i != "mro":
-        #        np.set(i, cls.from_py(getattr(obj, i)))
+        if rich:
+            for i in [j for j in dir(obj) if j.startswith("__") and j.endswith("__") and j not in ("__class__", "__name__", "__dict__", "__weakref__")]:
+                setattr(np, i, print_wrapper(getattr(obj, i)))
         
         np.set("$$python", obj)
         return np
+
+def print_wrapper(f):
+    def x(*args, **kwargs):
+        print f, args, kwargs
+        return f(*args, **kwargs)
+    return x

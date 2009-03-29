@@ -12,6 +12,8 @@ import objects.number as number
 from optparse import OptionParser
 import re
 
+from objects.inheritdict import InheritDict
+
 class ContinueI(Exception): pass
 class BreakI(Exception): pass
 class DropI(Exception): pass
@@ -21,9 +23,9 @@ class Interpreter(object):
 
     def __init__(self, g=None):
         if not g:
-            g = intplib.InheritDict(builtin.builtin)
+            g = InheritDict(builtin.builtin)
         
-        self.cntx = [g, intplib.InheritDict(g)]
+        self.cntx = [g, InheritDict(g)]
         self.types = {}
 
     def run(self, tree):
@@ -118,7 +120,7 @@ class Interpreter(object):
         glob["intp"] = self
         
         if type[0] == "python":
-            exec body in glob
+            exec body in glob, {}
 
     def hPRIMITIVE(self, val):
         if val[0] == "STRING":
@@ -200,8 +202,8 @@ class Interpreter(object):
 
         try:
             r = func(*args)
-        except TypeError, e:
-            raise e
+        except TypeError:
+            raise
         
         if not isinstance(r, OrObject):
             return OrObject.from_py(r)
@@ -324,7 +326,7 @@ def run_console(intp):
                 if r == None: pass
                 elif r.ispy() and r.topy() == None: pass
                 else:
-                    print r
+                    print repr(r)
             except DropI: raise
             except Exception, e:
                 traceback.print_exc()

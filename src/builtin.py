@@ -4,14 +4,13 @@ from objects.orobject import OrObject
 from objects.function import Function
 from objects.number import Number
 from objects.file import File
+from objects.inheritdict import InheritDict
 import objects.console as console
 import types
-import intplib
 import lib
 
 expose = OrObject.from_py
-    
-builtin = intplib.InheritDict()
+builtin = InheritDict()
 builtin.update({
     "int": expose(lib.toint),
     "num": expose(Number),
