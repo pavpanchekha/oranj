@@ -10,6 +10,7 @@ from objects.orobject import OrObject
 import objects.number as number
 
 from optparse import OptionParser
+import re
 
 class ContinueI(Exception): pass
 class BreakI(Exception): pass
@@ -111,6 +112,13 @@ class Interpreter(object):
                 run_console(self)
                 
             raise DropI
+
+    def hPROCBLOCK(self, type, body):
+        glob = globals()
+        glob["intp"] = self
+        
+        if type[0] == "python":
+            exec body in glob
 
     def hPRIMITIVE(self, val):
         if val[0] == "STRING":
@@ -307,7 +315,7 @@ def run_console(intp):
         t = ""
         while True:
             t = raw_input("oranj> ") + "\n"
-            while not lexer.isdone(t):
+            while not lexer.isdone(t) or re.match("\#![a-zA-Z0-9 \t]*\{(.|\n)*", t) and not re.match("\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}", t):
                 t += raw_input("     > ") + "\n"
 
             try:

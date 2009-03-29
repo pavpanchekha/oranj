@@ -113,25 +113,37 @@ def t_NEWLINE(t):
     return t
 
 def t_PROCDIR(t):
-    r"\#![a-zA-Z0-9 \t]+"
+    r"\#![a-zA-Z0-9 \t]+\n"
     t.value = ["PROCDIR"] + t.value[2:].split()
     return t
 
-def t_PROCBLOCK(t):
-    r"\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}"
-    
-    def process_body(s):
-        if s[0] == "\n":
-            s = s[1:]
-        t = s[:s.find["\n"]]
-        ws = t.find(t.strip())
+def process_body(s):
+    if s and s[0] == "\n":
+        s = s[1:]
+        
+    if "\n" in s:
+        t = s[:s.find("\n")]
+        ws = t[:t.find(t.strip())]
         
         s = s.split("\n")
         for i, v in enumerate(s):
             if v.startswith(ws):
-                s[i] = v[len(ws)+1:]
+                s[i] = v[len(ws):]
+        s = "\n".join(s)
+
+    return s
+
+def t_PROCBLOCK(t):
+    r"\#![a-zA-Z0-9 \t]*\{" r"(.|\n)*" r"\#![ \t]*\}"
+
+    txt = t.value
+    pstart = txt.find("{")
+    pend = txt.find("#!", 2)
     
-    t.value = ["PROCBLOCK", t.value[2:t.value.find("{")].strip().split(), process_body(t.value[t.value.find("{")+1:t.value.find("#!")])]
+    header = txt[2:pstart].strip()
+    body = txt[pstart+1:pend]
+
+    t.value = ["PROCBLOCK", header.split(), process_body(body)]
     return t
 
 def t_COMMENT(t):
@@ -191,7 +203,7 @@ if __name__ == "__main__":
     else:
         while True:
             try:
-                lex.input(raw_input("lex> ") + "\n")
+                lex.input(raw_input("lex> ").replace("!\\n", "\n") + "\n")
                 for tok in iter(lex.token, None):
                     if len(tok.type) == 1:
                         print "'" + tok.type + "'",

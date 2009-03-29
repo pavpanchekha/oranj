@@ -1,14 +1,18 @@
+
+Directives and Inline Blocks
+============================
+
+Directives
+----------
+
 Oranj directives are special commands to the interpreter. There are no
-fundamental differences between directives and other statements, except
-that directives usually either should not be present in a program or
-significantly change the function of the interpreter.
+fundamental differences between directives and other statements.
 
 All directives take the form
 
-#!xxxxxxx
+#!name [arg, arg, arg, ...]
 
-Where the directive name takes the place of xxxxxxx. The following directives
-are implemented:
+The following directives are implemented:
 
 * clear
   Clears the screen. Particularly useful in the interactive console. PLEASE
@@ -28,3 +32,26 @@ are implemented:
 
 * exit
   Exits the oranj program or shell.
+
+Inline Blocks
+-------------
+Inline blocks in Oranj are a block of code that the interpreter does
+not parse, but instead executes as a unit. This is most commonly used
+to run commands in a different programming language.
+
+All inline blocks take the form
+
+#!name [arg, arg, arg, ...] {
+text ...
+#! }
+
+Where the actual code is in the space labelled text. Lines of the form
+"#!..." cannot be used within an inline block. The following block types
+are implemented:
+
+* python
+  This block will execute the unit of code in a python interpreter. The
+  code can make use of the Interpreter object, which can be retrieved from
+  the global object intp. To interact with variable defined within oranj,
+  use intp.curr as a dictionary. Make sure to call OrObject.from_py on any
+  object that is exported to the running oranj code.
