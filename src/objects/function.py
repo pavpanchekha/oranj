@@ -16,14 +16,13 @@ class Function(OrObject):
         else:
             OrObject.__init__(self, "[anon]", Function)
             self.set("$$doc", doc)
-            self.set("$$call", self._call__)
+            self.set("$$call", self.__call__)
             
             self.arglist = arglist
             self.realargs = len([True for i in arglist if i[0] == "ARG"])
             self.rettype = rettype
             self.block = block
             self.intp = intp
-            self.cntx = InheritDict(intp.curr)
 
     def ispy(self): return not hasattr(self, "intp")
     def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
@@ -49,18 +48,18 @@ class Function(OrObject):
             return NotImplemented
     
     def _call__(self, *args, **kwargs):
-        self.intp.cntx.append(self.cntx)
+        cntx = InheritDict(self.intp.curr)
+        self.intp.cntx.append(cntx)
         
         argp = 0
-        
         if len(args) == self.realargs:
             # Yay, easy scenario
             for i in self.arglist:
                 if i[0] == "ARG":
                     if len(i) in (2, 4):
-                        self.cntx[i[1][1]] = args[argp]
+                        cntx[i[1][1]] = args[argp]
                     elif len(i) in (3, 5):
-                        self.cntx[i[2][1]] = args[argp]
+                        cntx[i[2][1]] = args[argp]
                     argp += 1
         elif len(args) < self.realargs:    
             # Awww
@@ -72,9 +71,9 @@ class Function(OrObject):
                         skip -= 1
                         continue
                     elif len(i) in (2, 4):
-                        self.cntx[i[1][1]] = args[argp]
+                        cntx[i[1][1]] = args[argp]
                     elif len(i) in (3, 5):
-                        self.cntx[i[2][1]] = args[argp]
+                        cntx[i[2][1]] = args[argp]
                     argp += 1
         else:
             # Also awww
@@ -83,12 +82,12 @@ class Function(OrObject):
             for i in self.arglist:
                 if i[0] == "ARG":
                     if len(i) in (2, 4):
-                        self.cntx[i[1][1]] = args[argp]
+                        cntx[i[1][1]] = args[argp]
                     elif len(i) in (3, 5):
-                        self.cntx[i[2][1]] = args[argp]
+                        cntx[i[2][1]] = args[argp]
                     argp += 1
                 elif i[0] == "UNWRAPABLE":
-                    self.cntx[i[1][1]] = args[argp:argp+extra]
+                    cntx[i[1][1]] = args[argp:argp+extra]
                     argp += extra
         
         try:

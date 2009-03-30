@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from objects.orobject import OrObject
-from objects.function import Function
+from objects.function import Function, ReturnI
 import operator
 
 def clear_screen():
@@ -21,10 +21,10 @@ def simpleop(f, name, try_noconv=True):
         try:
             try:
                 return args[0].get("$$" + name)(*args[1:])
-            except KeyError:
+            except AttributeError:
                 args2 = [args[0]] + list(args[2:])
                 return args[1].get("$$r_" + name)(*args2)
-        except:
+        except AttributeError:
             if all(hasattr(i, "ispy") and i.ispy() for i in args):
                 if try_noconv:
                     try:
@@ -65,7 +65,7 @@ uminus = simpleop(operator.neg, "uminus")
 def call(obj, *args, **kwargs):
     try:
         return obj.get("$$call")(*args, **kwargs)
-    except:
+    except AttributeError:
         if all(hasattr(i, "ispy") and i.ispy() for i in args) and all(hasattr(i, "ispy") and i.ispy() for k, i in kwargs.items()) and obj.ispy():
             args = [i.topy() for i in args]
             for i in kwargs:
