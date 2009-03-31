@@ -34,7 +34,7 @@ def t_BOOL(t):
 def t_NIL(t):
     r"nil"
 
-    t.value = ("NIL")
+    t.value = ("NIL",)
     return t
 
 def t_INF(t):
@@ -194,7 +194,11 @@ def isdone(s):
         elif i.value == "]": count[1] -= 1
         elif i.value == "(": count[0] += 1
         elif i.value == ")": count[0] -= 1
-    return all(i <= 0 for i in count)
+    
+    # Need better way to do this...
+    return all(i <= 0 for i in count) \
+        or re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*", s) \
+        and not re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}", s)
 
 if __name__ == "__main__":
     if "-t" in sys.argv:

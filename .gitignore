@@ -1,4 +1,4 @@
 *.pyc
-src/parser.out
-src/parsetab.py
+*/parser.out
+*/parsetab.py
 *~

@@ -33,40 +33,35 @@ class OrObject(object):
 
     def set(self, key, value):
         self.dict[key] = value
+    
+    def delete(self, key):
+        try:
+            del self.dict[key]
+        except KeyError:
+            delattr(self.topy(), key)
+    
+    def has(self, key):
+        return key in self.dict or hasattr(self.topy(), key)
 
     def __str__(self):
-        if "$$python" in self.dict:
-            return str(self.get("$$python"))
+        if self.ispy():
+            return str(self.topy())
         else:
-            return "<" + \
-                (str(self.get("$$class").__name__) + " ") if "$$class" in self.dict else "" + \
-                (str(self.get("$$name")) if "$$name" in self.dict else "") + \
-                ">"
+            s = "<"
+            
+            if self.has("$$class"):
+                s += str(self.get("$$class").__name__) + " "
+            
+            if self.has("$$name"):
+                s += str(self.get("$$name"))
+            
+            return s + ">"
 
     def __repr__(self):
-        if "$$python" in self.dict:
-            return repr(self.get("$$python"))
+        if self.ispy():
+            return repr(self.topy())
         else:
             return self.__str__()
-
-    def __nonzero__(self):
-        try:
-            return bool(self.get("$$python"))
-        except KeyError:
-            # TODO: implement bool
-            return True
-
-    def __iter__(self):
-        if "$$python" in self.dict:
-            return iter(self.get("$$python"))
-        else:
-            raise TypeError("object is not iterable")
-    
-    def __call__(self, *args, **kwargs):
-        if "$$python" in self.dict:
-            return self.get("$$python")(*args, **kwargs)
-        else:
-            raise TypeError("object is not callable")
     
     @classmethod
     def register(cls, new, *args):
@@ -77,6 +72,7 @@ class OrObject(object):
     def from_py(cls, obj, rich=True):
         """ rich means that __x__ methods will be copied """
         if isinstance(obj, cls): return obj
+        
         if type(obj) in cls.overrides:
             return cls.overrides[type(obj)](obj)
 
@@ -86,13 +82,7 @@ class OrObject(object):
 
         if rich:
             for i in [j for j in dir(obj) if j.startswith("__") and j.endswith("__") and j not in ("__class__", "__name__", "__dict__", "__weakref__")]:
-                setattr(np, i, print_wrapper(getattr(obj, i)))
+                setattr(np, i, getattr(obj, i))
         
         np.set("$$python", obj)
         return np
-
-def print_wrapper(f):
-    def x(*args, **kwargs):
-        print f, args, kwargs
-        return f(*args, **kwargs)
-    return x

@@ -1,1 +1,78 @@
-src/interpreter.py
+#!/usr/bin/env python
+
+import src.interpreter as intp
+from optparse import OptionParser
+import sys
+import traceback
+
+def import_readline():
+    try:
+        import readline
+    except ImportError:
+        pass
+    
+    def completer(text, state=0):
+        if text:
+            m = [i for i in intp.curr.keys() if i.startswith(text)]
+        else:
+            m = intp.curr.keys()[:]
+
+        try:
+            return m[state]
+        except IndexError:
+            return None
+    
+    readline.set_completer(completer)
+    readline.parse_and_bind("tab: complete")
+    return readline
+
+def run_console(intp):
+    import src.lexer as lexer
+    import src.analyze as analyze
+    import_readline()
+    
+    try:
+        t = ""
+        while True:
+            t = raw_input("oranj> ") + "\n"
+            while not lexer.isdone(t):
+                t += raw_input("     > ") + "\n"
+
+            try:
+                r = intp.run(t)
+                if r == None: pass
+                elif r.ispy() and r.topy() == None: pass
+                else:
+                    print repr(r)
+            except intp.DropI: raise
+            except Exception, e:
+                traceback.print_exc()
+    except (KeyboardInterrupt, EOFError):
+        print
+        sys.exit()
+    except intp.DropI:
+        print "Dropping down to python console. Call undrop() to return."
+
+def parse_args():
+    parser = OptionParser()
+    parser.add_option("-r", "--readin", action="store_true", help="Read input from stdin until EOF, then execute it", default=False)
+    opts, args = parser.parse_args()
+    child = []
+    
+    if args:
+        child = sys.argv[sys.argv.index(args[0]):]
+        opts = parser.parse_args(sys.argv[:sys.argv.index(args[0])])[0]
+    
+    return opts, args, child
+
+if __name__ == "__main__":
+    base_i = intp.Interpreter()
+    opts, args, child = parse_args()
+    
+    if child:
+        intp.run(open(child[0]).read(), intp)
+    elif opts.readin:
+        intp.run(sys.stdin.read())
+    else:
+        run_console(intp)
+    

@@ -24,7 +24,7 @@ def simpleop(f, name, try_noconv=True):
             except AttributeError:
                 args2 = [args[0]] + list(args[2:])
                 return args[1].get("$$r_" + name)(*args2)
-        except AttributeError:
+        except (AttributeError, IndexError):
             if all(hasattr(i, "ispy") and i.ispy() for i in args):
                 if try_noconv:
                     try:
@@ -73,6 +73,8 @@ def call(obj, *args, **kwargs):
             obj = obj.topy()
             
             return OrObject.from_py(obj(*args, **kwargs))
+        else:
+            raise TypeError(str(obj) + " is not callable")
         
 def getattr_(x, y):
     return OrObject.from_py(x.get(y))

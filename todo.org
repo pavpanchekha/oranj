@@ -26,7 +26,6 @@
 ** help
 ** vars
 ** OO'd tuples don't work
-** bool(nil) == nil
 ** why does io(6) not raise an error? What does it do?
 ** coerce fails
 ** enumerate is broken

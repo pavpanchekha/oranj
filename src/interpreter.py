@@ -2,15 +2,11 @@
 
 import analyze
 import sys
-import traceback
 
 import builtin
 import intplib
 from objects.orobject import OrObject
 import objects.number as number
-
-from optparse import OptionParser
-import re
 
 from objects.inheritdict import InheritDict
 
@@ -292,50 +288,6 @@ class Interpreter(object):
             else:
                 return r
 
-def run_console(intp):
-    import lexer
-    
-    try:
-        import readline
-        def completer(text, state=0):
-            if text:
-                m = [i for i in intp.curr.keys() if i.startswith(text)]
-            else:
-                m = intp.curr.keys()[:]
-
-            try:
-                return m[state]
-            except IndexError:
-                return None
-        
-        readline.set_completer(completer)
-        readline.parse_and_bind("tab: complete")
-    except ImportError:
-        pass
-    
-    try:
-        t = ""
-        while True:
-            t = raw_input("oranj> ") + "\n"
-            while not lexer.isdone(t) or re.match("\#![a-zA-Z0-9 \t]*\{(.|\n)*", t) and not re.match("\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}", t):
-                t += raw_input("     > ") + "\n"
-
-            try:
-                p = analyze.parse(t)
-                r = intp.run(p)
-                if r == None: pass
-                elif r.ispy() and r.topy() == None: pass
-                else:
-                    print repr(r)
-            except DropI: raise
-            except Exception, e:
-                traceback.print_exc()
-    except (KeyboardInterrupt, EOFError):
-        print
-        sys.exit()
-    except DropI:
-        print "Dropping down to python console. Call undrop() to return."
-
 def run(s, intp=Interpreter()):
     try:
         return intp.run(analyze.parse(s))
@@ -343,29 +295,3 @@ def run(s, intp=Interpreter()):
         run_console(intp)
 
 builtin.builtin["eval"] = OrObject.from_py(run)
-
-def go():
-    intp = Interpreter()
-    
-    parser = OptionParser()
-    parser.add_option("-r", "--readin", action="store_true", help="Read input from stdin until EOF, then execute it", default=False)
-    opts, args = parser.parse_args()
-    child = []
-    
-    if args:
-        child = sys.argv[sys.argv.index(args[0]):]
-        opts = parser.parse_args(sys.argv[:sys.argv.index(args[0])])[0]
-    
-    if child:
-        # TODO: Pass child[1:] as args
-        run(open(child[0]).read(), intp)
-        return
-    
-    if opts.readin:
-        run(sys.stdin.read(), intp)
-        return
-    
-    run_console(intp)
-
-if __name__ == "__main__":
-    go()

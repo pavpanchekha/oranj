@@ -26,6 +26,12 @@ class Function(OrObject):
 
     def ispy(self): return not hasattr(self, "intp")
     def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
+    
+    def __str__(self):
+        return "<fn " + self.get("$$name") + ">"
+    
+    def __repr__(self):
+        return "<fn " + self.get("$$name") + ">"
             
     def __call__(self, *args, **kwargs):
         if hasattr(self, "intp"):
@@ -50,6 +56,7 @@ class Function(OrObject):
     def _call__(self, *args, **kwargs):
         cntx = InheritDict(self.intp.curr)
         self.intp.cntx.append(cntx)
+        print "HI"
         
         argp = 0
         if len(args) == self.realargs:
