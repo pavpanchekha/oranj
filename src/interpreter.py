@@ -7,6 +7,7 @@ import builtin
 import intplib
 from objects.orobject import OrObject
 import objects.number as number
+import objects.orddict as odict
 
 from objects.inheritdict import InheritDict
 
@@ -16,6 +17,7 @@ class DropI(Exception): pass
 
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
+    run_console = None
 
     def __init__(self, g=None):
         if not g:
@@ -75,8 +77,8 @@ class Interpreter(object):
         return OrObject.from_py(set(map(self.run, r)))
     
     def hTABLE(self, vars):
-        #TODO
-        pass
+        vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
+        return odict.ODict(vars)
 
     def hDICT(self, vars):
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
@@ -93,22 +95,12 @@ class Interpreter(object):
 
     def hPROCDIR(self, cmd, *args):
         if cmd == "drop":
-            run_console(self)
+            Interpreter.run_console(self)
         elif cmd == "clear":
             intplib.clear_screen()
         elif cmd == "exit":
             sys.exit()
         elif cmd == "pydrop":
-            import os
-            global undrop
-            global intp
-            intp = self
-            
-            os.environ["PYTHONINSPECT"] = "1"
-            
-            def undrop():
-                run_console(self)
-                
             raise DropI
 
     def hPROCBLOCK(self, type, body):
@@ -118,7 +110,7 @@ class Interpreter(object):
         if type[0] == "python":
             exec body in glob, {}
 
-    def hPRIMITIVE(self, val):
+    def hPRIMITIVE(self, val, *others):
         if val[0] == "STRING":
             body, flags = val[1:]
             if "r" not in flags:
@@ -288,10 +280,20 @@ class Interpreter(object):
             else:
                 return r
 
+    def hTRY(self, block, *catches):
+        try:
+            self.run(block)
+        except Exception, e:
+            for i, v in enumerate(catches[1::4]):
+                if any(intplib.is_(e, self.run(j)) for j in v) or not v:
+                    if catches[3*i+2]:
+                        self.curr[catches[3*i+2][1]] = OrObject.from_py(e)
+                    self.run(catches[3*i+3])
+                    return
+            raise
+            
+
 def run(s, intp=Interpreter()):
-    try:
-        return intp.run(analyze.parse(s))
-    except DropI:
-        run_console(intp)
+    return intp.run(analyze.parse(s))
 
 builtin.builtin["eval"] = OrObject.from_py(run)

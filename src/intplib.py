@@ -20,22 +20,19 @@ def simpleop(f, name, try_noconv=True):
     def t(*args):
         try:
             try:
-                return args[0].get("$$" + name)(*args[1:])
+                return OrObject.from_py(args[0].get("$$" + name)(*args[1:]))
             except AttributeError:
                 args2 = [args[0]] + list(args[2:])
                 return args[1].get("$$r_" + name)(*args2)
-        except (AttributeError, IndexError):
-            if all(hasattr(i, "ispy") and i.ispy() for i in args):
-                if try_noconv:
-                    try:
-                        return f(*args)
-                    except:
-                        pass
-                
-                args = [i.topy() for i in args]
-                return OrObject.from_py(f(*args))
-            else:
-                return NotImplemented
+        except (AttributeError, IndexError, TypeError):
+            try:
+                return f(*args)
+            except TypeError:
+                if all(hasattr(i, "ispy") and i.ispy() for i in args):
+                    args = [i.topy() for i in args]
+                    return OrObject.from_py(f(*args))
+                else:
+                    return NotImplemented
     return t
 
 add = simpleop(operator.add, "add")
@@ -50,7 +47,6 @@ or_ = simpleop(operator.or_, "or")
 and_ = simpleop(operator.and_, "and")
 not_ = simpleop(operator.not_, "not")
 in_ = simpleop(lambda x, y: x in y, "in")
-is_ = simpleop(isinstance, "is")
 lt = simpleop(operator.lt, "lt", False)
 gt = simpleop(operator.gt, "gt", False)
 le = simpleop(operator.le, "le", False)
@@ -62,9 +58,26 @@ output = simpleop(lambda x, y: x.output(y), "output")
 uplus = simpleop(operator.pos, "uplus")
 uminus = simpleop(operator.neg, "uminus")
 
+def is_(obj, cls):
+    if hasattr(cls, "ispy") and cls.ispy():
+        cls = cls.topy()
+
+    try:
+        r = isinstance(obj, cls)
+    except TypeError:
+        r = False
+
+    if not r and hasattr(obj, "ispy") and obj.ispy():
+        try:
+            return isinstance(obj.topy(), cls)
+        except TypeError:
+            return False
+    else:
+        return r
+
 def call(obj, *args, **kwargs):
     try:
-        return obj.get("$$call")(*args, **kwargs)
+        return OrObject.from_py(obj.get("$$call")(*args, **kwargs))
     except AttributeError:
         if all(hasattr(i, "ispy") and i.ispy() for i in args) and all(hasattr(i, "ispy") and i.ispy() for k, i in kwargs.items()) and obj.ispy():
             args = [i.topy() for i in args]
@@ -74,6 +87,7 @@ def call(obj, *args, **kwargs):
             
             return OrObject.from_py(obj(*args, **kwargs))
         else:
+            raise
             raise TypeError(str(obj) + " is not callable")
         
 def getattr_(x, y):

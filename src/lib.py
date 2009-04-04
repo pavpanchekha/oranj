@@ -21,4 +21,3 @@ def typeof(x): #type
 
 def dirof(x): #dir
     return x.dict
-

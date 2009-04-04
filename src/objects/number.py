@@ -108,6 +108,9 @@ class Number(OrObject):
     
     def __int__(self):
         return self._val
+    
+    def __hash__(self):
+        return hash(self._val)
 
 def add_func(i):
     def t(*args):
@@ -130,7 +133,7 @@ def add_func(i):
         try:
             s = fn(*args)
             try:
-                return Number(s)
+                return Number(round(s, 28))
             except TypeError:
                 return OrObject(s)
         except:

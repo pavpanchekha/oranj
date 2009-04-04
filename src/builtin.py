@@ -6,6 +6,7 @@ from objects.number import Number
 from objects.file import File
 from objects.inheritdict import InheritDict
 import objects.console as console
+import objects.exception as exception
 import types
 import lib
 
@@ -30,6 +31,9 @@ builtin.update({
     "reverse": expose(reversed),
     "sort": expose(sorted),
     "chr": expose(unichr),
+    
+#    "Exception": expose(exception.OrException)
+    "Exception": expose(Exception),
 })
 
 stolen_builtins = [

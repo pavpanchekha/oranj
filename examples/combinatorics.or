@@ -9,7 +9,7 @@ factorial = fn(n) {
 }
 
 choose = fn(n, k) {
-    dec r = 1
+    num r = 1
     for i in k {
         r *= (n - i) / (i + 1)
     }

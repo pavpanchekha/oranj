@@ -23,6 +23,7 @@ class Function(OrObject):
             self.rettype = rettype
             self.block = block
             self.intp = intp
+            self.parcntx = self.intp.curr
 
     def ispy(self): return not hasattr(self, "intp")
     def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
@@ -54,10 +55,9 @@ class Function(OrObject):
             return NotImplemented
     
     def _call__(self, *args, **kwargs):
-        cntx = InheritDict(self.intp.curr)
+        cntx = InheritDict(self.parcntx)
         self.intp.cntx.append(cntx)
-        print "HI"
-        
+
         argp = 0
         if len(args) == self.realargs:
             # Yay, easy scenario
@@ -84,7 +84,7 @@ class Function(OrObject):
                     argp += 1
         else:
             # Also awww
-            extra = len(arglist) - len(args)
+            extra = len(self.arglist) - len(args)
             
             for i in self.arglist:
                 if i[0] == "ARG":
@@ -96,7 +96,7 @@ class Function(OrObject):
                 elif i[0] == "UNWRAPABLE":
                     cntx[i[1][1]] = args[argp:argp+extra]
                     argp += extra
-        
+
         try:
             self.intp.run(self.block)
         except ReturnI, e:

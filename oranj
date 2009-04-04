@@ -5,6 +5,18 @@ from optparse import OptionParser
 import sys
 import traceback
 
+def pydrop(i):
+    import os
+    global undrop
+    global curr
+    curr = i
+    
+    os.environ["PYTHONINSPECT"] = "1"
+    
+    def undrop():
+        run_console(i)
+
+
 def import_readline():
     try:
         import readline
@@ -26,7 +38,7 @@ def import_readline():
     readline.parse_and_bind("tab: complete")
     return readline
 
-def run_console(intp):
+def run_console(i):
     import src.lexer as lexer
     import src.analyze as analyze
     import_readline()
@@ -39,7 +51,8 @@ def run_console(intp):
                 t += raw_input("     > ") + "\n"
 
             try:
-                r = intp.run(t)
+                r = intp.run(t, i)
+                
                 if r == None: pass
                 elif r.ispy() and r.topy() == None: pass
                 else:
@@ -52,6 +65,7 @@ def run_console(intp):
         sys.exit()
     except intp.DropI:
         print "Dropping down to python console. Call undrop() to return."
+        pydrop(i)
 
 def parse_args():
     parser = OptionParser()
@@ -70,9 +84,8 @@ if __name__ == "__main__":
     opts, args, child = parse_args()
     
     if child:
-        intp.run(open(child[0]).read(), intp)
+        intp.run(open(child[0]).read(), base_i)
     elif opts.readin:
         intp.run(sys.stdin.read())
     else:
-        run_console(intp)
-    
+        run_console(base_i)

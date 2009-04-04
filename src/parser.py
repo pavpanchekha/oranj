@@ -539,16 +539,19 @@ def p_try_try(p):
     p[0] = ["TRY", p[2]]
 
 def p_try_catch(p):
-    """try_catch : CATCH expression block try_catch
-                 | CATCH expression AS ident block try_catch
-                 |"""
+    """try_catch : CATCH comma_list block try_catch
+                 | CATCH comma_list AS ident block try_catch
+                 | CATCH block try_catch
+                 | """
 
     if len(p) == 1:
         p[0] = []
     elif len(p) == 5:
-        p[0] = ["CATCH", p[2], p[3]] + p[4]
-    else:
+        p[0] = ["CATCH", p[2], None, p[3]] + p[4]
+    elif len(p) == 7:
         p[0] = ["CATCH", p[2], p[4], p[5]] + p[6]
+    else:
+        p[0] = ["CATCH", [], None, p[2]] + p[3]
 
 def p_statements(p):
     """statements : statements NEWLINE
