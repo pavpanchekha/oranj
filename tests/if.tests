@@ -4,4 +4,12 @@
 ## Tests conditionals as might be used in if
 
 # Numeric comparisons
->>> 
+>>> a = 0
+>>> if a == 0 {
+>>>     io << "YAY\n"
+>>> } else {
+>>>     io << "NAY\n"
+>>> }
+YAY
+
+## TODO: Add to this

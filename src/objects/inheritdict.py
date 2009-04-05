@@ -1,6 +1,6 @@
 class InheritDict:
-    def __init__(self, parent=None):
-        self.parent = parent
+    def __init__(self, *parents):
+        self.parents = parents
         self.dict = {}
 
     def update(self, keys={}):
@@ -10,12 +10,17 @@ class InheritDict:
         if key in self.dict:
             return self.dict[key]
         else:
+            for i in self.parents:
+                try:
+                    a = i[key]
+                except (AttributeError, TypeError):
+                    pass
+
             try:
-                a = self.parent[key]
                 self[key] = a # Cache lookup
                 return a
-            except TypeError:
-                raise AttributeError("Key not in InheritDict: " + key)
+            except NameError:
+                raise AttributeError("Key not in InheritDict: " + str(key))
 
     def __setitem__(self, key, value):
         self.dict[key] = value
@@ -24,10 +29,7 @@ class InheritDict:
         del self.dict[key]
 
     def __contains__(self, key):
-        return key in self.dict or self.parent and key in self.parent
+        return key in self.dict or self.parents and any(key in i for i in self.parents)
 
     def keys(self):
-        if self.parent:
-            return list(self.dict.keys()) + self.parent.keys()
-        else:
-            return list(self.dict.keys())
+        return self.dict.keys() + sum([i.keys() for i in self.parents], [])

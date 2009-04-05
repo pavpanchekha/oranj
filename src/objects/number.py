@@ -133,7 +133,7 @@ def add_func(i):
         try:
             s = fn(*args)
             try:
-                return Number(round(s, 28))
+                return Number(s if type(s) in (int, long) else round(s, 28))
             except TypeError:
                 return OrObject(s)
         except:

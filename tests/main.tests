@@ -11,15 +11,6 @@
 >>> io << 5 ^ 15
 30517578125
 
-# if
->>> a = 0
->>> if a == 0 {
->>> io << "YAY"
->>> } else {
->>> io << "NAY"
->>> }
-YAY
-
 # while loop
 >>> a = 0
 >>> while a < 10 {a = a + 1}
@@ -29,10 +20,10 @@ YAY
 # break
 >>> a = 0
 >>> while 1 {break}
->>> io << "DONE"
+>>> io << "DONE\n"
 DONE
 
 # while forever
 >>> while {break}
->>> io << "DONE"
+>>> io << "DONE\n"
 DONE

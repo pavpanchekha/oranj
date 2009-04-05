@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append("lib")
-sys.path.append("../lib")
-sys.path.append("src/lib")
+import os
+
+sys.path.append(os.path.join(sys.path[0], "src", "lib"))

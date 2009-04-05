@@ -50,7 +50,13 @@ class OrObject(object):
             s = "<"
             
             if self.has("$$class"):
-                s += str(self.get("$$class").__name__) + " "
+                if isinstance(self.get("$$class"), OrObject) and self.get("$$class").has("$$name"):
+                    s += str(self.get("$$class").get("$$name")) + " "
+                elif hasattr(self.get("$$class"), "__name__"):
+                    if hasattr(self.get("$$class"), "class_name"):
+                        s += self.get("$$class").class_name + " "
+                    else:
+                        s += str(self.get("$$class").__name__) + " "
             
             if self.has("$$name"):
                 s += str(self.get("$$name"))

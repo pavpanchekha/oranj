@@ -306,7 +306,8 @@ def p_test_basis(p):
     """test_basis : primitive
                   | literal
                   | ident
-                  | fn"""
+                  | fn
+                  | class"""
 
     p[0] = p[1]
 
@@ -387,8 +388,8 @@ def p_var_s(p):
     p[0] = [p[1].upper()] + p[2]
 
 def p_idents(p):
-    """idents : idents ',' ident
-              | ident"""
+    """idents : idents ',' IDENT
+              | IDENT"""
 
     if len(p) == 2:
         p[0] = [p[1]]
@@ -599,6 +600,50 @@ def p_arg_defs(p):
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
+
+def p_class(p):
+    """class : CLASS '(' comma_list ')' IS idents block
+             | CLASS '(' ')' IS idents block
+             | CLASS IS idents block
+             | CLASS '(' comma_list ')' block
+             | CLASS '(' ')' block
+             | CLASS block"""
+
+    if len(p) == 8:
+        p[0] = ["CLASS", "", p[3], p[6], p[7]]
+    elif len(p) == 7:
+        p[0] = ["CLASS", "", [], p[5], p[6]]
+    elif len(p) == 5:
+        if p[2] == "is":
+            p[0] = ["CLASS", "", [], p[3], p[4]]
+        else:
+            p[0] = ["CLASS", "", [], [], p[4]]
+    elif len(p) == 6:
+        p[0] = ["CLASS", "", p[3], [], p[5]]
+    else:
+        p[0] = ["CLASS", "", [], [], p[2]]
+
+def p_class_doc(p):
+    """class : CLASS STRING '(' comma_list ')' IS idents block
+             | CLASS STRING '(' ')' IS idents block
+             | CLASS STRING IS idents block
+             | CLASS STRING '(' comma_list ')' block
+             | CLASS STRING '(' ')' block
+             | CLASS STRING block"""
+
+    if len(p) == 9:
+        p[0] = ["CLASS", p[2], p[4], p[7], p[8]]
+    elif len(p) == 8:
+        p[0] = ["CLASS", p[2], [], p[6], p[7]]
+    elif len(p) == 6:
+        if p[3] == "is":
+            p[0] = ["CLASS", p[2], [], p[4], p[5]]
+        else:
+            p[0] = ["CLASS", p[2], [], [], p[5]]
+    elif len(p) == 7:
+        p[0] = ["CLASS", p[2], p[4], [], p[6]]
+    else:
+        p[0] = ["CLASS", p[2], [], [], p[3]]
 
 def p_arg_def_expr(p):
     """arg_def : expression

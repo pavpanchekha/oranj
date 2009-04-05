@@ -70,7 +70,7 @@ class Function(OrObject):
                     argp += 1
         elif len(args) < self.realargs:    
             # Awww
-            skip = len(arglist) - len(args)
+            skip = len(self.arglist) - len(args)
             
             for i in self.arglist:
                 if i[0] == "ARG":
@@ -96,6 +96,8 @@ class Function(OrObject):
                 elif i[0] == "UNWRAPABLE":
                     cntx[i[1][1]] = args[argp:argp+extra]
                     argp += extra
+
+        cntx["block"] = self
 
         try:
             self.intp.run(self.block)

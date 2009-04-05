@@ -8,6 +8,7 @@ import intplib
 from objects.orobject import OrObject
 import objects.number as number
 import objects.orddict as odict
+import objects.orclass as orclass
 
 from objects.inheritdict import InheritDict
 
@@ -130,10 +131,14 @@ class Interpreter(object):
         
         for i, v in zip(idents, vals):
             self.curr[i] = v
+            if v.get("$$name") == "[anon]":
+                v.set("$$name", i)
     
     def hASSIGN1(self, ident, val):
         val = self.run(val)
         self.curr[ident] = val
+        if val.get("$$name") == "[anon]":
+            val.set("$$name", ident)
 
     def hDECLARE(self, type, (idents, vals)):
         for i in idents:
@@ -157,10 +162,9 @@ class Interpreter(object):
 
     def hEXTERN(self, *vars):
         for i in vars:
-            i = i[1]
-            if i not in self.curr.parent:
+            if not self.curr.parent or i not in self.curr.parent:
                 raise NameError(i + " is not a valid variable")
-            self.curr[i] = t[i]
+            self.curr[i] = self.curr.parent[i]
     
     def hGETATTR(self, var, id):
         var = self.run(var)
@@ -291,7 +295,9 @@ class Interpreter(object):
                     self.run(catches[3*i+3])
                     return
             raise
-            
+
+    def hCLASS(self, doc, parents, tags, block):
+        return orclass.OrClass(self, map(self.run, parents), tags, block, self.run(doc))
 
 def run(s, intp=Interpreter()):
     return intp.run(analyze.parse(s))

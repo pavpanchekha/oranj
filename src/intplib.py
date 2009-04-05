@@ -59,6 +59,12 @@ uplus = simpleop(operator.pos, "uplus")
 uminus = simpleop(operator.neg, "uminus")
 
 def is_(obj, cls):
+    if cls.ispy() and type(cls.topy()) == type(""):
+        if hasattr(obj.get("$$class"), "has") and obj.get("$$class").has("$$tags"):
+            return cls.topy() in obj.get("$$class").get("$$tags")
+        else:
+            return False
+
     if hasattr(cls, "ispy") and cls.ispy():
         cls = cls.topy()
 
@@ -71,9 +77,12 @@ def is_(obj, cls):
         try:
             return isinstance(obj.topy(), cls)
         except TypeError:
-            return False
-    else:
-        return r
+            pass
+
+    if obj.has("$$class"):
+        return obj.get("$$class") == cls
+    
+    return r
 
 def call(obj, *args, **kwargs):
     try:
