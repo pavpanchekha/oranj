@@ -23,7 +23,7 @@ def get_augass(tree):
         if type(i) not in (type(()), type([])) or len(i) == 0: continue
         if i[0] in ("+=", "-=", "^=", "/=", "//=", "*=", "mod=", "and=", "or=", "<<=", ">>="):
             for j in range(len(i[1])):
-                i[2][j] = ["OP", i[0][:-1], augass_dostuff(i[1][j]), i[2][j]]
+                i[2][j] = ["OP", i[0][:-1], augass_dostuff(i[1][j][:]), i[2][j]]
             i[0] = "ASSIGN"
         elif i[0] == "=":
             i[0] = "ASSIGN"

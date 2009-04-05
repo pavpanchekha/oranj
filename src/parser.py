@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 
+# A warning to all who wish to edit this module:
+# Mostly, what I've done here makes sense
+# It might even be what you would do
+# But in order to get `a.b, c[0] += 1, 4` to parse...
+# I had to sell my soul to the devil
+# Careful modifying the rules loc and locs
+# Or the loch ness monster will have your soul
+#                               -- Pavel
+
+
 import ply.yacc as yacc
 from lexer import tokens, literals
 import terminal
@@ -193,15 +203,19 @@ def p_test_exp(p):
         p[0] = p[1]
 
 def p_test_call(p):
-    """test_call : test_call '(' arglist ')'
-                 | test_call '(' arglist ',' ')'
-                 | test_attr"""
+    """test_call : test_call_strong
+                 | test_attr_strong
+                 | test_idx_strong
+                 | test_basis"""
 
-    if len(p) >= 5:
-        p[0] = ["CALL", p[1]] + p[3]
-    else:
-        p[0] = p[1]
+    p[0] = p[1]
 
+
+def p_test_call_strong(p):
+    """test_call_strong : test_call '(' arglist ')'
+                        | test_call '(' arglist ',' ')'"""
+    
+    p[0] = ["CALL", p[1]] + p[3]    
 def p_arglist(p):
     """arglist : arglist ',' arg
                | arg
@@ -232,27 +246,32 @@ def p_arg_kwmult(p):
     """arg : '*' '*' expression"""
     p[0] = ["UNWRAPKW", p[3]]
 
-def p_test_attr(p):
-    """test_attr : test_call '.' IDENT
-                 | test_idx"""
+# No, you don't want to know
+def p_test_attr_strong(p):
+    """test_attr_strong : test_call '.' IDENT"""
 
-    if len(p) == 4:
-        p[0] = ["GETATTR", p[1], p[3]]
+    p[0] = ["GETATTR", p[1], p[3]]
+
+def p_test_idx_strong(p):
+    """test_idx_strong : test_call '[' index ']'
+                       | test_call '[' index ',' ']'
+                       | test_call literal
+                       | test_basis literal
+                       | ident literal"""
+
+    if len(p) == 2 and p[2][0] != "LIST":
+        raise SyntaxError("SyntaxError", "WTF are you doing there?!")
+    
+    if len(p) == 3:
+        g = p[2][1]
+        if len(g) == 1:
+            g = g[0]
+        p[0] = ["OP", "GETINDEX", p[1], g]
     else:
-        p[0] = p[1]
-
-def p_test_idx(p):
-    """test_idx : test_call '[' index ']'
-                | test_call '[' index ',' ']'
-                | test_basis"""
-
-    if len(p) >= 5:
         if len(p[3]) == 1:
             p[3] = p[3][0]
         p[0] = ["OP", "GETINDEX", p[1], p[3]]
-    else:
-        p[0] = p[1]
-
+    
 def p_index(p):
     """index : index ',' indice
              | indice"""
@@ -333,30 +352,21 @@ def p_statement(p):
                  | assignment
                  | declaration
                  | PROCDIR
-                 | PROCBLOCK"""
-
-    p[0] = p[1]
-
-def p_loc(p):
-    """loc : IDENT
-           | loc '[' index ']'
-           | loc '[' index ',' ']'
-           | loc '.' IDENT"""
+                 | PROCBLOCK
+                 | DOTDOTDOT"""
     
-    if len(p) == 2:
-        p[0] = p[1]
-    elif len(p) == 4:
-        p[0] = ["SETATTR", p[1], p[3]]
+    if p[1] == "...":
+        p[0] = ["DOTDOTDOT"]
     else:
-        p[0] = ["SETINDEX", p[1], p[3]]
+        p[0] = p[1]
 
 def p_assignment_single(p):
-    """assignment : IDENT EQOP expression"""
+    """assignment : loc EQOP expression"""
     
-    t = ["ASSIGN1", p[1], p[3]]
+    t = ["ASSIGN1", p[1], p[3], p[2]]
     
     if p[2] != "=":
-        s = p[1]
+        s = p[1][:]
         if type(s) == type(""):
             s = ["IDENT", s]
         elif s[0] == "SETATTR":
@@ -368,13 +378,15 @@ def p_assignment_single(p):
     
     p[0] = t
 
-def p_assignment(p):
-    """assignment : loc ',' locs EQOP expression ',' comma_list"""
+def p_assignment_soul_sold(p):
+    """assignment : loc ',' assignment ',' expression"""
 
-    if len(p[1]) < len(p[3]):
-        raise SyntaxError("SyntaxError", "Too many values on right side of assignment")
-
-    p[0] = [p[4], [p[1]] + p[3], [p[5]] + p[7]]
+    if p[3][0] == "ASSIGN1":
+        p[0] = [p[3][3], [p[1], p[3][1]], [p[5], p[3][2]]]
+    else:
+        p[3][1].insert(0, p[1])
+        p[3][2].append(p[5])
+        p[0] = p[3]
 
 def p_declaration(p):
     """declaration : ident assignment"""
@@ -390,15 +402,6 @@ def p_var_s(p):
 def p_idents(p):
     """idents : idents ',' IDENT
               | IDENT"""
-
-    if len(p) == 2:
-        p[0] = [p[1]]
-    else:
-        p[0] = p[1] + [p[3]]
-
-def p_locs(p):
-    """locs : locs ',' loc
-            | loc"""
 
     if len(p) == 2:
         p[0] = [p[1]]
@@ -663,6 +666,31 @@ def p_arg_def_kwmult(p):
     """arg_def : '*' '*' IDENT"""
     p[0] = ["UNWRAPABLEKW", p[3]]
 
+# I've heard that making this here might fix things
+def p_loc(p):
+    """loc : ident
+           | test_attr_strong
+           | test_idx_strong"""
+
+    if p[1][0] == "IDENT":
+        p[0] = p[1][1]
+    elif p[1][0] == "OP" and p[1][1] == "GETINDEX":
+        p[0] = ["SETINDEX", p[1][2], p[1][3]]
+    elif p[1][0] == "GETATTR":
+        p[0] = ["SETATTR", p[1][1], p[1][2]]
+    else:
+        raise SyntaxError("SyntaxError", "You're assigning that to WHAT?!")
+
+def p_locs(p):
+    """locs : locs ',' loc
+            | loc"""
+
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+    
 def p_error(t):
     try:
         e = Exception("SyntaxError (line %d, col %d)" % (t.lineno, getcol(t)), "The %s confuses me" % repr(t.value).lower())

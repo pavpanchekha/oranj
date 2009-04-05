@@ -5,6 +5,11 @@
    a ! b -> b(a)
    a ! b(...) -> b(a, ...)
    a ! b() -> b(a)
+** Fix multi-assign get(attr|index)
+   It works, but I can't make them anything but the
+   last argument
+** Fix multi-assign w/ more than 3 idents
+   Dum Dum Dum...
 * Interpreter
 ** Cache links
    To implement extern with del:
@@ -16,7 +21,6 @@
 ** Implement import
    This'll be tricky
 ** keyword arguments are broken
-** Setattr/setindex
 ** 'is' is broken
 ** allow OrObjects to be added etc
 ** OrObjecting lists and tuples doesn't OrObjectify their elements

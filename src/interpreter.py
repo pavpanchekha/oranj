@@ -127,18 +127,20 @@ class Interpreter(object):
             return number.inf
 
     def hASSIGN(self, idents, vals):
-        vals = map(self.run, vals)
-        
         for i, v in zip(idents, vals):
-            self.curr[i] = v
-            if v.get("$$name") == "[anon]":
-                v.set("$$name", i)
+            self.hASSIGN1(i, v)
     
-    def hASSIGN1(self, ident, val):
+    def hASSIGN1(self, ident, val, orig_type=None):
         val = self.run(val)
-        self.curr[ident] = val
-        if val.get("$$name") == "[anon]":
-            val.set("$$name", ident)
+        
+        if type(ident) == type(""):
+            self.curr[ident] = val
+            if val.get("$$name") == "[anon]":
+                val.set("$$name", ident)
+        elif ident[0] == "SETATTR":
+            self.run(ident[1]).set(ident[2], val)
+        elif ident[0] == "SETINDEX":
+            self.run(ident[1])[ident[2]] = val
 
     def hDECLARE(self, type, (idents, vals)):
         for i in idents:
