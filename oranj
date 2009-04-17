@@ -70,6 +70,7 @@ def run_console(i):
 def parse_args():
     parser = OptionParser()
     parser.add_option("-r", "--readin", action="store_true", help="Read input from stdin until EOF, then execute it", default=False)
+    parser.add_option("-t", "--test", help="Test a component (parser, lexer, analyzer). oranj -t p|l|a", default="")
     opts, args = parser.parse_args()
     child = []
     
@@ -87,5 +88,16 @@ if __name__ == "__main__":
         intp.run(open(child[0]).read(), base_i)
     elif opts.readin:
         intp.run(sys.stdin.read())
+    elif opts.test:
+        import_readline()
+        if opts.test == "a":
+            import src.analyze as analyze
+            analyze._test()
+        elif opts.test == "p":
+            import src.parser as parser
+            parser._test()
+        elif opts.test == "l":
+            import src.lexer as lexer
+            lexer._test()
     else:
         run_console(base_i)

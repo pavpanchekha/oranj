@@ -7,7 +7,7 @@ import sys
 tokens = [
     "STRING", "DEC", "INT", "BOOL", "NIL", "IDENT", "PLUSPLUS", "MINUSMINUS",
     "SLASHSLASH", "GE", "LE", "NE", "EQ", "LTLT", "GTGT", "DOTDOTDOT", "EQOP",
-    "NEWLINE", "PROCDIR", "PROCBLOCK", "INF"
+    "NEWLINE", "PROCDIR", "PROCBLOCK", "INF", "ISNT", "ASSIGN"
 ]
 
 # WARNING: t_STRING ***must*** be first in the list of functions.
@@ -24,6 +24,10 @@ def t_STRING(t):
     t.value = ("STRING", data, prefix)
 
     return t # TODO: Implement String class
+
+def t_ISNT(t):
+    r"(is\s+not)|(aint)"
+    return t
 
 def t_BOOL(t):
     r"true|false"
@@ -165,7 +169,8 @@ t_PLUSPLUS = r"\+\+"
 t_MINUSMINUS = r"\-\-"
 t_SLASHSLASH = r"\/\/"
 t_DOTDOTDOT = r"\.\.\."
-t_EQOP = r"(?<![<>])(\+|\-|\^|\/|\/\/|\*|<<|>>)?\=(?!\=)(?![<>])"
+t_EQOP = r"(?<![<>])(\+|\-|\^|\/|\/\/|\*|<<|>>)\=(?![=<>])"
+t_ASSIGN = r"(?<![<>])\=(?![=<>])"
 # The look[behind|ahead] is needed so that LE and GE match correctly
 t_LTLT = r"\<\<"
 t_GTGT = r"\>\>"
@@ -200,20 +205,18 @@ def isdone(s):
         or re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*", s) \
         and not re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}", s)
 
-if __name__ == "__main__":
-    if "-t" in sys.argv:
-        # Test code
-        pass
-    else:
+def _test():
+    try:
         while True:
-            try:
-                lex.input(raw_input("lex> ").replace("!\\n", "\n") + "\n")
-                for tok in iter(lex.token, None):
-                    if len(tok.type) == 1:
-                        print "'" + tok.type + "'",
-                    else:
-                        print "|" + tok.type + "|",
-                print
-            except (KeyboardInterrupt, EOFError):
-                print
-                break
+            lex.input(raw_input("lex> ").replace("!\\n", "\n") + "\n")
+            for tok in iter(lex.token, None):
+                if len(tok.type) == 1:
+                    print "'" + tok.type + "'",
+                else:
+                    print "|" + tok.type + "|",
+            print
+    except (KeyboardInterrupt, EOFError):
+        print
+
+if __name__ == "__main__":
+    _test()

@@ -3,11 +3,10 @@
 class OrObject(object):
     overrides = {}
 
-    def __init__(self, name="", classobj=None):
+    def __init__(self, name="[anon]", classobj=None):
         self.dict = {}
 
-        if name:
-            self.set("$$name", name)
+        self.set("$$name", name)
         if classobj:
             self.set("$$class", classobj)
 

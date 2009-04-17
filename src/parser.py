@@ -1,221 +1,81 @@
 #!/usr/bin/env python
 
-# A warning to all who wish to edit this module:
-# Mostly, what I've done here makes sense
-# It might even be what you would do
-# But in order to get `a.b, c[0] += 1, 4` to parse...
-# I had to sell my soul to the devil
-# Careful modifying the rules loc and locs
-# Or the loch ness monster will have your soul
-#                               -- Pavel
-
-
 import ply.yacc as yacc
 from lexer import tokens, literals
-import terminal
 
-class ParseError(Exception): pass
-
-term = terminal.TerminalController()
 start = "statements"
+precedence = (
+    ("left", "OR"),
+    ("left", "AND"),
+    ("right", "NOT"),
+    ("left", "IN", "|", "NOTIN"),
+    ("left", "IS", "ISNT"),
+    ("left", "LE", "GE", "NE", "EQ", "<", ">"),
+    ("left", "LTLT", "GTGT"),
+    ("left", "-", "+"),
+    ("left", "SLASHSLASH", "MOD", "/", "*"),
+    ("left", "PLUSPLUS", "MINUSMINUS"),
+    ("right", "UMINUS"),
+    ("right", "^"),
+    ("left", ".", "(", ")", "[", "]"),
+)
+
+def p_string(p):
+    """string : STRING string
+              | STRING"""
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[2]
 
 def p_primitive(p):
     """primitive : DEC
-                 | STRING
                  | INT
                  | NIL
                  | BOOL
                  | INF"""
     p[0] = ["PRIMITIVE", p[1]]
 
-def p_primitive_IDENT(p):
-    """ident : IDENT"""
-    p[0] = ["IDENT", p[1]]
+def p_primitive_str(p):
+    """primitive : string"""
     
-def p_literal_list(p):
-    """literal : '[' list_items ']'
-               | '[' list_items ',' ']'
-               | '[' ']'"""
+    p[0] = ["STRING", p[1]]
 
-    if len(p) == 3:
-        p[0] = ["LIST", []]
-    else:
-        p[0] = ["LIST", p[2]]
+def p_expr_bin(p):
+    """expr : expr OR expr
+            | expr AND expr
+            | expr IN expr
+            | expr '|' expr
+            | expr IS expr
+            | expr LE expr
+            | expr '<' expr
+            | expr '>' expr
+            | expr GE expr
+            | expr NE expr
+            | expr EQ expr
+            | expr LTLT expr
+            | expr GTGT expr
+            | expr '+' expr
+            | expr '-' expr
+            | expr '*' expr
+            | expr '/' expr
+            | expr SLASHSLASH expr
+            | expr MOD expr
+            | expr '^' expr"""
 
-def p_literal_alist(p):
-    """literal : '[' hash_items ']'
-               | '[' hash_items ',' ']'"""
-    p[0] = ["TABLE", p[2]]
+    p[0] = ["OP", p[2].upper(), p[1], p[3]]
 
-def p_literal_set(p):
-    """literal : '{' list_items '}'
-               | '{' list_items ',' '}'"""
-    p[0] = ["SET", p[2]]
+def p_lvalue_attr(p):
+    """lvalue : expr '.' IDENT"""
 
-def p_literal_dict(p):
-    """literal : '{' hash_items '}'
-               | '{' hash_items ',' '}'
-               | '{' '}'"""
-    if len(p) == 3:
-        p[0] = ["DICT", []]
-    else:
-        p[0] = ["DICT", p[2]]
+    p[0] = ["GETATTR", p[1], p[3]]
 
-def p_list_items(p):
-    """list_items : list_items ',' expression
-                  | expression"""
-
-    if len(p) == 2:
-        p[0] = [p[1]]
-    else:
-        p[0] = p[1] + [p[3]]
-
-def p_hash_items(p):
-    """hash_items : hash_items ',' primitive ':' expression
-                  | hash_items ',' ident ':' expression
-                  | primitive ':' expression
-                  | ident ':' expression"""
-
-    if len(p) < 5:
-        p[0] = [(p[1], p[3])]
-    else:
-        p[0] = p[1] + [(p[3], p[5])]
-
-def p_test_or(p):
-    """test_or : test_or OR test_and
-               | test_and"""
-
-    if len(p) == 4:
-        p[0] = ["OP", "OR", p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_and(p):
-    """test_and : test_and AND test_not
-                | test_not"""
-
-    if len(p) == 4:
-        p[0] = ["OP", "AND", p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_not(p):
-    """test_not : NOT test_in
-                | test_in"""
-
-    if len(p) == 3:
-        p[0] = ["OP", "NOT", p[2]]
-    else:
-        p[0] = p[1]
-
-def p_test_in(p):
-    """test_in : test_in IN test_type
-               | test_in NOT IN test_type
-               | test_in '|' test_type
-               | test_type"""
-
-    if len(p) == 4:
-        p[0] = ["OP", p[2], p[1], p[3]]
-    elif len(p) == 5:
-        p[0] = ["OP", "NOT", ["OP", "IN", p[1], p[4]]]
-    else:
-        p[0] = p[1]
-
-def p_test_type(p):
-    """test_type : test_type IS test_comp
-                 | test_type IS NOT test_comp
-                 | test_comp"""
-
-    if len(p) == 4:
-        p[0] = ["OP", "IS", p[1], p[3]]
-    elif len(p) == 5:
-        p[0] = ["OP", "NOT", ["OP", "IS", p[1], p[4]]]
-    else:
-        p[0] = p[1]
-
-def p_test_comp(p):
-    """test_comp : test_comp '<' test_io
-                 | test_comp LE test_io
-                 | test_comp '>' test_io
-                 | test_comp GE test_io
-                 | test_comp NE test_io
-                 | test_comp EQ test_io
-                 | test_io"""
-
-    if len(p) == 4:
-        p[0] = ["OP", p[2], p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_io(p):
-    """test_io : test_io LTLT test_pm
-               | test_io GTGT test_pm
-               | test_pm"""
-
-    if len(p) == 4:
-        p[0] = ["OP", p[2], p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_pm(p):
-    """test_pm : test_pm '+' test_mdmf
-               | test_pm '-' test_mdmf
-               | test_mdmf"""
-
-    if len(p) == 4:
-        p[0] = ["OP", p[2], p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_mdmf(p):
-    """test_mdmf : test_mdmf '*' test_un
-                 | test_mdmf '/' test_un
-                 | test_mdmf SLASHSLASH test_un
-                 | test_mdmf MOD test_un
-                 | test_un"""
-
-    if len(p) > 2:
-        p[0] = ["OP", p[2], p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_un(p):
-    """test_un : loc PLUSPLUS
-               | loc MINUSMINUS
-               | '-' test_un
-               | '+' test_un
-               | test_exp"""
-
-    if len(p) == 3 and p[2] in ("++", "--"):
-        p[0] = ["OP", p[2], p[1]]
-    elif p[1] in ("+", "-"):
-        p[0] = ["OP", "U"+p[1], p[2]]
-    else:
-        p[0] = p[1]
-
-def p_test_exp(p):
-    """test_exp : test_call '^' test_exp
-                | test_call"""
-
-    if len(p) == 4:
-        p[0] = ["OP", "^", p[1], p[3]]
-    else:
-        p[0] = p[1]
-
-def p_test_call(p):
-    """test_call : test_call_strong
-                 | test_attr_strong
-                 | test_idx_strong
-                 | test_basis"""
-
-    p[0] = p[1]
-
-
-def p_test_call_strong(p):
-    """test_call_strong : test_call '(' arglist ')'
-                        | test_call '(' arglist ',' ')'"""
+def p_lvalue_call(p):
+    """lvalue : expr '(' arglist ')'
+              | expr '(' arglist ',' ')'"""
     
-    p[0] = ["CALL", p[1]] + p[3]    
+    p[0] = ["CALL", p[1]] + p[3]
+
 def p_arglist(p):
     """arglist : arglist ',' arg
                | arg
@@ -229,49 +89,29 @@ def p_arglist(p):
         p[0] = p[1] + [p[3]]
 
 def p_arg_expr(p):
-    """arg : expression"""
+    """arg : expr"""
     p[0] = p[1]
 
 def p_arg_kw(p):
-    """arg : IDENT EQOP expression"""
+    """arg : IDENT ASSIGN expr"""
     if p[2] != "=":
         raise SyntaxError("Dude, what the fuck are you doing?!")
     p[0] = ["KW", p[1], p[3]]
 
 def p_arg_mult(p):
-    """arg : '*' expression"""
+    """arg : '*' expr"""
     p[0] = ["UNWRAP", p[2]]
 
 def p_arg_kwmult(p):
-    """arg : '*' '*' expression"""
+    """arg : '*' '*' expr"""
     p[0] = ["UNWRAPKW", p[3]]
 
-# No, you don't want to know
-def p_test_attr_strong(p):
-    """test_attr_strong : test_call '.' IDENT"""
+def p_lvalue_index(p):
+    """lvalue : expr '[' index ']'
+              | expr '[' index ',' ']'"""
 
-    p[0] = ["GETATTR", p[1], p[3]]
+    p[0] = ["OP", "GETINDEX", p[1], p[3]]
 
-def p_test_idx_strong(p):
-    """test_idx_strong : test_call '[' index ']'
-                       | test_call '[' index ',' ']'
-                       | test_call literal
-                       | test_basis literal
-                       | ident literal"""
-
-    if len(p) == 2 and p[2][0] != "LIST":
-        raise SyntaxError("SyntaxError", "WTF are you doing there?!")
-    
-    if len(p) == 3:
-        g = p[2][1]
-        if len(g) == 1:
-            g = g[0]
-        p[0] = ["OP", "GETINDEX", p[1], g]
-    else:
-        if len(p[3]) == 1:
-            p[3] = p[3][0]
-        p[0] = ["OP", "GETINDEX", p[1], p[3]]
-    
 def p_index(p):
     """index : index ',' indice
              | indice"""
@@ -282,24 +122,24 @@ def p_index(p):
         p[0] = p[1] + [p[3]]
 
 def p_indice3(p):
-    """indice : expression ':' expression ':' expression
-              | ':' expression ':' expression
-              | expression ':' ':' expression
-              | ':' ':' expression"""
+    """indice : expr ':' expr ':' expr
+              | ':' expr ':' expr
+              | expr ':' ':' expr
+              | ':' ':' expr"""
     
-    p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], ["PRIMITIVE", ["INT", "-1", 10]]]
     if len(p) == 6:
-        p[1] = p[1]
-        p[2] = p[3]
+        p[0] = ["SLICE", p[1], p[3], p[5]]
     elif len(p) == 5 and p[1] == ":":
-        p[2] = p[2]
+        p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], p[2], p[4]]
     elif len(p) == 5:
-        p[1] = p[1]
+        p[0] = ["SLICE", p[1], ["PRIMITIVE", ["INT", "-1", 10]], p[4]]
+    else:
+        p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], ["PRIMITIVE", ["INT", "-1", 10]], p[3]]
     
 def p_indice2(p):
-    """indice : expression ':' expression
-              | ':' expression
-              | expression ':'
+    """indice : expr ':' expr
+              | ':' expr
+              | expr ':'
               | ':'"""
     
     if len(p) == 4:
@@ -312,7 +152,7 @@ def p_indice2(p):
         p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], ["PRIMITIVE", ["INT", "-1", 10]]]
 
 def p_indice(p):
-    """indice : expression
+    """indice : expr
               | DOTDOTDOT
               |"""
     
@@ -321,121 +161,167 @@ def p_indice(p):
     else:
         p[0] = None
 
-def p_test_basis(p):
-    """test_basis : primitive
-                  | literal
-                  | ident
-                  | fn
-                  | class"""
+
+def p_expr_kernel(p):
+    """expr : kernel"""
 
     p[0] = p[1]
 
-def p_test_basis_paren(p):
-    """test_basis : '(' expression ')'"""
+def p_expr_bin_not1(p):
+    """expr : expr NOT IN expr %prec NOTIN"""
 
-    p[0] = p[2]
+    p[0] = ["OP", "NOT", ["OP", "IN", p[1], p[4]]]
 
-def p_expression_test(p):
-    """expression : test_or"""
+def p_expr_bin_not2(p):
+    """expr : expr ISNT expr"""
 
-    p[0] = p[1]
+    p[0] = ["OP", "NOT", ["OP", "IS", p[1], p[3]]]
 
-# Rules that end in _s are statements
+def p_expr_un_l1(p):
+    """expr : NOT expr"""
 
-def p_statement(p):
-    """statement : expression
-                 | var_s
-                 | flow_s
-                 | assert_s
-                 | block_s
-                 | import_s
-                 | assignment
-                 | declaration
-                 | PROCDIR
-                 | PROCBLOCK
-                 | DOTDOTDOT"""
-    
-    if p[1] == "...":
-        p[0] = ["DOTDOTDOT"]
+    p[0] = ["OP", "NOT", p[2]]
+
+def p_expr_un_l2(p):
+    """expr : '-' expr %prec UMINUS
+            | '+' expr %prec UMINUS"""
+
+    p[0] = ["OP", "U"+p[1], p[2]]
+
+def p_expr_un_r(p):
+    """expr : expr PLUSPLUS
+            | expr MINUSMINUS"""
+
+    p[0] = ["OP", p[2], p[1]]
+
+def p_list_items(p):
+    """list_items : list_items ',' expr
+                  | expr"""
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_hash_items(p):
+    """hash_items : hash_items ',' expr ':' expr
+                  | expr ':' expr"""
+    if len(p) == 4:
+        p[0] = [(p[1], p[3])]
     else:
         p[0] = p[1]
 
-def p_assignment_single(p):
-    """assignment : loc EQOP expression"""
-    
-    t = ["ASSIGN1", p[1], p[3], p[2]]
-    
-    if p[2] != "=":
-        s = p[1][:]
-        if type(s) == type(""):
-            s = ["IDENT", s]
-        elif s[0] == "SETATTR":
-            s[0] = "GETATTR"
-        elif s[0] == "SETINDEX":
-            s[0] = "GETINDEX"
-    
-        t[2] = ["OP", p[2][:-1], s, p[3]]
-    
-    p[0] = t
+def p_lvalue_ident(p):
+    """lvalue : IDENT"""
 
-def p_assignment_soul_sold(p):
-    """assignment : loc ',' assignment ',' expression"""
+    p[0] = ["IDENT", p[1]]
+
+def p_kernel_expr(p):
+    """kernel : '(' expr ')'"""
+
+    p[0] = p[2]
+    
+def h_loc(p):
+    if p[0] == "IDENT":
+        return p[1]
+    elif p[0] == "OP" and p[1] == "GETINDEX":
+        return ["SETINDEX", p[2], p[3]]
+    elif p[0] == "GETATTR":
+        return ["SETATTR", p[1], p[2]]
+    else:
+        raise SyntaxError("You're assigning that to WHAT?!")
+
+def p_assignment_single(p):
+    """assignment : lvalue EQOP expr
+                  | lvalue ASSIGN expr"""
+
+    var = h_loc(p[1])
+    p[0] = ["ASSIGN1", var, p[3], p[2]]
+
+def p_assignment_many(p):
+    """assignment : lvalue ',' assignment ',' expr"""
+
+    var = h_loc(p[1])
 
     if p[3][0] == "ASSIGN1":
-        p[0] = [p[3][3], [p[1], p[3][1]], [p[5], p[3][2]]]
+        p[0] = [p[3][3], [var, p[3][1]], [p[3][2], p[5]]]
     else:
-        p[3][1].insert(0, p[1])
+        p[3][1].insert(0, var)
         p[3][2].append(p[5])
         p[0] = p[3]
 
-def p_declaration(p):
-    """declaration : ident assignment"""
+# There used to be variable type declarations;
+# no more. Multiple dispatch can work without
+# them. So let's leave oranj as simple as can
+# be.
 
-    p[0] = ["DECLARE", p[1], p[2]]
-
-def p_var_s(p):
-    """var_s : DEL locs
-             | EXTERN idents"""
-
-    p[0] = [p[1].upper()] + p[2]
-
-def p_idents(p):
-    """idents : idents ',' IDENT
-              | IDENT"""
+def p_many_exprs(p):
+    """many_exprs : many_exprs ',' expr
+                  | expr"""
 
     if len(p) == 2:
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
+
+def p_many_lvalues(p):
+    """many_lvalues : many_lvalues ',' lvalue
+                    | lvalue"""
+
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_many_idents(p):
+    """many_idents : many_idents ',' IDENT
+                   | IDENT"""
+
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_del_s(p):
+    """del_s : DEL many_lvalues"""
+
+    p[0] = ["DEL"] + map(h_delloc, p[2])
+
+def h_delloc(p):
+    if p[0] == "IDENT":
+        return p[1]
+    elif p[0] == "OP" and p[1] == "GETINDEX":
+        return ["DELINDEX", p[2], p[3]]
+    elif p[0] == "GETATTR":
+        return ["DELATTR", p[1], p[2]]
+    else:
+        raise SyntaxError("You're deleting WHAT?!")    
+
+def p_extern_s(p):
+    """extern_s : EXTERN many_idents"""
+    p[0] = ["EXTERN"] + map(h_identonly, p[2])
 
 def p_flow_s(p):
-    """flow_s : BREAK flow_item
-              | CONTINUE flow_item
-              | RETURN comma_list
-              | RETURN comma_list ','
-              | THROW flow_item
-              | YIELD comma_list
-              | YIELD comma_list ','"""
+    """flow_s : BREAK expr
+              | BREAK
+              | CONTINUE expr
+              | CONTINUE
+              | THROW expr
+              | THROW
+              | RETURN many_exprs
+              | RETURN many_exprs ','
+              | YIELD many_exprs
+              | YIELD many_exprs ','"""
 
-    p[0] = [p[1].upper(), p[2]]
-
-def p_flow_item(p):
-    """flow_item : expression
-                 |"""
-
-    if len(p) == 2:
-        p[0] = p[1]
+    if len(p) == 3:
+        p[0] = [p[1].upper(), p[2]]
     else:
-        p[0] = None
+        p[0] = [p[1].upper(), None]
 
-def p_comma_list(p):
-    """comma_list : comma_list ',' expression
-                  | expression"""
-    
-    if len(p) == 2:
-        p[0] = [p[1]]
+def h_identonly(p):
+    if p[0] == "IDENT":
+        return p[1]
     else:
-        p[0] = p[1] + [p[3]]
+        raise SyntaxError("Can only make variable (IDENT) external")
 
 def p_import_s(p):
     """import_s : IMPORT import_items
@@ -444,23 +330,23 @@ def p_import_s(p):
     if len(p) == 3:
         p[0] = [p[1], p[2]]
     else:
+        if p[2][-1] == "*":
+            raise SyntaxError("Can only use 'import ... as ...' with single variable")
         p[0] = [p[1], p[2], p[4]]
 
 def p_import_items(p):
-    """import_items : IDENT '.' import_items
-                    | IDENT
-                    | '*'"""
+    """import_items : import_items '.' IDENT
+                    | import_items '.' '*'
+                    | IDENT"""
 
     if len(p) == 4:
-        p[0] = [p[1]] + p[3]
-    elif p[1] != "*":
-        p[0] = [p[1]]
+        p[0] = p[1] + [p[3]]
     else:
-        p[0] = ["* ANY"]
+        p[0] = [p[1]]
 
 def p_assert_s(p):
-    """assert_s : ASSERT expression
-                | ASSERT expression ',' expression"""
+    """assert_s : ASSERT expr
+                | ASSERT expr ',' expr"""
 
     if len(p) == 3:
         p[0] = ["ASSERT", p[2]]
@@ -472,11 +358,6 @@ def p_block_s(p):
                | while_s
                | for_s
                | try_s"""
-#               | with_s
-#               | class_s
-#               | fn_s"""
-
-#TODO: with, class, and fn statements
 
     p[0] = p[1]
 
@@ -486,13 +367,13 @@ def p_if_s(p):
     p[0] = p[1] + p[2] + p[3]
 
 def p_if_if(p):
-    """if_if : IF expression block"""
+    """if_if : IF expr block"""
 
     p[0] = ["IF", p[2], p[3]]
 
 def p_if_elif(p):
-    """if_elifs : ELIF expression block if_elifs
-                |"""
+    """if_elifs : ELIF expr block if_elifs
+                | """
 
     if len(p) == 1:
         p[0] = []
@@ -501,7 +382,7 @@ def p_if_elif(p):
 
 def p_else(p):
     """else : ELSE block
-            |"""
+            | """
 
     if len(p) == 1:
         p[0] = []
@@ -510,16 +391,15 @@ def p_else(p):
 
 def p_block(p):
     """block : '{' statements '}'
-             | literal"""
+             | NEWLINE"""
     
     if len(p) == 4:
         p[0] = p[2]
     else:
-        if p[1][0] not in ("DICT", "SET"): raise SyntaxError("That's a " + p[1][0].lower() + ", not a block.")
-        p[0] = p[1][1]
+        p[0] = []
 
 def p_while_s(p):
-    """while_s : WHILE expression block else
+    """while_s : WHILE expr block else
                | WHILE block else"""
 
     if len(p) == 5:
@@ -528,9 +408,11 @@ def p_while_s(p):
         p[0] = ["WHILE", None, p[2]] + p[3]
 
 def p_for_s(p):
-    """for_s : FOR locs IN comma_list block else"""
+    """for_s : FOR many_lvalues IN many_exprs block else"""
 
-    p[0] = ["FOR", (p[2], p[4]), p[5]] + p[6]
+    vars = map(h_loc, p[2])
+
+    p[0] = ["FOR", (vars, p[4]), p[5]] + p[6]
 
 def p_try_s(p):
     """try_s : try_try try_catch else"""
@@ -543,8 +425,8 @@ def p_try_try(p):
     p[0] = ["TRY", p[2]]
 
 def p_try_catch(p):
-    """try_catch : CATCH comma_list block try_catch
-                 | CATCH comma_list AS ident block try_catch
+    """try_catch : CATCH many_exprs block try_catch
+                 | CATCH many_exprs AS lvalue block try_catch
                  | CATCH block try_catch
                  | """
 
@@ -553,201 +435,73 @@ def p_try_catch(p):
     elif len(p) == 5:
         p[0] = ["CATCH", p[2], None, p[3]] + p[4]
     elif len(p) == 7:
-        p[0] = ["CATCH", p[2], p[4], p[5]] + p[6]
+        var = h_loc(p[4])
+        p[0] = ["CATCH", p[2], var, p[5]] + p[6]
     else:
         p[0] = ["CATCH", [], None, p[2]] + p[3]
 
+def p_statement(p):
+    """statement : expr
+                 | assignment
+                 | del_s
+                 | extern_s
+                 | flow_s
+                 | import_s
+                 | assert_s
+                 | block_s"""
+    
+    p[0] = p[1]
+
 def p_statements(p):
-    """statements : statements NEWLINE
-                  | statements NEWLINE statement
-                  | statement
+    """statements : statements NEWLINE statement
+                  | statement NEWLINE
                   | """
-
+    
     if len(p) == 1:
         p[0] = []
-    elif len(p) in (2, 3):
+    elif len(p) == 3:
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
 
-def p_rettype(p):
-    """rettype : IDENT
-               | NIL"""
+def p_kernel(p): # MUST go on bottom to resolve r/r conflict correctly
+    """kernel : primitive
+              | list
+              | dict
+              | lvalue"""
     
-    p[0] = p[1] if p[1] != None else "nil"
+    p[0] = p[1]
 
-def p_fn1(p):
-    """fn : FN STRING '(' arg_defs ')' rettype block"""
-    p[0] = [["FN", p[4], p[7], p[2][1], p[6]]]
-
-def p_fn2(p):
-    """fn : FN '(' arg_defs ')' rettype block"""
-    p[0] = [["FN", p[3], p[6], "", p[5]]]
-
-def p_fn3(p):
-    """fn : FN STRING '(' arg_defs ')' block"""
-    p[0] = [["FN", p[4], p[6], p[2][1], ""]]
-
-def p_fn4(p):
-    """fn : FN '(' arg_defs ')' block"""
-    p[0] = [["FN", p[3], p[5], "", ""]]
-
-def p_arg_defs(p):
-    """arg_defs : arg_defs ',' arg_def
-                | arg_def
-                | """
-
-    if len(p) == 1:
-        p[0] = []
-    elif len(p) == 2:
-        p[0] = [p[1]]
+def p_list(p):
+    """list : '[' ']'
+            | '[' list_items ']'
+            | '[' list_items ',' ']'"""
+    if len(p) == 3:
+        p[0] = ["LIST", []]
     else:
-        p[0] = p[1] + [p[3]]
+        p[0] = ["LIST", p[2]]
 
-def p_class(p):
-    """class : CLASS '(' comma_list ')' IS idents block
-             | CLASS '(' ')' IS idents block
-             | CLASS IS idents block
-             | CLASS '(' comma_list ')' block
-             | CLASS '(' ')' block
-             | CLASS block"""
+def p_dict(p):
+    """dict : '[' hash_items ']'
+            | '[' hash_items ',' ']'"""
+    p[0] = ["DICT", p[2]]
 
-    if len(p) == 8:
-        p[0] = ["CLASS", "", p[3], p[6], p[7]]
-    elif len(p) == 7:
-        p[0] = ["CLASS", "", [], p[5], p[6]]
-    elif len(p) == 5:
-        if p[2] == "is":
-            p[0] = ["CLASS", "", [], p[3], p[4]]
-        else:
-            p[0] = ["CLASS", "", [], [], p[4]]
-    elif len(p) == 6:
-        p[0] = ["CLASS", "", p[3], [], p[5]]
-    else:
-        p[0] = ["CLASS", "", [], [], p[2]]
+def p_error(p):
+    print "FAIL"
 
-def p_class_doc(p):
-    """class : CLASS STRING '(' comma_list ')' IS idents block
-             | CLASS STRING '(' ')' IS idents block
-             | CLASS STRING IS idents block
-             | CLASS STRING '(' comma_list ')' block
-             | CLASS STRING '(' ')' block
-             | CLASS STRING block"""
-
-    if len(p) == 9:
-        p[0] = ["CLASS", p[2], p[4], p[7], p[8]]
-    elif len(p) == 8:
-        p[0] = ["CLASS", p[2], [], p[6], p[7]]
-    elif len(p) == 6:
-        if p[3] == "is":
-            p[0] = ["CLASS", p[2], [], p[4], p[5]]
-        else:
-            p[0] = ["CLASS", p[2], [], [], p[5]]
-    elif len(p) == 7:
-        p[0] = ["CLASS", p[2], p[4], [], p[6]]
-    else:
-        p[0] = ["CLASS", p[2], [], [], p[3]]
-
-def p_arg_def_expr(p):
-    """arg_def : expression
-               | IDENT expression"""
-    p[0] = ["ARG"] + p[1:]
-
-def p_arg_def_kw(p):
-    """arg_def : IDENT '=' expression
-               | IDENT IDENT '=' expression"""
-    p[0] = ["ARG"] + p[1:]
-
-def p_arg_def_mult(p):
-    """arg_def : '*' IDENT"""
-    p[0] = ["UNWRAPABLE", p[2]]
-
-def p_arg_def_kwmult(p):
-    """arg_def : '*' '*' IDENT"""
-    p[0] = ["UNWRAPABLEKW", p[3]]
-
-# I've heard that making this here might fix things
-def p_loc(p):
-    """loc : ident
-           | test_attr_strong
-           | test_idx_strong"""
-
-    if p[1][0] == "IDENT":
-        p[0] = p[1][1]
-    elif p[1][0] == "OP" and p[1][1] == "GETINDEX":
-        p[0] = ["SETINDEX", p[1][2], p[1][3]]
-    elif p[1][0] == "GETATTR":
-        p[0] = ["SETATTR", p[1][1], p[1][2]]
-    else:
-        raise SyntaxError("SyntaxError", "You're assigning that to WHAT?!")
-
-def p_locs(p):
-    """locs : locs ',' loc
-            | loc"""
-
-    if len(p) == 2:
-        p[0] = [p[1]]
-    else:
-        p[0] = p[1] + [p[3]]
-
-    
-def p_error(t):
-    try:
-        e = Exception("SyntaxError (line %d, col %d)" % (t.lineno, getcol(t)), "The %s confuses me" % repr(t.value).lower())
-    except:
-        raise
-        e = Exception("SyntaxError", "No idea where though.")
-    
-    handle_error(e)
+def parse(s):
+    return yacc.parse(s)
 
 yacc.yacc()
 
-def getcol(tok):
-    l = in_put.rfind("\n", 0, tok.lexpos)
-    if l < 0:
-        l = 0
-    return (tok.lexpos - l) + 1
-
-def parse(s):
-    global errors
-    errors = 0
-    global in_put
-    in_put = s
+def _test():
+    import pprint # Because parse trees get hairy
     
     try:
-        r = yacc.parse(s)
-    except SyntaxError, e:
-        handle_error(e)
-    
-    if errors: raise ParseError("Parsing error occurred")
-    return r
-
-def handle_error(e):
-    global errors
-    print term.render("${RED}%s${NORMAL}" % e.args[0] + ("" if len(e.args) == 1 else (": " + " ".join(e.args[1:]))))
-    errors += 1
-
-def _test(s):
-    global errors
-    y = parse(s)
-    
-    if type(y) == type([]) and len(y) > 1:
-        errors += 1
-
-    if not errors:
-        pprint.pprint(y[0])
+        while True:
+            pprint.pprint(parse(raw_input("parse> ") + "\n"))
+    except (KeyboardInterrupt, EOFError):
+        print
 
 if __name__ == "__main__":
-    import pprint # Because parse trees get hairy
-    import sys
-    
-    if len(sys.argv) == 2:
-        y = parse(open(sys.argv[1]).read())
-    else:
-        while True:
-            try:
-                _test(raw_input("parse> ") + "\n")
-            except (EOFError, KeyboardInterrupt):
-                break
-            except ParseError:
-                continue
+    _test()

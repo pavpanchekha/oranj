@@ -12,7 +12,7 @@ class ODict(odict.OrderedDict):
     def topy(self): return self
     
     def __str__(self, fn=str):
-        return "[%s]" % ", ".join(
+        return "{%s}" % ", ".join(
             map(lambda x: ": ".join(map(fn, x)),
                 self.items()))
     

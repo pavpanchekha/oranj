@@ -5,6 +5,8 @@ from objects.function import Function
 from objects.number import Number
 from objects.file import File
 from objects.inheritdict import InheritDict
+from objects.ordict import OrDict
+from objects.orddict import ODict
 import objects.console as console
 import objects.exception as exception
 import types
@@ -15,6 +17,9 @@ builtin = InheritDict()
 builtin.update({
     "int": expose(lib.toint),
     "num": expose(Number),
+    "dict": expose(OrDict),
+    "odict": expose(ODict),
+    "set": expose(set),
     
     "io": expose(console.io),
     "file": expose(File),

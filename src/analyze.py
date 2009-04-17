@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import parser
-import sys
-import pprint
 
 #import runtime
 
@@ -65,34 +63,25 @@ def check_break_continue(tree, lstack=[]):
 #TODO: Check types
 
 def parse(t):
-    try:
-        p = parser.parse(t)
-    except:
-        raise
+    p = parser.parse(t)
 
     get_augass(p)
     check_break_continue(p)
 
     return p
 
-def _test(s):
-    global errors
-    y = parse(s)
+def _test_run(s):
+    import pprint
     
-    if type(y) == type([]) and len(y) > 1:
-        errors += 1
+    global errors
+    pprint.pprint(parse(s))
 
-    if errors:
-        print term.render("${RED}${BOLD}%d error%s" % (errors, "s" if errors > 1 else ""))
-    else:
-        pprint.pprint(y[0])
+def _test():
+    try:
+        while True:
+            _test_run(raw_input("analyze> ") + "\n")
+    except (EOFError, KeyboardInterrupt):
+        print
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        y = parse(open(sys.argv[1]).read())
-    else:
-        try:
-            while True:
-                _test(raw_input("parse> "))
-        except (EOFError, KeyboardInterrupt):
-            print
+    _test()

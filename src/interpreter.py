@@ -112,12 +112,7 @@ class Interpreter(object):
             exec body in glob, {}
 
     def hPRIMITIVE(self, val, *others):
-        if val[0] == "STRING":
-            body, flags = val[1:]
-            if "r" not in flags:
-                body = eval('"' + body + '"')
-            return OrObject.from_py(body)
-        elif val[0] in ("DEC", "INT"):
+        if val[0] in ("DEC", "INT"):
             return number.Number(*val[1:])
         elif val[0] == "BOOL":
             return OrObject.from_py(val[1])
@@ -125,6 +120,15 @@ class Interpreter(object):
             return OrObject.from_py(None)
         elif val[0] == "INF":
             return number.inf
+
+    def hSTRING(self, vals):
+        strs = []
+        for val in vals:
+            body, flags = val[1:]
+            if "r" not in flags:
+                body = eval('"' + body + '"')
+            strs.append(body)
+        return OrObject.from_py("".join(strs))
 
     def hASSIGN(self, idents, vals):
         for i, v in zip(idents, vals):
@@ -136,6 +140,7 @@ class Interpreter(object):
         if type(ident) == type(""):
             self.curr[ident] = val
             if val.get("$$name") == "[anon]":
+                print val.set, val.dict
                 val.set("$$name", ident)
         elif ident[0] == "SETATTR":
             self.run(ident[1]).set(ident[2], val)
@@ -265,26 +270,26 @@ class Interpreter(object):
                 return
                 
     def hCALL(self, val, *args):
-            a = []
-            kw = {}
-            
-            for i in args:
-                if i[0] == "UNWRAPKW":
-                    kw.update(self.run(i[1]))
-                elif i[0] == "KW":
-                    kw[self.run(i[1])] = self.run(i[2])
-                elif i[0] == "UNWRAP":
-                    a.extend(self.run(i[1]).topy())
-                else:
-                    a.append(self.run(i))
-
-            func = self.run(val)
-
-            r = intplib.call(func, *a)
-            if not isinstance(r, OrObject):
-                return OrObject.from_py(r)
+        a = []
+        kw = {}
+        
+        for i in args:
+            if i[0] == "UNWRAPKW":
+                kw.update(self.run(i[1]))
+            elif i[0] == "KW":
+                kw[self.run(i[1])] = self.run(i[2])
+            elif i[0] == "UNWRAP":
+                a.extend(self.run(i[1]).topy())
             else:
-                return r
+                a.append(self.run(i))
+        
+        func = self.run(val)
+
+        r = intplib.call(func, *a, **kw)
+        if not isinstance(r, OrObject):
+            return OrObject.from_py(r)
+        else:
+            return r
 
     def hTRY(self, block, *catches):
         try:

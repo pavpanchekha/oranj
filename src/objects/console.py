@@ -78,7 +78,7 @@ class Console(OrObject):
         self.fout.write(str(end))
 
     def error(self, *args):
-        self.ferr.write("\n".join(map(repr, args)) + "\n")
+        self.ferr.write("\n".join(map(str, args)) + "\n")
 
 class IO(OrObject):
     def __init__(self, **binds):
