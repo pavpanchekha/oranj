@@ -79,7 +79,7 @@ def is_(obj, cls):
         except TypeError:
             pass
 
-    if obj.has("$$class"):
+    if hasattr(obj, "has") and obj.has("$$class"):
         return obj.get("$$class") == cls
     
     return r

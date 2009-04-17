@@ -140,7 +140,6 @@ class Interpreter(object):
         if type(ident) == type(""):
             self.curr[ident] = val
             if val.get("$$name") == "[anon]":
-                print val.set, val.dict
                 val.set("$$name", ident)
         elif ident[0] == "SETATTR":
             self.run(ident[1]).set(ident[2], val)
@@ -153,8 +152,8 @@ class Interpreter(object):
             
         self.hASSIGN((idents, vals))
 
-    def hFN(self, args, block, doc, rettype):
-        return intplib.Function(self, args, block, doc, rettype)
+    def hFN(self, args, block, doc, tags):
+        return intplib.Function(self, args, block, doc, tags)
     
     def hRETURN(self, *args):
         args = map(self.run, args)
@@ -301,6 +300,10 @@ class Interpreter(object):
                         self.curr[catches[3*i+2][1]] = OrObject.from_py(e)
                     self.run(catches[3*i+3])
                     return
+            
+            if catches[-2] == "FINALLY":
+                self.run(catches[-1])
+            
             raise
 
     def hCLASS(self, doc, parents, tags, block):

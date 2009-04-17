@@ -346,7 +346,7 @@ def p_import_items(p):
 
 def p_assert_s(p):
     """assert_s : ASSERT expr
-                | ASSERT expr ',' expr"""
+                | ASSERT expr ',' string"""
 
     if len(p) == 3:
         p[0] = ["ASSERT", p[2]]
@@ -415,9 +415,9 @@ def p_for_s(p):
     p[0] = ["FOR", (vars, p[4]), p[5]] + p[6]
 
 def p_try_s(p):
-    """try_s : try_try try_catch else"""
+    """try_s : try_try try_catch else try_finally"""
 
-    p[0] = p[1] + p[2] + p[3]
+    p[0] = p[1] + p[2] + p[3] + p[4]
 
 def p_try_try(p):
     """try_try : TRY block"""
@@ -440,6 +440,131 @@ def p_try_catch(p):
     else:
         p[0] = ["CATCH", [], None, p[2]] + p[3]
 
+def p_try_finally(p):
+    """try_finally : FINALLY block
+                   | """
+    
+    if len(p) == 1:
+        p[0] = []
+    else:
+        p[0] = ["FINALLY", p[2]]
+
+# FUNCTION DEFS
+# The EBNF for a function def is
+# > fn_s : FN [string] ['(' arg_defs ')'] [IS many_idents] block
+# Due to the fact that there is no EBNF in Ply, we're getting 8 different
+# rules
+
+def p_fn1(p):
+    """fn : FN string '(' arg_defs ')' IS many_idents block"""
+    p[0] = [["FN", p[4], p[8], p[2], p[7]]]
+
+def p_fn2(p):
+    """fn : FN '(' arg_defs ')' IS many_idents block"""
+    p[0] = [["FN", p[3], p[7], "", p[6]]]
+
+def p_fn3(p):
+    """fn : FN string '(' arg_defs ')' block"""
+    p[0] = [["FN", p[4], p[6], p[2], []]]
+
+def p_fn4(p):
+    """fn : FN '(' arg_defs ')' block"""
+    p[0] = [["FN", p[3], p[5], "", []]]
+
+def p_fn5(p):
+    """fn : FN string IS many_idents block"""
+    p[0] = [["FN", [], p[5], p[2], p[4]]]
+
+def p_fn6(p):
+    """fn : FN IS many_idents block"""
+    p[0] = [["FN", [], p[4], "", p[3]]]
+
+def p_fn7(p):
+    """fn : FN string block"""
+    p[0] = [["FN", [], p[3], p[2], []]]
+
+def p_fn8(p):
+    """fn : FN block"""
+    p[0] = [["FN", [], p[2], "", []]]
+
+def p_arg_defs(p):
+    """arg_defs : arg_defs ',' arg_def
+                | arg_def
+                | """
+
+    if len(p) == 1:
+        p[0] = []
+    elif len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
+
+def p_arg_def_expr(p):
+    """arg_def : expr
+               | IDENT expr"""
+    p[0] = ["ARG"] + p[1:]
+
+def p_arg_def_kw(p):
+    """arg_def : IDENT '=' expr
+               | IDENT IDENT '=' expr"""
+    p[0] = ["ARG"] + p[1:]
+
+def p_arg_def_mult(p):
+    """arg_def : '*' IDENT"""
+    p[0] = ["UNWRAPABLE", p[2]]
+
+def p_arg_def_kwmult(p):
+    """arg_def : '*' '*' IDENT"""
+    p[0] = ["UNWRAPABLEKW", p[3]]
+
+# CLASS DEFINITIONS
+# The EBNF for a class def is very similar to that of a function def
+# class : CLASS [string] ['(' [many_exprs] ')'] [IS many_idents] block
+
+def p_class(p):
+    """class : CLASS '(' many_exprs ')' IS many_idents block
+             | CLASS '(' ')' IS many_idents block
+             | CLASS IS many_idents block
+             | CLASS '(' many_exprs ')' block
+             | CLASS '(' ')' block
+             | CLASS block"""
+
+    if len(p) == 8:
+        p[0] = ["CLASS", "", p[3], p[6], p[7]]
+    elif len(p) == 7:
+        p[0] = ["CLASS", "", [], p[5], p[6]]
+    elif len(p) == 5:
+        if p[2] == "is":
+            p[0] = ["CLASS", "", [], p[3], p[4]]
+        else:
+            p[0] = ["CLASS", "", [], [], p[4]]
+    elif len(p) == 6:
+        p[0] = ["CLASS", "", p[3], [], p[5]]
+    else:
+        p[0] = ["CLASS", "", [], [], p[2]]
+
+def p_class_doc(p):
+    """class : CLASS string '(' many_exprs ')' IS many_idents block
+             | CLASS string '(' ')' IS many_idents block
+             | CLASS string IS many_idents block
+             | CLASS string '(' many_exprs ')' block
+             | CLASS string '(' ')' block
+             | CLASS string block"""
+
+    if len(p) == 9:
+        p[0] = ["CLASS", p[2], p[4], p[7], p[8]]
+    elif len(p) == 8:
+        p[0] = ["CLASS", p[2], [], p[6], p[7]]
+    elif len(p) == 6:
+        if p[3] == "is":
+            p[0] = ["CLASS", p[2], [], p[4], p[5]]
+        else:
+            p[0] = ["CLASS", p[2], [], [], p[5]]
+    elif len(p) == 7:
+        p[0] = ["CLASS", p[2], p[4], [], p[6]]
+    else:
+        p[0] = ["CLASS", p[2], [], [], p[3]]
+
 def p_statement(p):
     """statement : expr
                  | assignment
@@ -448,18 +573,22 @@ def p_statement(p):
                  | flow_s
                  | import_s
                  | assert_s
-                 | block_s"""
+                 | block_s
+                 | PROCDIR
+                 | PROCBLOCK"""
     
     p[0] = p[1]
 
 def p_statements(p):
-    """statements : statements NEWLINE statement
+    """statements : statements NEWLINE statement NEWLINE
+                  | statements NEWLINE statement
                   | statement NEWLINE
+                  | statement
                   | """
     
     if len(p) == 1:
         p[0] = []
-    elif len(p) == 3:
+    elif len(p) <= 3:
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
@@ -468,7 +597,9 @@ def p_kernel(p): # MUST go on bottom to resolve r/r conflict correctly
     """kernel : primitive
               | list
               | dict
-              | lvalue"""
+              | lvalue
+              | fn
+              | class"""
     
     p[0] = p[1]
 

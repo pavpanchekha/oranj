@@ -7,7 +7,7 @@ class ReturnI(Exception): pass
 class Function(OrObject):
     class_name = "fn"
 
-    def __init__(self, intp, arglist=None, block=None, doc="", rettype=""):
+    def __init__(self, intp, arglist=None, block=None, doc="", tags=[]):
         if arglist is None:
             self.fn = intp
             OrObject.__init__(self, self.fn.__name__, Function)
@@ -17,10 +17,10 @@ class Function(OrObject):
             OrObject.__init__(self, "[anon]", Function)
             self.set("$$doc", doc)
             self.set("$$call", self.__call__)
+            self.set("$$tags", OrObject.from_py(tags))
             
             self.arglist = arglist
             self.realargs = len([True for i in arglist if i[0] == "ARG"])
-            self.rettype = rettype
             self.block = block
             self.intp = intp
             self.parcntx = self.intp.curr

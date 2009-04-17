@@ -16,7 +16,7 @@ class OrClass(OrObject):
             self.set("$$class", OrClass)
             self.set("$$doc", doc)
             self.set("$$call", self.__call__)
-            self.set("$$tags", tags)
+            self.set("$$tags", OrObject.from_py(tags))
             intp.cntx.append(self.dict)
 
             self.intp = intp
