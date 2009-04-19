@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from orobject import OrObject
 from function import Function
 import sys
@@ -26,7 +27,7 @@ class Console(OrObject):
 
     def output(self, arg):
         self.write(arg, sep="", end="")
-    
+
     def read(self, prompt="", valid_f=None, coerce_f=None):
         """
         Get user input, validate, and coerce it if necessary.
@@ -41,7 +42,7 @@ class Console(OrObject):
 
         if hasattr(prompt, "ispy") and prompt.ispy():
             prompt = prompt.topy()
-        
+
         self.fout.write(prompt)
         txt = self.fin.readline()[:-1]
 
@@ -49,13 +50,15 @@ class Console(OrObject):
             return txt
         elif coerce_f is None:
             try:
-                return valid_f(txt)
+                v = valid_f(txt)
+                assert v != NotImplemented
+                return v
             except:
                 print "Invalid input; please try again."
                 return input(prompt, valid_f, coerce_f)
         else:
             try:
-                valid_f(txt)
+                assert valid_f(txt) != NotImplemented
             except:
                 print "Invalid input; please try again."
                 return input(prompt, valid_f, coerce_f)
@@ -63,7 +66,7 @@ class Console(OrObject):
                 return coerce_f(txt)
 
     def write(self, *args, **kwargs):
-        
+
         p = {
             "sep": " ",
             "end": "\n"
@@ -94,7 +97,7 @@ class IO(OrObject):
         self.set("bind", Function(self.bind))
         self.set("register", Function(self.register))
         self.set("get", Function(self.get_reg))
-        
+
     def ispy(self): return False
     def topy(self): return NotImplemented
 
@@ -103,7 +106,7 @@ class IO(OrObject):
             key2 = key.topy()
         else:
             key2 = key
-        
+
         try:
             self.__curr = self.__bound[key2]
         except KeyError:
@@ -113,17 +116,17 @@ class IO(OrObject):
         if not v:
             v = s
             s = "[temp]"
-        
+
         if hasattr(s, "ispy") and s.ispy():
             s = s.topy()
-        
+
         self.__bound[s] = v
         self.bind(s)
 
     def get_reg(self, key):
         if hasattr(key, "ispy") and key.ispy():
             key = key.topy()
-        
+
         return self.__bound[key]
 
     def read(self, *args, **kwargs):
@@ -141,7 +144,7 @@ class IO(OrObject):
     def output(self, *args, **kwargs):
         self.__curr.get("$$output")(*args, **kwargs)
         return self
-    
+
     def __str__(self):
         return "<io bound to " + repr(self.__curr) + ">"
 

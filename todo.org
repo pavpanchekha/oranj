@@ -1,10 +1,4 @@
 
-* Parser
-** a ! b
-   Behavior:
-   a ! b -> b(a)
-   a ! b(...) -> b(a, ...)
-   a ! b() -> b(a)
 * Interpreter
 ** Cache links
    To implement extern with del:
@@ -15,14 +9,12 @@
    Probably as exceptions
 ** Implement import
    This'll be tricky
-** OrObjecting lists and tuples doesn't OrObjectify their elements
+** Make instance methods work
+   Damned self!
+** Make passing keyword arguments to user-defined functions work
 * Library
 ** globals / locals
 ** help
 ** vars
-** OO'd tuples don't work
-** why does io(6) not raise an error? What does it do?
-** coerce fails
 ** enumerate is broken
 ** filter does nothing
-** input broken

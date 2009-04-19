@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from objects.orobject import OrObject
 from objects.function import Function, ReturnI
@@ -81,7 +82,7 @@ def is_(obj, cls):
 
     if hasattr(obj, "has") and obj.has("$$class"):
         return obj.get("$$class") == cls
-    
+
     return r
 
 def call(obj, *args, **kwargs):
@@ -93,12 +94,12 @@ def call(obj, *args, **kwargs):
             for i in kwargs:
                 kwargs[i] = kwargs[i].topy()
             obj = obj.topy()
-            
+
             return OrObject.from_py(obj(*args, **kwargs))
         else:
             raise
             raise TypeError(str(obj) + " is not callable")
-        
+
 def getattr_(x, y):
     return OrObject.from_py(x.get(y))
 
@@ -112,7 +113,7 @@ getindex_ = simpleop(indexer, "getindex")
 
 op_names = {
     "+": add, "-": sub,
-    "*": mul, "/": div, "//": floor, "mod": mod,
+    "*": mul, "/": div, "//": floor, "MOD": mod,
     "^": exp,
     "|": divis,
     "OR": or_, "AND": and_, "NOT": not_,

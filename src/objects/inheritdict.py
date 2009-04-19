@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class InheritDict:
     def __init__(self, *parents):
         self.parents = parents
@@ -13,14 +14,14 @@ class InheritDict:
             for i in self.parents:
                 try:
                     a = i[key]
-                except (AttributeError, TypeError):
+                except (KeyError, TypeError):
                     pass
 
             try:
                 self[key] = a # Cache lookup
                 return a
             except NameError:
-                raise AttributeError("Key not in InheritDict: " + str(key))
+                raise KeyError("Key not in InheritDict: " + str(key))
 
     def __setitem__(self, key, value):
         self.dict[key] = value
@@ -30,6 +31,12 @@ class InheritDict:
 
     def __contains__(self, key):
         return key in self.dict or self.parents and any(key in i for i in self.parents)
+
+    def __str__(self):
+        return "[" + str(self.dict)[1:-1] + "]"
+
+    def __repr__(self):
+        return str(self)
 
     def keys(self):
         return self.dict.keys() + sum([i.keys() for i in self.parents], [])

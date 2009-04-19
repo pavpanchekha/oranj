@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import ply.yacc as yacc
 from lexer import tokens, literals
+
+import terminal
+class ParseError(Exception): pass
+term = terminal.TerminalController()
 
 start = "statements"
 precedence = (
@@ -17,6 +22,7 @@ precedence = (
     ("left", "PLUSPLUS", "MINUSMINUS"),
     ("right", "UMINUS"),
     ("right", "^"),
+    ("left", "!"),
     ("left", ".", "(", ")", "[", "]"),
 )
 
@@ -38,7 +44,7 @@ def p_primitive(p):
 
 def p_primitive_str(p):
     """primitive : string"""
-    
+
     p[0] = ["STRING", p[1]]
 
 def p_expr_bin(p):
@@ -65,6 +71,16 @@ def p_expr_bin(p):
 
     p[0] = ["OP", p[2].upper(), p[1], p[3]]
 
+def p_expr_postcall(p):
+    """expr : expr '!' expr"""
+
+    if p[3][0] == "CALL":
+        t = p[3][:]
+        t.insert(2, p[1])
+        p[0] = t
+    else:
+        p[0] = ["CALL", p[3], p[1]]
+
 def p_lvalue_attr(p):
     """lvalue : expr '.' IDENT"""
 
@@ -73,7 +89,7 @@ def p_lvalue_attr(p):
 def p_lvalue_call(p):
     """lvalue : expr '(' arglist ')'
               | expr '(' arglist ',' ')'"""
-    
+
     p[0] = ["CALL", p[1]] + p[3]
 
 def p_arglist(p):
@@ -94,8 +110,6 @@ def p_arg_expr(p):
 
 def p_arg_kw(p):
     """arg : IDENT ASSIGN expr"""
-    if p[2] != "=":
-        raise SyntaxError("Dude, what the fuck are you doing?!")
     p[0] = ["KW", p[1], p[3]]
 
 def p_arg_mult(p):
@@ -126,7 +140,7 @@ def p_indice3(p):
               | ':' expr ':' expr
               | expr ':' ':' expr
               | ':' ':' expr"""
-    
+
     if len(p) == 6:
         p[0] = ["SLICE", p[1], p[3], p[5]]
     elif len(p) == 5 and p[1] == ":":
@@ -135,13 +149,13 @@ def p_indice3(p):
         p[0] = ["SLICE", p[1], ["PRIMITIVE", ["INT", "-1", 10]], p[4]]
     else:
         p[0] = ["SLICE", ["PRIMITIVE", ["INT", "0", 10]], ["PRIMITIVE", ["INT", "-1", 10]], p[3]]
-    
+
 def p_indice2(p):
     """indice : expr ':' expr
               | ':' expr
               | expr ':'
               | ':'"""
-    
+
     if len(p) == 4:
         p[0] = ["SLICE", p[1], p[3]]
     elif p[1] == ":" and len(p) == 3:
@@ -155,7 +169,7 @@ def p_indice(p):
     """indice : expr
               | DOTDOTDOT
               |"""
-    
+
     if len(p) == 2:
         p[0] = p[1]
     else:
@@ -189,8 +203,8 @@ def p_expr_un_l2(p):
     p[0] = ["OP", "U"+p[1], p[2]]
 
 def p_expr_un_r(p):
-    """expr : expr PLUSPLUS
-            | expr MINUSMINUS"""
+    """expr : lvalue PLUSPLUS
+            | lvalue MINUSMINUS"""
 
     p[0] = ["OP", p[2], p[1]]
 
@@ -219,7 +233,7 @@ def p_kernel_expr(p):
     """kernel : '(' expr ')'"""
 
     p[0] = p[2]
-    
+
 def h_loc(p):
     if p[0] == "IDENT":
         return p[1]
@@ -229,30 +243,6 @@ def h_loc(p):
         return ["SETATTR", p[1], p[2]]
     else:
         raise SyntaxError("You're assigning that to WHAT?!")
-
-def p_assignment_single(p):
-    """assignment : lvalue EQOP expr
-                  | lvalue ASSIGN expr"""
-
-    var = h_loc(p[1])
-    p[0] = ["ASSIGN1", var, p[3], p[2]]
-
-def p_assignment_many(p):
-    """assignment : lvalue ',' assignment ',' expr"""
-
-    var = h_loc(p[1])
-
-    if p[3][0] == "ASSIGN1":
-        p[0] = [p[3][3], [var, p[3][1]], [p[3][2], p[5]]]
-    else:
-        p[3][1].insert(0, var)
-        p[3][2].append(p[5])
-        p[0] = p[3]
-
-# There used to be variable type declarations;
-# no more. Multiple dispatch can work without
-# them. So let's leave oranj as simple as can
-# be.
 
 def p_many_exprs(p):
     """many_exprs : many_exprs ',' expr
@@ -294,11 +284,11 @@ def h_delloc(p):
     elif p[0] == "GETATTR":
         return ["DELATTR", p[1], p[2]]
     else:
-        raise SyntaxError("You're deleting WHAT?!")    
+        raise SyntaxError("You're deleting WHAT?!")
 
 def p_extern_s(p):
     """extern_s : EXTERN many_idents"""
-    p[0] = ["EXTERN"] + map(h_identonly, p[2])
+    p[0] = ["EXTERN"] + p[2]
 
 def p_flow_s(p):
     """flow_s : BREAK expr
@@ -316,12 +306,6 @@ def p_flow_s(p):
         p[0] = [p[1].upper(), p[2]]
     else:
         p[0] = [p[1].upper(), None]
-
-def h_identonly(p):
-    if p[0] == "IDENT":
-        return p[1]
-    else:
-        raise SyntaxError("Can only make variable (IDENT) external")
 
 def p_import_s(p):
     """import_s : IMPORT import_items
@@ -392,7 +376,7 @@ def p_else(p):
 def p_block(p):
     """block : '{' statements '}'
              | NEWLINE"""
-    
+
     if len(p) == 4:
         p[0] = p[2]
     else:
@@ -443,7 +427,7 @@ def p_try_catch(p):
 def p_try_finally(p):
     """try_finally : FINALLY block
                    | """
-    
+
     if len(p) == 1:
         p[0] = []
     else:
@@ -500,14 +484,17 @@ def p_arg_defs(p):
         p[0] = p[1] + [p[3]]
 
 def p_arg_def_expr(p):
-    """arg_def : expr
-               | IDENT expr"""
+    """arg_def_ : IDENT IDENT
+                | IDENT"""
     p[0] = ["ARG"] + p[1:]
 
 def p_arg_def_kw(p):
-    """arg_def : IDENT '=' expr
-               | IDENT IDENT '=' expr"""
-    p[0] = ["ARG"] + p[1:]
+    """arg_def : arg_def_ ASSIGN expr
+               | arg_def_"""
+    if len(p) == 4:
+        p[0] = ["DEFARG"] + p[1][1:] + [p[3]]
+    else:
+        p[0] = p[1]
 
 def p_arg_def_mult(p):
     """arg_def : '*' IDENT"""
@@ -576,22 +563,35 @@ def p_statement(p):
                  | block_s
                  | PROCDIR
                  | PROCBLOCK"""
-    
+
     p[0] = p[1]
 
-def p_statements(p):
-    """statements : statements NEWLINE statement NEWLINE
-                  | statements NEWLINE statement
-                  | statement NEWLINE
-                  | statement
-                  | """
-    
-    if len(p) == 1:
-        p[0] = []
-    elif len(p) <= 3:
+def p_statements_aux(p):
+    """statements_ : statements_ NEWLINE statement
+                   | statement"""
+
+    if len(p) == 2:
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[3]]
+
+def p_statements2(p):
+    """statements : NEWLINE statements_ NEWLINE
+                  | NEWLINE statements_"""
+
+    p[0] = p[2]
+
+def p_statements1(p):
+    """statements : statements_ NEWLINE
+                  | statements_"""
+
+    p[0] = p[1]
+
+def p_statements0(p):
+    """statements : NEWLINE
+                  | """
+
+    p[0] = []
 
 def p_kernel(p): # MUST go on bottom to resolve r/r conflict correctly
     """kernel : primitive
@@ -600,7 +600,7 @@ def p_kernel(p): # MUST go on bottom to resolve r/r conflict correctly
               | lvalue
               | fn
               | class"""
-    
+
     p[0] = p[1]
 
 def p_list(p):
@@ -617,20 +617,75 @@ def p_dict(p):
             | '[' hash_items ',' ']'"""
     p[0] = ["DICT", p[2]]
 
-def p_error(p):
-    print "FAIL"
+def p_assignment_single(p):
+    """assignment : lvalue EQOP expr
+                  | lvalue ASSIGN expr"""
+
+    var = h_loc(p[1])
+    p[0] = [p[2], [var], [p[3]]]
+
+def p_assignment_many(p):
+    """assignment : lvalue ',' assignment ',' expr"""
+
+    var = h_loc(p[1])
+    p[3][1].insert(0, var)
+    p[3][2].append(p[5])
+    p[0] = p[3]
+
+# There used to be variable type declarations;
+# no more. Multiple dispatch can work without
+# them. So let's leave oranj as simple as can
+# be.
+
+def p_error(t):
+    if t:
+        e = SyntaxError("(line %d, col %d)" % (t.lineno, getcol(t)) + " The %s confuses me" % repr(t.value).lower())
+    else:
+        e = SyntaxError("At the end of your input.")
+
+    handle_error(e)
+
+parser = yacc.yacc()
 
 def parse(s):
-    return yacc.parse(s)
+    global parser
+    parser.errors = 0
+    parser.txt = s
+
+    try:
+        r = parser.parse(s)
+    except SyntaxError, e:
+        handle_error(e)
+
+    if parser.errors: raise ParseError("Parsing error occurred")
+    return r
+
+def handle_error(e):
+    global parser
+    parser.errors += 1
+
+    print term.render("${RED}%s${NORMAL}" % type(e).__name__ + \
+        ("" if not e.args else (": " + " ".join(e.args))))
+
+def getcol(tok):
+    global parser
+
+    l = parser.txt.rfind("\n", 0, tok.lexpos)
+    if l < 0:
+        l = 0
+    return (tok.lexpos - l) + 1
 
 yacc.yacc()
 
 def _test():
     import pprint # Because parse trees get hairy
-    
+
     try:
         while True:
-            pprint.pprint(parse(raw_input("parse> ") + "\n"))
+            try:
+                pprint.pprint(parse(raw_input("parse> ") + "\n"))
+            except ParseError:
+                pass
     except (KeyboardInterrupt, EOFError):
         print
 

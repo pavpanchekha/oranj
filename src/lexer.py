@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import ply.lex as lex
 import re
@@ -43,12 +44,12 @@ def t_NIL(t):
 
 def t_INF(t):
     r"inf"
-    
+
     if t.value[0] in "+-":
         t.value = ("INF", t.value[0])
     else:
         t.value = ("INF", "+")
-    
+
     return t
 
 def t_INT2(t):
@@ -113,7 +114,7 @@ def t_NEWLINE(t):
         t.lexer.subcol = {}
 
     t.lexer.subcol[t.lexer.lineno] = t.lexpos
-    
+
     return t
 
 def t_PROCDIR(t):
@@ -124,11 +125,11 @@ def t_PROCDIR(t):
 def process_body(s):
     if s and s[0] == "\n":
         s = s[1:]
-        
+
     if "\n" in s:
         t = s[:s.find("\n")]
         ws = t[:t.find(t.strip())]
-        
+
         s = s.split("\n")
         for i, v in enumerate(s):
             if v.startswith(ws):
@@ -143,7 +144,7 @@ def t_PROCBLOCK(t):
     txt = t.value
     pstart = txt.find("{")
     pend = txt.rfind("#!", 2)
-    
+
     header = txt[2:pstart].strip()
     body = txt[pstart+1:pend]
 
@@ -163,7 +164,7 @@ for i in ("mod", "and", "or", "not", "in", "is", "catch", "class", "else", "elif
     reserved[i] = i.upper()
 tokens += reserved.values()
 
-literals = "%()[]{}@,:.`;#?+-*/^|<>"
+literals = "%()[]{}@,:.`#?+-*/^|<>!"
 
 t_PLUSPLUS = r"\+\+"
 t_MINUSMINUS = r"\-\-"
@@ -185,12 +186,12 @@ def parse(s):
     lex.input(s)
     global in_put
     in_put = s
-    
+
     return list(iter(lex.token, None))
 
 def isdone(s):
     l = parse(s)
-    
+
     count = [0, 0, 0]
     for i in l:
         if i.value == "{": count[2] += 1
@@ -199,7 +200,7 @@ def isdone(s):
         elif i.value == "]": count[1] -= 1
         elif i.value == "(": count[0] += 1
         elif i.value == ")": count[0] -= 1
-    
+
     # Need better way to do this...
     return all(i <= 0 for i in count) \
         or re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*", s) \

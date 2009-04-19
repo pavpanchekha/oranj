@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from orobject import OrObject
 from inheritdict import InheritDict
 import types
@@ -11,7 +12,7 @@ class OrClass(OrObject):
             pass
         else:
             OrObject.__init__(self)
-            self.dict = InheritDict(*([intp.curr] + list(i.dict for i in parents if hasattr(i, "dict"))))
+            self.dict = InheritDict(*(list(i.dict for i in parents if hasattr(i, "dict"))))
             self.set("$$name", "[anon]")
             self.set("$$class", OrClass)
             self.set("$$doc", doc)
@@ -47,7 +48,7 @@ class OrClass(OrObject):
             fn = self.get("$$init")
             cntx["block"] = self
             self.intp.cntx.append(cntx)
-            fn(x, *args, **kwargs)
+            fn(*args, **kwargs)
             return x
         else:
             x = OrObject()

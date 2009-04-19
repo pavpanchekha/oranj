@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import parser
 
@@ -18,14 +19,15 @@ def augass_dostuff(s):
 
 def get_augass(tree):
     for id, i in enumerate(tree):
-        if type(i) not in (type(()), type([])) or len(i) == 0: continue
+        if type(i) != type([]) or len(i) == 0: continue
         if i[0] in ("+=", "-=", "^=", "/=", "//=", "*=", "mod=", "and=", "or=", "<<=", ">>="):
             for j in range(len(i[1])):
                 i[2][j] = ["OP", i[0][:-1], augass_dostuff(i[1][j][:]), i[2][j]]
             i[0] = "ASSIGN"
         elif i[0] == "=":
             i[0] = "ASSIGN"
-        elif type(tree) in (type(()), type([])):
+
+        if type(tree) == type([]):
             get_augass(i)
     return
 
@@ -44,9 +46,9 @@ def check_break_continue(tree, lstack=[]):
         if not lstack:
             raise Exception("Invalid " + tree[0] + " statement")
 
-        if tree[1] and tree[1][0] == "PRIMITIVE" and tree[1][1][0] == "INT":            
+        if tree[1] and tree[1][0] == "PRIMITIVE" and tree[1][1][0] == "INT":
             min = len(lstack) - int(tree[1][1][1], tree[1][1][2])
-            
+
             for i, v in enumerate(lstack):
                 if i >= min:
                     v[0] += "2"
@@ -72,7 +74,7 @@ def parse(t):
 
 def _test_run(s):
     import pprint
-    
+
     global errors
     pprint.pprint(parse(s))
 

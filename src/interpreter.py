@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import analyze
 import sys
@@ -14,16 +15,17 @@ from objects.inheritdict import InheritDict
 
 class ContinueI(Exception): pass
 class BreakI(Exception): pass
+class PyDropI(Exception): pass
 class DropI(Exception): pass
 
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
-    run_console = None
+    run_console = lambda self: None
 
     def __init__(self, g=None):
         if not g:
             g = InheritDict(builtin.builtin)
-        
+
         self.cntx = [g, InheritDict(g)]
         self.types = {}
 
@@ -35,7 +37,7 @@ class Interpreter(object):
         except:
             if type(tree[0]) == type("") and hasattr(self, "h" + tree[0]):
                 raise
-        
+
         if type(tree[0]) == type([]):
             for i in tree:
                 j = self.run(i)
@@ -71,12 +73,15 @@ class Interpreter(object):
                         i = tree.find("ELSE")
                         self.run(tree[i + 1])
 
+    def hRAW(self, val):
+        return val
+
     def hLIST(self, vars):
         return OrObject.from_py(map(self.run, vars))
 
     def hSET(self, vars):
         return OrObject.from_py(set(map(self.run, r)))
-    
+
     def hTABLE(self, vars):
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
         return odict.ODict(vars)
@@ -87,7 +92,7 @@ class Interpreter(object):
 
     def hSLICE(self, *stops):
         return OrObject.from_py(slice(*[self.run(i).topy() for i in stops]))
-    
+
     def hIDENT(self, var):
         try:
             return self.curr[var]
@@ -97,17 +102,19 @@ class Interpreter(object):
     def hPROCDIR(self, cmd, *args):
         if cmd == "drop":
             Interpreter.run_console(self)
+        elif cmd == "undrop":
+            raise DropI
         elif cmd == "clear":
             intplib.clear_screen()
         elif cmd == "exit":
             sys.exit()
         elif cmd == "pydrop":
-            raise DropI
+            raise PyDropI
 
     def hPROCBLOCK(self, type, body):
         glob = globals()
         glob["intp"] = self
-        
+
         if type[0] == "python":
             exec body in glob, {}
 
@@ -133,10 +140,10 @@ class Interpreter(object):
     def hASSIGN(self, idents, vals):
         for i, v in zip(idents, vals):
             self.hASSIGN1(i, v)
-    
-    def hASSIGN1(self, ident, val, orig_type=None):
+
+    def hASSIGN1(self, ident, val):
         val = self.run(val)
-        
+
         if type(ident) == type(""):
             self.curr[ident] = val
             if val.get("$$name") == "[anon]":
@@ -149,16 +156,16 @@ class Interpreter(object):
     def hDECLARE(self, type, (idents, vals)):
         for i in idents:
             self.types[i] = type
-            
+
         self.hASSIGN((idents, vals))
 
     def hFN(self, args, block, doc, tags):
         return intplib.Function(self, args, block, doc, tags)
-    
+
     def hRETURN(self, *args):
         args = map(self.run, args)
         raise intplib.ReturnI(*args)
-    
+
     def hDEL(self, *vars):
         for i in vars:
             i = i[1]
@@ -171,7 +178,7 @@ class Interpreter(object):
             if not self.curr.parent or i not in self.curr.parent:
                 raise NameError(i + " is not a valid variable")
             self.curr[i] = self.curr.parent[i]
-    
+
     def hGETATTR(self, var, id):
         var = self.run(var)
         return intplib.getattr_(var, id)
@@ -180,20 +187,17 @@ class Interpreter(object):
         val = self.run(val)
         if val:
             return
-        
+
         if doc:
             raise AssertionError
         else:
             raise AssertionError(self.run(doc))
-    
+
     def hOP(self, op, *args):
         if op in ("--", "++"):
-            if type(args[0]) == type(""): # IDENT++
-                v = self.curr[args[0]]
-                self.curr[args[0]] = intplib.add(self.curr[args[0]], number.Number(1 if op == "++" else -1))
-                return v
-            return
-
+            v = self.run(args[0])
+            self.hASSIGN1(analyze.parser.h_loc(args[0]), ["OP", op[0], args[0], ["PRIMITIVE", ("INT", "1", 10)]])
+            return v
 
         args = map(self.run, args)
         func = intplib.op_names[op]
@@ -202,12 +206,12 @@ class Interpreter(object):
             r = func(*args)
         except TypeError:
             raise
-        
+
         if not isinstance(r, OrObject):
             return OrObject.from_py(r)
         else:
             return r
-    
+
     def hIF(self, cond, body, *others):
         if self.run(cond):
             self.run(body)
@@ -234,11 +238,15 @@ class Interpreter(object):
 
     def hWHILE(self, cond, body, *others):
         if cond:
-            test = lambda: self.run(cond)
+            def test():
+                s = self.run(cond)
+                print s, bool(s)
+                return s
         else:
             test = lambda: True
-        
+
         while test():
+            print "running", self.curr.dict
             self.run(body)
         else:
             if others:
@@ -249,7 +257,7 @@ class Interpreter(object):
             test = lambda: self.run(cond)
         else:
             test = lambda: True
-            
+
         try:
             while test():
                 try:
@@ -267,11 +275,11 @@ class Interpreter(object):
                 raise BreakI(e.args[0] - 1)
             else:
                 return
-                
+
     def hCALL(self, val, *args):
         a = []
         kw = {}
-        
+
         for i in args:
             if i[0] == "UNWRAPKW":
                 kw.update(self.run(i[1]))
@@ -281,7 +289,7 @@ class Interpreter(object):
                 a.extend(self.run(i[1]).topy())
             else:
                 a.append(self.run(i))
-        
+
         func = self.run(val)
 
         r = intplib.call(func, *a, **kw)
@@ -300,10 +308,10 @@ class Interpreter(object):
                         self.curr[catches[3*i+2][1]] = OrObject.from_py(e)
                     self.run(catches[3*i+3])
                     return
-            
+
             if catches[-2] == "FINALLY":
                 self.run(catches[-1])
-            
+
             raise
 
     def hCLASS(self, doc, parents, tags, block):

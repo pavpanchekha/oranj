@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from orobject import OrObject
 import decimal
 import operator
@@ -15,15 +16,18 @@ class Number(OrObject):
 
     def is_nan(self):
         return self._val == decimal.NaN
-    
-    def __init__(self, value, base=10):
+
+    def __init__(self, value, base=10, intonlystr=False):
         OrObject.__init__(self, "", Number)
-        
+
         if type(value) == type(""):
             value = value.replace(" ", "")
-            
+
             if "." in value or "e" in value or value in ("Infinity", "-Infinity", "NaN"):
-                self._val = decimal.Decimal(value)
+                if intonlystr:
+                    raise TypeError(repr(value) + " not integral")
+                else:
+                    self._val = decimal.Decimal(value)
             else:
                 self._val = int(value, base)
         elif hasattr(value, "_val"):
@@ -36,14 +40,14 @@ class Number(OrObject):
             raise TypeError("How am I supposed to make " + repr(value) + " a Number?")
 
         try:
-            if int(self._val) == self._val:
+            if int(self._val) == self._val or intonlystr:
                 self._val = int(self._val)
         except OverflowError:
             pass
-    
+
     def ispy(self): return True
     def topy(self): return self._val
-    
+
     def __nonzero__(self):
         return self != 0
 
@@ -57,7 +61,7 @@ class Number(OrObject):
             return self._val.__cmp__(other._val)
         except:
             return -(other.__cmp__(self._val))
-        
+
     def __div__(self, other):
         s = self._val
         o = other._val
@@ -66,25 +70,25 @@ class Number(OrObject):
             return Number(a)
         else:
             return Number(decimal.Decimal(s) / o)
-        
+
     def __len__(self):
         return self
 
     def __iter__(self):
         return xrange(self).__iter__()
-    
+
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         if type(self._val) == decimal.Decimal:
             if self.is_nan():
                 return "NaN"
             elif self.is_inf():
                 return ("-" if self._val < 0 else "") + "inf"
-        
+
             s = str(self._val)
-            
+
             if "e" not in s:
                 ipart = s[:s.find(".")]
                 fpart = s[s.find("."):]
@@ -95,20 +99,20 @@ class Number(OrObject):
                 epart = s[s.find("e"):]
 
             fpart = fpart[:7]
-            
+
             return ipart + fpart + epart
         else:
             s = str(self._val)
             if s[-1] == "L":
                 s = s[:-1]
             return s
-    
+
     def __index__(self):
         return int(self)
-    
+
     def __int__(self):
         return self._val
-    
+
     def __hash__(self):
         return hash(self._val)
 
@@ -116,7 +120,7 @@ def add_func(i):
     def t(*args):
         if any(type(i) != Number for i in args):
             return NotImplemented
-    
+
         c = i
         args = map(lambda x: x._val, args)
 
@@ -132,14 +136,15 @@ def add_func(i):
 
         try:
             s = fn(*args)
+        except TypeError:
+            return NotImplemented
+        else:
             try:
                 return Number(s if type(s) in (int, long) else round(s, 28))
             except TypeError:
-                return OrObject(s)
-        except:
-            return NotImplemented
+                return OrObject.from_py(s)
     return t
-    
+
 for i in ["abs", "add", "and", "divmod", "float", "floordiv", "index", \
           "invert", "lshift", "mod", "mul", "neg", "or", "pos", "pow", "radd", "rand", \
           "rdivmod", "rfloordiv", "rlshift", "rmod", "rmul", "ror", "rpow", \

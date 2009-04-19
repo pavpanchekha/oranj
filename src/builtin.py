@@ -1,4 +1,5 @@
 #!/bin/false
+# -*- coding: utf-8 -*-
 
 from objects.orobject import OrObject
 from objects.function import Function
@@ -20,7 +21,7 @@ builtin.update({
     "dict": expose(OrDict),
     "odict": expose(ODict),
     "set": expose(set),
-    
+
     "io": expose(console.io),
     "file": expose(File),
     "input": expose(console.input),
@@ -31,26 +32,25 @@ builtin.update({
     "join": expose(lib.join),
     "range": expose(range),
     "type": expose(lib.typeof),
-    
+
     "dir": expose(lib.dirof),
     "reverse": expose(reversed),
     "sort": expose(sorted),
     "chr": expose(unichr),
-    
-#    "Exception": expose(exception.OrException)
+
     "Exception": expose(Exception),
 })
 
 stolen_builtins = [
     'abs', 'all', 'any', 'bool', 'callable', #buffer
-    'classmethod', 'cmp', 'coerce', #chr (not as unichr)
+    'cmp', #chr (not as unichr)
     'dict', 'divmod', 'enumerate', #delattr
     'exit', 'filter', # frozenset
     'hash', 'id', #get/hasattr
     'iter', 'len', 'list',
     'map', 'max', 'min', 'ord', # object
     'range', 'repr', #property
-    'round', 'set', 'slice', 'staticmethod', #setattr
+    'round', 'set', 'slice', #setattr
     'str', 'sum', 'unicode', #super
     'zip'
 ]

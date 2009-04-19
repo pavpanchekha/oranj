@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from objects.number import Number
 
@@ -6,7 +7,7 @@ def join(arr, s):
     return s.join(map(str, arr))
 
 def toint(x): #int
-    return int(Number(x)._val)
+    return Number(x, intonlystr=True)
 
 def typeof(x): #type
     try:

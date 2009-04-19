@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import src.interpreter as intp
 from optparse import OptionParser
@@ -10,9 +11,9 @@ def pydrop(i):
     global undrop
     global curr
     curr = i
-    
+
     os.environ["PYTHONINSPECT"] = "1"
-    
+
     def undrop():
         run_console(i)
 
@@ -22,7 +23,7 @@ def import_readline():
         import readline
     except ImportError:
         pass
-    
+
     def completer(text, state=0):
         if text:
             m = [i for i in intp.curr.keys() if i.startswith(text)]
@@ -33,7 +34,7 @@ def import_readline():
             return m[state]
         except IndexError:
             return None
-    
+
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
     return readline
@@ -42,7 +43,7 @@ def run_console(i):
     import src.lexer as lexer
     import src.analyze as analyze
     import_readline()
-    
+
     try:
         t = ""
         while True:
@@ -52,18 +53,22 @@ def run_console(i):
 
             try:
                 r = intp.run(t, i)
-                
+
                 if r == None: pass
                 elif r.ispy() and r.topy() == None: pass
                 else:
                     print repr(r)
-            except intp.DropI: raise
+            except intp.PyDropI: raise
+            except intp.DropI:
+                break # This will happen when you #!undrop
             except Exception, e:
                 traceback.print_exc()
-    except (KeyboardInterrupt, EOFError):
+    except EOFError:
+        print
+    except KeyboardInterrupt:
         print
         sys.exit()
-    except intp.DropI:
+    except intp.PyDropI:
         print "Dropping down to python console. Call undrop() to return."
         pydrop(i)
 
@@ -73,17 +78,17 @@ def parse_args():
     parser.add_option("-t", "--test", help="Test a component (parser, lexer, analyzer). oranj -t p|l|a", default="")
     opts, args = parser.parse_args()
     child = []
-    
+
     if args:
         child = sys.argv[sys.argv.index(args[0]):]
         opts = parser.parse_args(sys.argv[:sys.argv.index(args[0])])[0]
-    
+
     return opts, args, child
 
 if __name__ == "__main__":
     base_i = intp.Interpreter()
     opts, args, child = parse_args()
-    
+
     if child:
         intp.run(open(child[0]).read(), base_i)
     elif opts.readin:
@@ -100,4 +105,5 @@ if __name__ == "__main__":
             import src.lexer as lexer
             lexer._test()
     else:
+        intp.Interpreter.run_console = run_console
         run_console(base_i)
