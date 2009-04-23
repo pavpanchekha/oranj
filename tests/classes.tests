@@ -1,0 +1,25 @@
+
+#!../oranj -r
+
+# Test class methods
+>>> Car = class {nc = 0; $$init = fn(self) {Car.nc++}; gnc = fn(cls) is classfn {return cls.nc}}
+>>> g = Car()
+>>> io << g.gnc() << endl
+>>> io << Car.gnc() << endl
+1
+1
+
+# Test Inheritance
+>>> Car = class {say_hi = fn is staticfn {io << "HI!\n"}; say_bye = fn is staticfn {io << "BYE!\n"}}
+>>> c = Car
+>>> c.say_hi()
+>>> c.say_bye()
+>>> Cdr = class(Car) {say_hi = fn is staticfn {io << "HALLO!\n"}}
+>>> d = Cdr()
+>>> d.say_hi()
+>>> d.say_bye()
+HI!
+BYE!
+HALLO!
+BYE!
+
