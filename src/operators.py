@@ -2,22 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from objects.orobject import OrObject
-from objects.function import Function, ReturnI
 import operator
 
-def clear_screen():
-    import os
-    if os.name == "posix":
-        # Unix/Linux/MacOS/BSD/etc
-        os.system('clear')
-    elif os.name in ("nt", "dos", "ce"):
-        # DOS/Windows
-        os.system('CLS')
-    else:
-        # Fallback for other operating systems.
-        print '\n' * 100
-
-def simpleop(f, name, try_noconv=True):
+def __mk_op(f, name, try_noconv=True):
     def t(*args):
         try:
             try:
@@ -36,28 +23,28 @@ def simpleop(f, name, try_noconv=True):
                     return NotImplemented
     return t
 
-add = simpleop(operator.add, "add")
-sub = simpleop(operator.sub, "sub")
-mul = simpleop(operator.mul, "mul")
-div = simpleop(operator.div, "div")
-exp = simpleop(operator.pow, "exp")
-floor = simpleop(operator.floordiv, "floor")
-mod = simpleop(operator.mod, "mod")
-divis = simpleop(lambda x, y: y % x == 0, "divis")
-or_ = simpleop(operator.or_, "or")
-and_ = simpleop(operator.and_, "and")
-not_ = simpleop(operator.not_, "not")
-in_ = simpleop(lambda x, y: x in y, "in")
-lt = simpleop(operator.lt, "lt", False)
-gt = simpleop(operator.gt, "gt", False)
-le = simpleop(operator.le, "le", False)
-ge = simpleop(operator.ge, "ge", False)
-ne = simpleop(operator.ne, "ne", False)
-eq = simpleop(operator.eq, "eq", False)
-input = simpleop(lambda x, y: x.input(y), "input")
-output = simpleop(lambda x, y: x.output(y), "output")
-uplus = simpleop(operator.pos, "uplus")
-uminus = simpleop(operator.neg, "uminus")
+add = __mk_op(operator.add, "add")
+sub = __mk_op(operator.sub, "sub")
+mul = __mk_op(operator.mul, "mul")
+div = __mk_op(operator.div, "div")
+exp = __mk_op(operator.pow, "exp")
+floor = __mk_op(operator.floordiv, "floor")
+mod = __mk_op(operator.mod, "mod")
+divis = __mk_op(lambda x, y: y % x == 0, "divis")
+or_ = __mk_op(operator.or_, "or")
+and_ = __mk_op(operator.and_, "and")
+not_ = __mk_op(operator.not_, "not")
+in_ = __mk_op(lambda x, y: x in y, "in")
+lt = __mk_op(operator.lt, "lt", False)
+gt = __mk_op(operator.gt, "gt", False)
+le = __mk_op(operator.le, "le", False)
+ge = __mk_op(operator.ge, "ge", False)
+ne = __mk_op(operator.ne, "ne", False)
+eq = __mk_op(operator.eq, "eq", False)
+input = __mk_op(lambda x, y: x.input(y), "input")
+output = __mk_op(lambda x, y: x.output(y), "output")
+uplus = __mk_op(operator.pos, "uplus")
+uminus = __mk_op(operator.neg, "uminus")
 
 def is_(obj, cls):
     if cls.ispy() and type(cls.topy()) == type(""):
@@ -101,15 +88,18 @@ def call(obj, *args, **kwargs):
             raise TypeError(str(obj) + " is not callable")
 
 def getattr_(x, y):
-    return OrObject.from_py(x.get(y))
+    if x.has("$$getattr"):
+        return x.get("$$getattr", y)
+    else:
+        return OrObject.from_py(x.get(y))
 
 def indexer(x, y):
-    if type(y) == type(()):
+    if type(x) in map(type, ((), [], {})):
         return map(lambda y: x[y], y)
-    else:
-        return x[y]
+    
+    return x[y]
 
-getindex_ = simpleop(indexer, "getindex")
+getindex_ = __mk_op(indexer, "getindex")
 
 op_names = {
     "+": add, "-": sub,

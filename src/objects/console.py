@@ -133,7 +133,8 @@ class IO(OrObject):
         return self.__curr.get("read")(*args, **kwargs)
 
     def write(self, *args, **kwargs):
-        return self.__curr.get("write")(*args, **kwargs)
+        self.__curr.get("write")(*args, **kwargs)
+        return self
 
     def error(self, *args, **kwargs):
         return self.__curr.get("error")(*args, **kwargs)

@@ -18,14 +18,16 @@ class File(OrObject):
             self.fname = "???"
             self.file = fname
         
-        for i in dir(self.file):
-            if not i.startswith("__") and i not in self.dict:
-                self.set(i, OrObject.from_py(getattr(self.file, i)))
-        
         self.buf = []
 
     def ispy(self): return False
     def topy(self): return NotImplemented
+
+    def get(self):
+        if i in self.dict:
+            return self.dict[i]
+        if i in self.file and not i.startswith("__"):
+            return OrObject.from_py(getattr(self.file, i))
 
     def __str__(self):
         return "<File " + self.fname + ">"

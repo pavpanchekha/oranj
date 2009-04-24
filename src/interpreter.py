@@ -5,18 +5,22 @@ import analyze
 import sys
 
 import builtin
-import intplib
-from objects.orobject import OrObject
-import objects.number as number
-import objects.orddict as odict
-import objects.orclass as orclass
+import operators
+import libintp
 
+from objects.orobject import OrObject
 from objects.inheritdict import InheritDict
+import objects.number
 
 class ContinueI(Exception): pass
 class BreakI(Exception): pass
 class PyDropI(Exception): pass
 class DropI(Exception): pass
+
+def str_to_bool(s):
+    s = s.lower()
+
+    return s not in ("false", "off", "no", "bad", "never", "death", "laplacian")
 
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
@@ -28,6 +32,23 @@ class Interpreter(object):
 
         self.cntx = [g, InheritDict(g)]
         self.types = {}
+
+        self.opts = {
+            "logger": None
+            }
+        
+        self.stmtstack = []
+        self.cstmt = [(0, 0), (0, 0), ""]
+        self.level = 0
+
+    def set_option(self, opt, val):
+        if opt == "ec": # Turn activity log on or off
+            if val:
+                import errorcontext
+                self.opts["logger"] = errorcontext.ErrorContext()
+            else:
+                if self.opts["logger"] is not None:
+                    self.opts["logger"].active = False
 
     def run(self, tree):
         if not tree: return
@@ -73,6 +94,15 @@ class Interpreter(object):
                         i = tree.find("ELSE")
                         self.run(tree[i + 1])
 
+    def hSTATEMENT(self, linespan, charspan, txt, val):
+        self.level += 1
+        self.cstmt = [linespan, charspan, txt]
+        self.stmtstack.append(self.cstmt)
+        asdf = self.run(val)
+        self.stmtstack.pop()
+        self.level -= 1
+        return asdf
+
     def hRAW(self, val):
         return val
 
@@ -83,8 +113,10 @@ class Interpreter(object):
         return OrObject.from_py(set(map(self.run, r)))
 
     def hTABLE(self, vars):
+        from objects.orddict import ODict
+        
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
-        return odict.ODict(vars)
+        return ODict(vars)
 
     def hDICT(self, vars):
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
@@ -94,22 +126,52 @@ class Interpreter(object):
         return OrObject.from_py(slice(*[self.run(i).topy() for i in stops]))
 
     def hIDENT(self, var):
+        for c in self.cntx:
+            try:
+                i = c[var]
+            except KeyError:
+                pass
+        
         try:
-            return self.curr[var]
-        except AttributeError:
-            raise AttributeError("Variable %s does not exist" % var)
+            return i
+        except NameError:
+            raise NameError("Variable %s does not exist" % var)
 
-    def hPROCDIR(self, cmd, *args):
+    def hPROCDIR(self, cmd, args=""):
         if cmd == "drop":
             Interpreter.run_console(self)
         elif cmd == "undrop":
             raise DropI
         elif cmd == "clear":
-            intplib.clear_screen()
+            libintp.clear_screen()
         elif cmd == "exit":
             sys.exit()
         elif cmd == "pydrop":
             raise PyDropI
+        elif cmd == "pyerror":
+            import traceback
+            traceback.print_exc()
+        elif cmd == "set":
+            args = args.split()
+            if len(args) != 2:
+                raise SyntaxError("#!set requires two arguments")
+
+            self.set_option(args[0], str_to_bool(args[1]))
+        elif cmd == "ec":
+            if not args or not self.opts["logger"]:
+                return
+            if len(args) >= 4 and args[:4] == "data" and args[4].isspace():
+                type = "data"
+                val = args[4:].strip()
+            else:
+                type = "message"
+                val = args
+            self.opts["logger"].write(val, type)
+        elif cmd == "ecsave":
+            if not args:
+                raise SyntaxError("#ecsave requires variable name as argument")
+            else:
+                self.curr[args] = OrObject.from_py(self.opts["logger"])
 
     def hPROCBLOCK(self, type, body):
         glob = globals()
@@ -120,13 +182,13 @@ class Interpreter(object):
 
     def hPRIMITIVE(self, val, *others):
         if val[0] in ("DEC", "INT"):
-            return number.Number(*val[1:])
+            return objects.number.Number(*val[1:])
         elif val[0] == "BOOL":
             return OrObject.from_py(val[1])
         elif val[0] == "NIL":
             return OrObject.from_py(None)
         elif val[0] == "INF":
-            return number.inf
+            return objects.number.inf
 
     def hSTRING(self, vals):
         strs = []
@@ -160,11 +222,11 @@ class Interpreter(object):
         self.hASSIGN((idents, vals))
 
     def hFN(self, args, block, doc, tags):
-        return intplib.Function(self, args, block, doc, tags)
+        return libintp.Function(self, args, block, self.run(["STRING", doc]), tags)
 
     def hRETURN(self, *args):
         args = map(self.run, args)
-        raise intplib.ReturnI(*args)
+        raise libintp.ReturnI(*args)
 
     def hDEL(self, *vars):
         for i in vars:
@@ -181,7 +243,7 @@ class Interpreter(object):
 
     def hGETATTR(self, var, id):
         var = self.run(var)
-        return intplib.getattr_(var, id)
+        return operators.getattr_(var, id)
 
     def hASSERT(self, val, doc=""):
         val = self.run(val)
@@ -200,7 +262,7 @@ class Interpreter(object):
             return v
 
         args = map(self.run, args)
-        func = intplib.op_names[op]
+        func = operators.op_names[op]
 
         try:
             r = func(*args)
@@ -238,15 +300,11 @@ class Interpreter(object):
 
     def hWHILE(self, cond, body, *others):
         if cond:
-            def test():
-                s = self.run(cond)
-                print s, bool(s)
-                return s
+            test = lambda:  self.run(cond)
         else:
             test = lambda: True
 
         while test():
-            print "running", self.curr.dict
             self.run(body)
         else:
             if others:
@@ -291,8 +349,12 @@ class Interpreter(object):
                 a.append(self.run(i))
 
         func = self.run(val)
-
-        r = intplib.call(func, *a, **kw)
+        try:
+            r = operators.call(func, *a, **kw)
+        finally:
+            if self.level > len(self.stmtstack):
+                self.stmtstack = self.stmtstack[:self.level]
+        
         if not isinstance(r, OrObject):
             return OrObject.from_py(r)
         else:
@@ -303,7 +365,7 @@ class Interpreter(object):
             self.run(block)
         except Exception, e:
             for i, v in enumerate(catches[1::4]):
-                if any(intplib.is_(e, self.run(j)) for j in v) or not v:
+                if any(operators.is_(e, self.run(j)) for j in v) or not v:
                     if catches[3*i+2]:
                         self.curr[catches[3*i+2][1]] = OrObject.from_py(e)
                     self.run(catches[3*i+3])
@@ -315,7 +377,8 @@ class Interpreter(object):
             raise
 
     def hCLASS(self, doc, parents, tags, block):
-        return orclass.OrClass(self, map(self.run, parents), tags, block, self.run(doc))
+        from objects.orclass import OrClass
+        return OrClass(self, map(self.run, parents), tags, block, self.run(doc))
 
 def run(s, intp=Interpreter()):
     return intp.run(analyze.parse(s))

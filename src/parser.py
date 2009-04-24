@@ -374,13 +374,9 @@ def p_else(p):
         p[0] = ["ELSE", p[2]]
 
 def p_block(p):
-    """block : '{' statements '}'
-             | NEWLINE"""
+    """block : '{' statements '}'"""
 
-    if len(p) == 4:
-        p[0] = p[2]
-    else:
-        p[0] = []
+    p[0] = p[2]
 
 def p_while_s(p):
     """while_s : WHILE expr block else
@@ -563,8 +559,19 @@ def p_statement(p):
                  | block_s
                  | PROCDIR
                  | PROCBLOCK"""
+    
+    txtp = p.lexspan(1)[0]
+    while txtp > 0 and parser.txt[txtp] not in "\n;":
+        txtp -= 1
+    
+    code = parser.txt[p.lexspan(1)[0]:p.lexspan(1)[1]+1]
+    bounds = [i - txtp for i in p.linespan(1)]
+    p[0] = ["STATEMENT", bounds, p.lexspan(1), code, p[1]]
 
-    p[0] = p[1]
+#def p_statement_pdir(p):
+#    """statement : PROCDIR many_exprs"""
+#
+#    p[0] = p[1] + p[2]
 
 def p_statements_aux(p):
     """statements_ : statements_ NEWLINE statement
@@ -653,7 +660,7 @@ def parse(s):
     parser.txt = s
 
     try:
-        r = parser.parse(s)
+        r = parser.parse(s, tracking=True)
     except SyntaxError, e:
         handle_error(e)
 

@@ -27,6 +27,7 @@ builtin.update({
     "input": expose(console.input),
     "output": expose(console.output),
     "error": expose(console.error),
+    "endl": expose("\n"),
 
     "repr": expose(repr),
     "join": expose(lib.join),

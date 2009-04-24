@@ -1,19 +1,46 @@
-primes = [2]
-curr = 2
 
-#max = input("Maximum? ", int)
-max = 2000
-
-while curr < max {
-    curr += 1
+PrimeManager = class {
+    $$init = fn(self) {
+        self.plist = [2]
+        self.pmax = 2
+    }
     
-    for p in primes {
-        if p | curr {
-            continue 2
+    isprime = fn(self, val) {
+        if val > self.pmax {
+            while val > self.pmax {
+                for i in self.plist {
+                    if i | val {
+                        val++
+                        continue 2
+                    }
+                }
+                
+                self.plist.append(i)
+                val++
+            }
+            
+            return self.plist[-1] == val
+        } else {
+            return val in self.plist
         }
     }
+    
+    $$getindex = fn(self, index) {
+        ci = self.plist[-1] + 1
+        while index > len(self.plist) {
+            for i in self.plist {
+                if i | val {
+                    ci++
+                    continue 2
+                }
+            }
 
-    primes.append(curr)
+            self.plist.append[i]
+            ci++
+        }
+        
+        return self.plist[index]
+    }
 }
 
-output(join(primes, ", "))
+#!drop

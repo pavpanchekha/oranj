@@ -28,6 +28,7 @@ class Function(OrObject):
             argtypes = [i[0] for i in arglist]
             self.argtypes = [argtypes.count("ARG"), argtypes.count("DEFARG"), argtypes.count("UNWRAPABLE"), argtypes.count("UNWRAPABLEKW")]
             self.realargs = self.argtypes[0] + self.argtypes[1]
+            self.argnamelist = [i[1] for i in arglist]
 
     def ispy(self): return not hasattr(self, "intp")
     def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
@@ -117,15 +118,29 @@ class Function(OrObject):
 
         cntx["block"] = self
 
+        if self.intp.opts["logger"]:
+            summary = ": " + str(self.get("$$doc"))
+            args = cntx.dict
+            arglist = ["%s=%s" % (i, cntx[i]) for i in sorted([i for i in cntx.dict.keys() if i != "block"], key=lambda x: self.argnamelist.index(x))]
+            summary = "%s(%s)%s" % (str(self), ", ".join(arglist), summary)
+            
+            self.intp.opts["logger"].push(summary)
+        
+        self.intp.level += 1
+        #self.intp.stmtstack.append(self.intp.cstmt)
         try:
             self.intp.run(self.block)
         except ReturnI, e:
+            if self.intp.opts["logger"]: self.intp.opts["logger"].pop()
+            
             if e.args:
                 a = list(e.args) if len(e.args) > 1 else e.args[0]
                 return OrObject.from_py(a)
             else:
                 return
         finally:
+            if self.intp.opts["logger"]: self.intp.opts["logger"].pop(certain=False)
+            self.intp.level -= 1
             self.intp.cntx.pop()
 
 OrObject.register(Function, types.BuiltinFunctionType,

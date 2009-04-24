@@ -9,8 +9,6 @@
    Probably as exceptions
 ** Implement import
    This'll be tricky
-** Make instance methods work
-   Damned self!
 ** Make passing keyword arguments to user-defined functions work
 * Library
 ** globals / locals
@@ -18,3 +16,8 @@
 ** vars
 ** enumerate is broken
 ** filter does nothing
+
+
+* Up next:
+** Fix exception display
+** IMPORT!!!!!

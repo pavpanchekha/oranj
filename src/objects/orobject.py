@@ -20,34 +20,39 @@ class OrObject(object):
             return self.dict["$$python"]
         except KeyError:
             return NotImplemented
+    
+    def isnil(self):
+        return self.ispy() and self.topy() is None
 
     def tagged(self, tag):
         return self.has("$$tags") and tag in self.get("$$tags")
 
     def get(self, key):
-        try:
-            v = self.dict[key]
-        except KeyError:
-            if self.ispy():
-                try:
-                    return getattr(self.topy(), key)
-                except:
-                    pass
-            raise AttributeError(key + " is not an attribute of " + repr(self))
+        if key in self.dict:
+            val = self.dict[key]
+        elif self.ispy() and hasattr(self.topy(), key):
+            return getattr(self.topy(), key)
         else:
-            if self.ispy() or key in ("$$class", ) or not callable(v) or not isinstance(v, OrObject):
-                return v
+            raise AttributeError(key + " is not an attribute of " + repr(self))
+        
+        if self.ispy() or not isinstance(val, OrObject) or key in ("$$class", ) or not callable(val):
+            return val
+        elif val.tagged("Static"):
+            return val
+        elif val.tagged("Class"):
+            if isinstance(self.get("$$class"), OrObject):
+                def classmethod_wrapper(*args, **kwargs):
+                    return val(self.get("$$class"), *args, **kwargs)
             else:
-                if v.tagged("static"):
-                    return v
-                elif v.tagged("class"):
-                    def classmethod_wrapper(*args, **kwargs):
-                        return v(v.get("$$class"), *args, **kwargs)
-                    return classmethod_wrapper
-                else:
-                    def instancemethod_wrapper(*args, **kwargs):
-                        return v(self, *args, **kwargs)
-                    return instancemethod_wrapper
+                def classmethod_wrapper(*args, **kwargs):
+                    return val(self, *args, **kwargs)
+            return classmethod_wrapper
+        elif isinstance(self.get("$$class"), OrObject):
+            def instancemethod_wrapper(*args, **kwargs):
+                return val(self, *args, **kwargs)
+            return instancemethod_wrapper
+        else:
+            return val
 
     def set(self, key, value):
         self.dict[key] = value
@@ -90,6 +95,12 @@ class OrObject(object):
             return str(self.get("$$repr")())
         else:
             return self.__str__()
+    
+    def __del__(self):
+        if self.ispy() and hasattr(self.topy(), "__del"):
+            return self.topy().__del__
+        elif self.has("$$del"):
+            return self.get("$$del")()
 
     @classmethod
     def register(cls, new, *args):
@@ -104,13 +115,13 @@ class OrObject(object):
         if type(obj) in cls.overrides:
             return cls.overrides[type(obj)](obj)
 
-        n = obj.__name__ if hasattr(obj, "__name__") else ""
-        c = type(obj) if hasattr(obj, "__class__") else ""
+        n = obj.__name__ if hasattr(obj, "__name__") else "[anon]"
+        c = type(obj) if hasattr(obj, "__class__") else None
         np = cls(n, c)
 
         if rich:
             for i in [j for j in dir(obj) if j.startswith("__") and j.endswith("__") and not hasattr(cls, j) and j not in ("__class__", "__name__", "__dict__", "__weakref__")]:
-                setattr(cls, i, mk_method(i))
+                setattr(OrObject, i, mk_method(i))
 
         np.set("$$python", obj)
         return np

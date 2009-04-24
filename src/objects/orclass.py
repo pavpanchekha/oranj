@@ -33,7 +33,7 @@ class OrClass(OrObject):
     def topy(self): return NotImplemented
 
     def __call__(self, *args, **kwargs):
-        if self.has("$$init"):
+        if "$$init" in self.dict:
             x = OrObject()
             x.dict = InheritDict(self.dict)
             x.set("$$name", "[anon]")
@@ -45,10 +45,10 @@ class OrClass(OrObject):
             # There's a thin layer for the special variables
             # this and block
 
-            fn = self.get("$$init")
+            fn = self.dict["$$init"]
             cntx["block"] = self
             self.intp.cntx.append(cntx)
-            fn(*args, **kwargs)
+            fn(x, *args, **kwargs)
             return x
         else:
             x = OrObject()

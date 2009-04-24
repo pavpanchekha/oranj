@@ -5,6 +5,8 @@ import src.interpreter as intp
 from optparse import OptionParser
 import sys
 import traceback
+import src.libintp
+import src.parser
 
 def pydrop(i):
     import os
@@ -53,16 +55,15 @@ def run_console(i):
 
             try:
                 r = intp.run(t, i)
-
-                if r == None: pass
-                elif r.ispy() and r.topy() == None: pass
-                else:
-                    print repr(r)
             except intp.PyDropI: raise
-            except intp.DropI:
-                break # This will happen when you #!undrop
+            except intp.DropI: break
+            except src.parser.ParseError: pass
             except Exception, e:
+                src.libintp.print_exception(e, i)
                 traceback.print_exc()
+            else:
+                if hasattr(r, "isnil") and not r.isnil():
+                    print repr(r)
     except EOFError:
         print
     except KeyboardInterrupt:
