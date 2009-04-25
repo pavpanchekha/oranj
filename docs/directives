@@ -26,10 +26,42 @@ The following directives are implemented:
       #!drop
   }
 
+* undrop
+  End the dropped-down oranj shell and continue the external code that called  #!drop
+
 * pydrop
   Drop down to a python shell. This is useful for deep debugging or, even more
   likely, debugging the interpreter itself.
 
+* pyerror
+  Print out the python stack trace of the last exception
+
+* set
+  Set a global interpreter option. Options:
+    ec - set to on to enable context logging, off to disable
+
+* debug
+  Set up the debugger. You will begin to step through the code
+
+* step
+  If called without arguments, steps one statement forward through the code
+
+  If called with arguments in or out will correspondingly move into or out of
+  blocks and functions
+
+  If called with argument end will stop debugging
+
+* ec
+  Logs its arguments to the error context. If argument begins with data, rest of
+  arguments evaluated and added as a data message. For example
+
+  #!ec Retrieving data from internet
+  url_data = url_get("http://www.google.com")
+  #!ec data url_data
+
+* ecsave
+  Save the error context in the variable name given as an argument.
+  
 * exit
   Exits the oranj program or shell.
 
@@ -52,6 +84,6 @@ are implemented:
 * python
   This block will execute the unit of code in a python interpreter. The
   code can make use of the Interpreter object, which can be retrieved from
-  the global object intp. To interact with variable defined within oranj,
-  use intp.curr as a dictionary. Make sure to call OrObject.from_py on any
+  the global object curr. To interact with variable defined within oranj,
+  use curr.curr as a dictionary. Make sure to call OrObject.from_py on any
   object that is exported to the running oranj code.
