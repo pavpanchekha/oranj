@@ -559,19 +559,14 @@ def p_statement(p):
                  | block_s
                  | PROCDIR
                  | PROCBLOCK"""
-    
-    txtp = p.lexspan(1)[0]
-    while txtp > 0 and parser.txt[txtp] not in "\n;":
-        txtp -= 1
-    
-    code = parser.txt[p.lexspan(1)[0]:p.lexspan(1)[1]+1]
-    bounds = [i - txtp for i in p.linespan(1)]
-    p[0] = ["STATEMENT", bounds, p.lexspan(1), code, p[1]]
 
-#def p_statement_pdir(p):
-#    """statement : PROCDIR many_exprs"""
-#
-#    p[0] = p[1] + p[2]
+    txtp = p.lexspan(1)[0]
+    while txtp > 0 and parser.txt[txtp] != "\n":
+        txtp -= 1
+
+    code = parser.txt[p.lexspan(1)[0]:p.lexspan(1)[1]+1]
+    bounds = [i - txtp for i in p.lexspan(1)]
+    p[0] = ["STATEMENT", [i+1 for i in p.linespan(1)], bounds, code, p[1]]
 
 def p_statements_aux(p):
     """statements_ : statements_ NEWLINE statement

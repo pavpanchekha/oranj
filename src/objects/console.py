@@ -6,8 +6,8 @@ import sys
 class Console(OrObject):
     def __init__(self, fin=sys.stdin, fout=sys.stdout, ferr=sys.stderr):
         OrObject.__init__(self, "cons", Console)
-        self.set("$$input", Function(self.input))
-        self.set("$$output", Function(self.output))
+        self.set("$$input", self.input)
+        self.set("$$output", self.output)
         self.set("read", Function(self.read))
         self.set("write", Function(self.write))
         self.set("error", Function(self.error))
@@ -89,8 +89,8 @@ class IO(OrObject):
         self.__bound = binds
         self.bind(binds.items()[0][0])
 
-        self.set("$$input", Function(self.input))
-        self.set("$$output", Function(self.output))
+        self.set("$$input", self.input)
+        self.set("$$output", self.output)
         self.set("read", Function(self.read))
         self.set("write", Function(self.write))
         self.set("error", Function(self.error))
@@ -123,7 +123,10 @@ class IO(OrObject):
         self.__bound[s] = v
         self.bind(s)
 
-    def get_reg(self, key):
+    def get_reg(self, key=None):
+        if not key:
+            return self.__curr
+
         if hasattr(key, "ispy") and key.ispy():
             key = key.topy()
 

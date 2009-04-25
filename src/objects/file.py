@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from orobject import OrObject
 from function import Function
 import types
@@ -5,8 +6,8 @@ import types
 class File(OrObject):
     def __init__(self, fname, mode="r"):
         OrObject.__init__(self, "", File)
-        self.set("$$input", Function(self.input))
-        self.set("$$output", Function(self.output))
+        self.set("$$input", self.input)
+        self.set("$$output", self.output)
         self.set("read", Function(self.read))
         self.set("write", Function(self.write))
 
@@ -17,13 +18,13 @@ class File(OrObject):
         elif type(fname) == types.FileType:
             self.fname = "???"
             self.file = fname
-        
+
         self.buf = []
 
     def ispy(self): return False
     def topy(self): return NotImplemented
 
-    def get(self):
+    def get(self, i):
         if i in self.dict:
             return self.dict[i]
         if i in self.file and not i.startswith("__"):
@@ -81,7 +82,7 @@ class File(OrObject):
             self.file.write(str(end))
         except:
             raise IOError("File not open in write or append mode")
-        
+
         return self
 
 OrObject.register(File, types.FileType)

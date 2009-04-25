@@ -17,13 +17,13 @@ tokens = [
 
 def t_STRING(t):
     r"""[a-z]*((['"])(?:\3\3)?)(?:\\\3|[^\2])*?\2"""
-    
+
     t.value = liblex.hSTRING(t.value)
     return t
 
 def t_ISNT(t):
     r"(is\s+not)|(aint)"
-    
+
     return t
 
 def t_BOOL(t):
@@ -70,7 +70,7 @@ def t_IDENT(t):
         t.value = liblex.hIDENT(t.value)
     except NameError:
         t.type = t.value.upper()
-    
+
     return t
 
 def t_PROCDIR(t):
@@ -129,6 +129,7 @@ t_ignore = " \t\f\v\r"
 lex.lex()
 
 def parse(s):
+    lex.lexer.lineno = 0
     lex.input(s)
     global in_put
     in_put = s

@@ -1,4 +1,5 @@
 #!/bin/false
+# -*- coding: utf-8 -*-
 
 from objects.function import Function, ReturnI
 from objects.number import inf
@@ -22,17 +23,17 @@ def clear_screen():
 def print_exception(e, i):
     msg = __term.render("${RED}%s${NORMAL}" % type(e).__name__ + \
         ("" if not e.args else (": " + " ".join(map(str, e.args)))))
-    
+
     print >> sys.stderr, msg
-    
+
     if i.opts["logger"]:
         print >> sys.stderr, str(i.opts["logger"])
         i.opts["logger"].clear()
         print >> sys.stderr, ""
-    
+
     for q in i.stmtstack:
-        print >> stderr, "Line %d%s (cols %d-%d): %s" % (q[0][0], q[0][1] if q[0][1] != q[0][0] else "", \
+        print >> sys.stderr, "Line %d%s (cols %d-%d): %s" % (q[0][0], q[0][1] if q[0][1] != q[0][0] else "", \
             q[1][0] + 1, q[1][1] + 1, q[2])
-    
+
     print >> sys.stderr, msg
     i.stmtstack = []

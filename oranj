@@ -45,6 +45,7 @@ def run_console(i):
     import src.lexer as lexer
     import src.analyze as analyze
     import_readline()
+    i.consolelevel += 1
 
     try:
         t = ""
@@ -56,11 +57,12 @@ def run_console(i):
             try:
                 r = intp.run(t, i)
             except intp.PyDropI: raise
-            except intp.DropI: break
+            except intp.DropI:
+                break
             except src.parser.ParseError: pass
             except Exception, e:
                 src.libintp.print_exception(e, i)
-                traceback.print_exc()
+                #traceback.print_exc()
             else:
                 if hasattr(r, "isnil") and not r.isnil():
                     print repr(r)
@@ -72,6 +74,8 @@ def run_console(i):
     except intp.PyDropI:
         print "Dropping down to python console. Call undrop() to return."
         pydrop(i)
+
+    i.consolelevel -= 1
 
 def parse_args():
     parser = OptionParser()
@@ -87,6 +91,7 @@ def parse_args():
     return opts, args, child
 
 if __name__ == "__main__":
+    intp.Interpreter.run_console = run_console
     base_i = intp.Interpreter()
     opts, args, child = parse_args()
 
@@ -106,5 +111,4 @@ if __name__ == "__main__":
             import src.lexer as lexer
             lexer._test()
     else:
-        intp.Interpreter.run_console = run_console
         run_console(base_i)

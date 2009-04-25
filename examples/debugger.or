@@ -1,0 +1,16 @@
+a = 1
+
+if a == 1 {
+    io << a << endl
+    a = 3
+    #!debug
+    a = 2
+    io << a << endl
+}
+
+io << a << endl
+
+b = 7
+c = b
+c += a
+io << c << endl

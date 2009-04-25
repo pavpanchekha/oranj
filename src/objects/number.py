@@ -19,6 +19,7 @@ class Number(OrObject):
 
     def __init__(self, value, base=10, intonlystr=False):
         OrObject.__init__(self, "", Number)
+        self._val = 0
 
         if type(value) == type(""):
             value = value.replace(" ", "")

@@ -18,13 +18,16 @@ class PyDropI(Exception): pass
 class DropI(Exception): pass
 
 def str_to_bool(s):
-    s = s.lower()
-
-    return s not in ("false", "off", "no", "bad", "never", "death", "laplacian")
+    return s.lower() not in ("false", "off", "no", "bad", "never", "death", "evil")
 
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
     run_console = lambda self: None
+
+    def start_console(self):
+        self.level -= 1
+        self.run_console()
+        self.level += 1
 
     def __init__(self, g=None):
         if not g:
@@ -36,10 +39,12 @@ class Interpreter(object):
         self.opts = {
             "logger": None
             }
-        
+
         self.stmtstack = []
         self.cstmt = [(0, 0), (0, 0), ""]
         self.level = 0
+        self.steplevel = [-1, -1]
+        self.consolelevel = 0
 
     def set_option(self, opt, val):
         if opt == "ec": # Turn activity log on or off
@@ -53,14 +58,16 @@ class Interpreter(object):
     def run(self, tree):
         if not tree: return
 
-        try:
+        if type(tree[0]) == type("") and hasattr(self, "h" + tree[0]):
             return getattr(self, "h" + tree[0])(*tree[1:])
-        except:
-            if type(tree[0]) == type("") and hasattr(self, "h" + tree[0]):
-                raise
 
         if type(tree[0]) == type([]):
             for i in tree:
+                #print self.steplevel, self.level
+                if self.steplevel[1] > self.level and self.steplevel[0] >= self.consolelevel and i[0] == "STATEMENT":
+                    print "Next line (%d):" % i[1][0], i[3]
+                    Interpreter.run_console(self)
+
                 j = self.run(i)
             return j
         elif tree[0] == "FOR":
@@ -100,6 +107,10 @@ class Interpreter(object):
         self.stmtstack.append(self.cstmt)
         asdf = self.run(val)
         self.stmtstack.pop()
+
+        if self.steplevel[1] > self.level:
+            self.steplevel[1] = self.level
+
         self.level -= 1
         return asdf
 
@@ -114,7 +125,7 @@ class Interpreter(object):
 
     def hTABLE(self, vars):
         from objects.orddict import ODict
-        
+
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
         return ODict(vars)
 
@@ -131,7 +142,7 @@ class Interpreter(object):
                 i = c[var]
             except KeyError:
                 pass
-        
+
         try:
             return i
         except NameError:
@@ -139,7 +150,10 @@ class Interpreter(object):
 
     def hPROCDIR(self, cmd, args=""):
         if cmd == "drop":
+            self.level += 1
+            print "Dropping into oranj shell; use #!undrop to undrop"
             Interpreter.run_console(self)
+            self.level -= 1
         elif cmd == "undrop":
             raise DropI
         elif cmd == "clear":
@@ -157,6 +171,18 @@ class Interpreter(object):
                 raise SyntaxError("#!set requires two arguments")
 
             self.set_option(args[0], str_to_bool(args[1]))
+        elif cmd == "debug":
+            self.steplevel[1] = self.level - 1 # the -1 is black magic
+            self.steplevel[0] = self.consolelevel
+        elif cmd == "step":
+            if args.startswith("in"):
+                self.steplevel[1] += 1
+            elif args.startswith("out"):
+                self.steplevel[1] -= 1
+            elif args.startswith("end"):
+                self.steplevel[1] = -1
+
+            raise DropI("Stepping")
         elif cmd == "ec":
             if not args or not self.opts["logger"]:
                 return
@@ -354,7 +380,7 @@ class Interpreter(object):
         finally:
             if self.level > len(self.stmtstack):
                 self.stmtstack = self.stmtstack[:self.level]
-        
+
         if not isinstance(r, OrObject):
             return OrObject.from_py(r)
         else:
@@ -380,7 +406,7 @@ class Interpreter(object):
         from objects.orclass import OrClass
         return OrClass(self, map(self.run, parents), tags, block, self.run(doc))
 
-def run(s, intp=Interpreter()):
+def run(s, intp=Interpreter(), main=False):
     return intp.run(analyze.parse(s))
 
 builtin.builtin["eval"] = OrObject.from_py(run)

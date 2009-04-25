@@ -35,12 +35,12 @@ or_ = __mk_op(operator.or_, "or")
 and_ = __mk_op(operator.and_, "and")
 not_ = __mk_op(operator.not_, "not")
 in_ = __mk_op(lambda x, y: x in y, "in")
-lt = __mk_op(operator.lt, "lt", False)
-gt = __mk_op(operator.gt, "gt", False)
-le = __mk_op(operator.le, "le", False)
-ge = __mk_op(operator.ge, "ge", False)
-ne = __mk_op(operator.ne, "ne", False)
-eq = __mk_op(operator.eq, "eq", False)
+lt = __mk_op(operator.lt, "lt")
+gt = __mk_op(operator.gt, "gt")
+le = __mk_op(operator.le, "le")
+ge = __mk_op(operator.ge, "ge")
+ne = __mk_op(operator.ne, "ne")
+eq = __mk_op(operator.eq, "eq")
 input = __mk_op(lambda x, y: x.input(y), "input")
 output = __mk_op(lambda x, y: x.output(y), "output")
 uplus = __mk_op(operator.pos, "uplus")
@@ -96,7 +96,7 @@ def getattr_(x, y):
 def indexer(x, y):
     if type(x) in map(type, ((), [], {})):
         return map(lambda y: x[y], y)
-    
+
     return x[y]
 
 getindex_ = __mk_op(indexer, "getindex")
