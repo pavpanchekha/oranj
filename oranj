@@ -57,16 +57,14 @@ def run_console(i):
             try:
                 r = intp.run(t, i)
             except intp.PyDropI: raise
-            except intp.DropI:
-                break
+            except intp.DropI: raise EOFError
             except src.parser.ParseError: pass
             except Exception, e:
                 src.libintp.print_exception(e, i)
-                #traceback.print_exc()
             else:
                 if hasattr(r, "isnil") and not r.isnil():
                     print repr(r)
-    except EOFError:
+    except EOFError, e:
         print
     except KeyboardInterrupt:
         print

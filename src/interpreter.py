@@ -20,14 +20,26 @@ class DropI(Exception): pass
 def str_to_bool(s):
     return s.lower() not in ("false", "off", "no", "bad", "never", "death", "evil")
 
+def autoblock(f):
+    def t(self, *args, **kwargs):
+        self.steplevel[1] += 1
+        try:
+            v = f(self, *args, **kwargs)
+        finally:
+            self.steplevel[1] -= 1
+
+        return v
+    return t
+
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
     run_console = lambda self: None
 
     def start_console(self):
-        self.level -= 1
-        self.run_console()
-        self.level += 1
+        try:
+            self.run_console()
+        except (EOFError, DropI, PyDropI):
+            return
 
     def __init__(self, g=None):
         if not g:
@@ -63,43 +75,46 @@ class Interpreter(object):
 
         if type(tree[0]) == type([]):
             for i in tree:
-                #print self.steplevel, self.level
-                if self.steplevel[1] > self.level and self.steplevel[0] >= self.consolelevel and i[0] == "STATEMENT":
+                if self.steplevel[1] > self.level and self.steplevel[0] >= self.consolelevel \
+                        and i[0] == "STATEMENT" and i[4][0] not in ("FOR", "FOR2", "WHILE", \
+                        "WHILE2", "IF", "WHILE", "WHILE2", "CLASS"):
                     print "Next line (%d):" % i[1][0], i[3]
-                    Interpreter.run_console(self)
+                    Interpreter.start_console(self)
 
                 j = self.run(i)
             return j
-        elif tree[0] == "FOR":
-            vals = map(self.run, tree[1][1])
-            names = tree[1][0]
 
+    @autoblock
+    def hFOR(self, (names, vals), block):
+        vals = map(self.run, vals)
+
+        for v in zip(*vals):
+            for n, vv in zip(names, v):
+                self.curr[n] = OrObject.from_py(vv)
+            self.run(block)
+
+    @autoblock
+    def hFOR2(self, (names, vals), block, *others):
+        vals = map(self.run, vals)
+
+        try:
             for v in zip(*vals):
-                for n, vv in zip(names, v):
-                    self.curr[n] = OrObject.from_py(vv)
-                self.run(tree[2])
-        elif tree[0] == "FOR2":
-            vals = map(self.run, tree[1][1])
-            names = tree[1][0]
-
-            try:
-                for v in zip(*vals):
-                    try:
-                        for n, vv in zip(names, v):
-                            self.curr[n] = OrObject.from_py(vv)
-                        self.run(tree[2])
-                    except ContinueI, e:
-                        if e.args != () and e.args[0] > 1:
-                            v = e.args[0] - 1
-                            raise ContinueI(v)
-            except BreakI, e:
-                if e.args != () and e.args[0] != 0:
-                    v = e.args[0] - 1
-                    raise BreakI(v)
-                else:
-                    if "ELSE" in tree:
-                        i = tree.find("ELSE")
-                        self.run(tree[i + 1])
+                try:
+                    for n, vv in zip(names, v):
+                        self.curr[n] = OrObject.from_py(vv)
+                    self.run(block)
+                except ContinueI, e:
+                    if e.args != () and e.args[0] > 1:
+                        v = e.args[0] - 1
+                        raise ContinueI(v)
+        except BreakI, e:
+            if e.args != () and e.args[0] != 0:
+                v = e.args[0] - 1
+                raise BreakI(v)
+            else:
+                if "ELSE" in others:
+                    i = others.find("ELSE")
+                    self.run(others[i + 1])
 
     def hSTATEMENT(self, linespan, charspan, txt, val):
         self.level += 1
@@ -107,10 +122,6 @@ class Interpreter(object):
         self.stmtstack.append(self.cstmt)
         asdf = self.run(val)
         self.stmtstack.pop()
-
-        if self.steplevel[1] > self.level:
-            self.steplevel[1] = self.level
-
         self.level -= 1
         return asdf
 
@@ -172,13 +183,14 @@ class Interpreter(object):
 
             self.set_option(args[0], str_to_bool(args[1]))
         elif cmd == "debug":
-            self.steplevel[1] = self.level - 1 # the -1 is black magic
             self.steplevel[0] = self.consolelevel
+            self.steplevel[1] = self.level # the -1 is black magic
         elif cmd == "step":
+            self.steplevel[1] += 1
             if args.startswith("in"):
-                self.steplevel[1] += 1
+                self.steplevel[1] += 2
             elif args.startswith("out"):
-                self.steplevel[1] -= 1
+                self.steplevel[1] -= 2
             elif args.startswith("end"):
                 self.steplevel[1] = -1
 
@@ -300,6 +312,7 @@ class Interpreter(object):
         else:
             return r
 
+    @autoblock
     def hIF(self, cond, body, *others):
         if self.run(cond):
             self.run(body)
@@ -324,6 +337,7 @@ class Interpreter(object):
         else:
             raise BreakI()
 
+    @autoblock
     def hWHILE(self, cond, body, *others):
         if cond:
             test = lambda:  self.run(cond)
@@ -336,6 +350,7 @@ class Interpreter(object):
             if others:
                 self.run(others[1])
 
+    @autoblock
     def hWHILE2(self, cond, body, *others):
         if cond:
             test = lambda: self.run(cond)
@@ -386,6 +401,7 @@ class Interpreter(object):
         else:
             return r
 
+    @autoblock
     def hTRY(self, block, *catches):
         try:
             self.run(block)
@@ -402,6 +418,7 @@ class Interpreter(object):
 
             raise
 
+    @autoblock
     def hCLASS(self, doc, parents, tags, block):
         from objects.orclass import OrClass
         return OrClass(self, map(self.run, parents), tags, block, self.run(doc))

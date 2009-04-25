@@ -1,16 +1,28 @@
+
+io << "This script demonstrates the oranj debugging tool\n"
+io << "To start a debugging session, simply add the #!debug directive to your code\n"
+
+#!debug
+
+io << "You should now see each line of code before it is run. Press C-d or type #!step to run it\n"
+io << "Before a line is run, you have access to a complete shell. Feel free to, for example, examine or even change variables\n"
+
 a = 1
 
+io << "Blocks such as if and while are entered automatically\n"
+
 if a == 1 {
-    io << a << endl
     a = 3
-    #!debug
-    a = 2
-    io << a << endl
 }
 
 io << a << endl
+add1 = fn (x) {
+    return x + 1
+}
 
-b = 7
-c = b
-c += a
-io << c << endl
+io << "Function calls are not entered automatically. Type #!step in to enter them\n"
+io << "Use #!step out to exit a function call and #!step end to stop debugging\n"
+
+c = add1(a)
+
+io << endl << "This is the end of the tutorial. Feel free to play with this in your own code!\n"

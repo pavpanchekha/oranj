@@ -561,11 +561,15 @@ def p_statement(p):
                  | PROCBLOCK"""
 
     txtp = p.lexspan(1)[0]
-    while txtp > 0 and parser.txt[txtp] != "\n":
+    while txtp > -1 and parser.txt[txtp] != "\n":
         txtp -= 1
 
-    code = parser.txt[p.lexspan(1)[0]:p.lexspan(1)[1]+1]
-    bounds = [i - txtp for i in p.lexspan(1)]
+    txtp2 = p.lexspan(1)[1]
+    while txtp2 < len(parser.txt) and parser.txt[txtp2] != "\n":
+        txtp2 += 1
+
+    code = parser.txt[txtp + 1:txtp2]
+    bounds = [txtp, txtp2]
     p[0] = ["STATEMENT", [i+1 for i in p.linespan(1)], bounds, code, p[1]]
 
 def p_statements_aux(p):
