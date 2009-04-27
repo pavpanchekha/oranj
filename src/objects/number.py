@@ -12,10 +12,10 @@ class Number(OrObject):
     class_name = "num"
 
     def is_inf(self):
-        return self._val in (decimal.Inf, decimal.negInf, decimal.NaN)
+        return self._val in (decimal._Infinity, decimal._NegativeInfinity, decimal._NaN)
 
     def is_nan(self):
-        return self._val == decimal.NaN
+        return self._val == decimal._NaN
 
     def __init__(self, value, base=10, intonlystr=False):
         OrObject.__init__(self, "", Number)
@@ -47,7 +47,11 @@ class Number(OrObject):
             pass
 
     def ispy(self): return True
-    def topy(self): return self._val
+    def topy(self):
+        if type(self._val) == decimal.Decimal:
+            return float(self._val)
+        else:
+            return self._val
 
     def __nonzero__(self):
         return self != 0
@@ -64,6 +68,9 @@ class Number(OrObject):
             return -(other.__cmp__(self._val))
 
     def __div__(self, other):
+        if not hasattr(other, "_val"):
+            other = Number(other)
+        
         s = self._val
         o = other._val
         a = s / o
@@ -112,18 +119,26 @@ class Number(OrObject):
         return int(self)
 
     def __int__(self):
-        return self._val
+        return int(self._val)
 
     def __hash__(self):
         return hash(self._val)
 
+convtypes = map(type, (0.5, 1, 1L)) + [Number, decimal.Decimal]
+
 def add_func(i):
     def t(*args):
-        if any(type(i) != Number for i in args):
+        c = i
+
+        if any(type(x) not in convtypes for x in args):
             return NotImplemented
 
-        c = i
-        args = map(lambda x: x._val, args)
+        argf = []
+        for x in args:
+            if hasattr(x, "_val"):
+                argf.append(x._val)
+            else:
+                argf.append(Number(x)._val)
 
         if c in __builtins__:
             fn = __builtins__[c]
@@ -136,7 +151,7 @@ def add_func(i):
                 return NotImplemented
 
         try:
-            s = fn(*args)
+            s = fn(*argf)
         except TypeError:
             return NotImplemented
         else:
@@ -149,7 +164,7 @@ def add_func(i):
 for i in ["abs", "add", "and", "divmod", "float", "floordiv", "index", \
           "invert", "lshift", "mod", "mul", "neg", "or", "pos", "pow", "radd", "rand", \
           "rdivmod", "rfloordiv", "rlshift", "rmod", "rmul", "ror", "rpow", \
-          "rrshift", "rshift", "rsub", "rxor", "sub", "xor", "int"]:
+          "rrshift", "rshift", "rsub", "rxor", "sub", "xor"]:
 
     setattr(Number, "__%s__" % i, add_func(i))
 

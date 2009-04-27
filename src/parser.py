@@ -312,11 +312,11 @@ def p_import_s(p):
                 | IMPORT import_items AS IDENT"""
 
     if len(p) == 3:
-        p[0] = [p[1], p[2]]
+        p[0] = [p[1].upper(), p[2]]
     else:
         if p[2][-1] == "*":
             raise SyntaxError("Can only use 'import ... as ...' with single variable")
-        p[0] = [p[1], p[2], p[4]]
+        p[0] = [p[1].upper(), p[2], p[4]]
 
 def p_import_items(p):
     """import_items : import_items '.' IDENT

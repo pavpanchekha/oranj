@@ -11,13 +11,10 @@
    This'll be tricky
 ** Make passing keyword arguments to user-defined functions work
 * Library
-** globals / locals
+** globals / locals are read-only. Need to rebind writes to changing the actual variables
 ** help
-** vars
-** enumerate is broken
-** filter does nothing
 
 
-* Up next:
-** Fix exception display
-** IMPORT!!!!!
+* Python Interface
+** Numpy cannot add created arrays
+   Cryptic error messages. Tutorial cannot be completed

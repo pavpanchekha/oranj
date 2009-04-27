@@ -1,0 +1,7 @@
+
+io << "This code is always run\n"
+
+$$main = fn(args) {
+    io << "This code only run when the current script is run from the shell\n"
+    io << "args contains script arguments: " << args << endl
+}

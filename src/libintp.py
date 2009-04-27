@@ -26,7 +26,7 @@ def print_exception(e, i):
 
     print >> sys.stderr, msg
 
-    if i.opts["logger"]:
+    if i.opts["logger"] and i.opts["logger"].messages:
         print >> sys.stderr, str(i.opts["logger"])
         i.opts["logger"].clear()
         print >> sys.stderr, ""

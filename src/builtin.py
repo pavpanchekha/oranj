@@ -13,7 +13,12 @@ import objects.exception as exception
 import types
 import lib
 
-expose = OrObject.from_py
+def expose(r, n=""):
+    v = OrObject.from_py(r)
+    if n:
+        v.name = n
+    return v
+
 builtin = InheritDict()
 builtin.update({
     "int": expose(lib.toint),
@@ -32,9 +37,9 @@ builtin.update({
     "repr": expose(repr),
     "join": expose(lib.join),
     "range": expose(range),
-    "type": expose(lib.typeof),
+    "type": expose(lib.typeof, "type"),
 
-    "dir": expose(lib.dirof),
+    "dir": expose(lib.dirof, "dir"),
     "reverse": expose(reversed),
     "sort": expose(sorted),
     "chr": expose(unichr),

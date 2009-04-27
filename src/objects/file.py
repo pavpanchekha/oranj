@@ -4,6 +4,8 @@ from function import Function
 import types
 
 class File(OrObject):
+    class_name = "file"
+    
     def __init__(self, fname, mode="r"):
         OrObject.__init__(self, "", File)
         self.set("$$input", self.input)

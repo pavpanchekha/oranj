@@ -95,6 +95,10 @@ if __name__ == "__main__":
 
     if child:
         intp.run(open(child[0]).read(), base_i)
+        if "$$main" in base_i.curr:
+            main = base_i.curr["$$main"]
+            passargs = intp.OrObject.from_py(child)
+            main(passargs)
     elif opts.readin:
         intp.run(sys.stdin.read())
     elif opts.test:

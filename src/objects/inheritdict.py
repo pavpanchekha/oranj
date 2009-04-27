@@ -18,7 +18,7 @@ class InheritDict:
                     pass
 
             try:
-                self[key] = a # Cache lookup
+#                self[key] = a # Cache lookup
                 return a
             except NameError:
                 raise KeyError("Key not in InheritDict: " + str(key))

@@ -11,13 +11,14 @@ def __mk_op(f, name, try_noconv=True):
                 return OrObject.from_py(args[0].get("$$" + name)(*args[1:]))
             except AttributeError:
                 args2 = [args[0]] + list(args[2:])
-                return args[1].get("$$r_" + name)(*args2)
+                return OrObject.from_py(args[1].get("$$r_" + name)(*args2))
         except (AttributeError, IndexError, TypeError):
             try:
-                return f(*args)
+                return OrObject.from_py(f(*args))
             except TypeError:
-                if all(hasattr(i, "ispy") and i.ispy() for i in args):
-                    args = [i.topy() for i in args]
+                if all(not hasattr(i, "ispy") or i.ispy() for i in args):
+                    args = [i.topy() if i.ispy() else i for i in args]
+                    print f, args
                     return OrObject.from_py(f(*args))
                 else:
                     return NotImplemented
@@ -75,16 +76,15 @@ def is_(obj, cls):
 def call(obj, *args, **kwargs):
     try:
         return OrObject.from_py(obj.get("$$call")(*args, **kwargs))
-    except AttributeError:
-        if all(hasattr(i, "ispy") and i.ispy() for i in args) and all(hasattr(i, "ispy") and i.ispy() for k, i in kwargs.items()) and obj.ispy():
-            args = [i.topy() for i in args]
+    except (AttributeError, TypeError):
+        if all(not hasattr(i, "ispy") or i.ispy() for i in args) and all(not hasattr(i, "ispy") or i.ispy() for k, i in kwargs.items()) and obj.ispy():
+            args = [i.topy() if i.ispy() else i for i in args]
             for i in kwargs:
-                kwargs[i] = kwargs[i].topy()
+                kwargs[i] = kwargs[i].topy() if kwargs[i].ispy() else kwargs[i]
             obj = obj.topy()
 
             return OrObject.from_py(obj(*args, **kwargs))
         else:
-            raise
             raise TypeError(str(obj) + " is not callable")
 
 def getattr_(x, y):

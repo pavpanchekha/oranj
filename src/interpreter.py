@@ -2,14 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import analyze
-import sys
+import sys, os
+
+import files
 
 import builtin
 import operators
 import libintp
 
+import objects.about
+
 from objects.orobject import OrObject
 from objects.inheritdict import InheritDict
+from objects.module import Module
 import objects.number
 
 class ContinueI(Exception): pass
@@ -19,6 +24,18 @@ class DropI(Exception): pass
 
 def str_to_bool(s):
     return s.lower() not in ("false", "off", "no", "bad", "never", "death", "evil")
+
+def flatten_tuples(s, l=None):
+    if l is None:
+        l = []
+
+    for i in s:
+        if type(i) == type(()) or hasattr(i, "ispy") and i.ispy() and type(i.topy()) == type(()):
+            flatten_tuples(i, l)
+        else:
+            l.append(i)
+
+    return l
 
 def autoblock(f):
     def t(self, *args, **kwargs):
@@ -58,14 +75,42 @@ class Interpreter(object):
         self.steplevel = [-1, -1]
         self.consolelevel = 0
 
+        self.searchpath = [files.Path("."), files.Path(objects.about.mainpath) + "stdlib", files.Path(objects.about.mainpath) + "sitelib"]
+
+        if os.name == "nt":
+            # Yay windows!
+            userbase = files.Path("%APPDATA%/Oranj/")
+        else:
+            userbase = files.Path("~/.local/lib/oranj/")
+
+        self.searchpath.append(userbase)
+        self.searchpath.append(userbase + objects.about.version)
+
+        @OrObject.from_py
+        def vars():
+            return OrObject.from_py(self.curr.dict)
+
+        @OrObject.from_py
+        def globals():
+            return OrObject.from_py(self.cntx[1].dict)
+
+        @OrObject.from_py
+        def locals():
+            return OrObject.from_py(self.curr.dict)
+
+        g["globals"] = globals
+        g["locals"] = locals
+
     def set_option(self, opt, val):
         if opt == "ec": # Turn activity log on or off
-            if val:
+            if str_to_bool(val):
                 import errorcontext
                 self.opts["logger"] = errorcontext.ErrorContext()
             else:
                 if self.opts["logger"] is not None:
                     self.opts["logger"].active = False
+        elif opt == "path":
+            self.searchpath.append(files.Path(val))
 
     def run(self, tree):
         if not tree: return
@@ -89,7 +134,7 @@ class Interpreter(object):
         vals = map(self.run, vals)
 
         for v in zip(*vals):
-            for n, vv in zip(names, v):
+            for n, vv in zip(names, flatten_tuples(v)):
                 self.curr[n] = OrObject.from_py(vv)
             self.run(block)
 
@@ -100,7 +145,7 @@ class Interpreter(object):
         try:
             for v in zip(*vals):
                 try:
-                    for n, vv in zip(names, v):
+                    for n, vv in zip(names, flatten_tuples(v)):
                         self.curr[n] = OrObject.from_py(vv)
                     self.run(block)
                 except ContinueI, e:
@@ -181,7 +226,7 @@ class Interpreter(object):
             if len(args) != 2:
                 raise SyntaxError("#!set requires two arguments")
 
-            self.set_option(args[0], str_to_bool(args[1]))
+            self.set_option(args[0], args[1])
         elif cmd == "debug":
             self.steplevel[0] = self.consolelevel
             self.steplevel[1] = self.level # the -1 is black magic
@@ -423,7 +468,75 @@ class Interpreter(object):
         from objects.orclass import OrClass
         return OrClass(self, map(self.run, parents), tags, block, self.run(doc))
 
-def run(s, intp=Interpreter(), main=False):
+    def __get_import_loc(self, path):
+        for loc in self.searchpath:
+            if path[0] in loc or path[0] + ".or" in loc:
+                return loc
+        raise ImportError("Module %s not found" % ".".join(path))
+
+    def __get_py_import(self, path):
+        for i in range(len(path)):
+            try:
+                val = __import__(".".join(path[:i+1]))
+            except ImportError:
+                break
+        else:
+            return val, i + 1
+        
+        if i == 0:
+            raise ImportError("Module %s not found" % ".".join(path))
+        else:
+            return val, i
+
+    @autoblock
+    def hIMPORT(self, path):
+
+        #Step 1: Get module
+        try:
+            loc = self.__get_import_loc(path)
+        except ImportError:
+            try:
+                v, pathp = self.__get_py_import(path)
+            except ImportError:
+                raise ImportError("Module %s not found" % ".".join(path))
+            else:
+                name = path[pathp - 1]
+                mod = Module.from_py(v)
+        else:
+            pathp = 0
+            while pathp < len(path) and path[pathp] in loc:
+                loc += path[pathp]
+                pathp += 1
+
+            if pathp < len(path) and path[pathp] + ".or" in loc:
+                loc += path[pathp] + ".or"
+                pathp += 1
+
+            f = loc.get().open().read()
+            intp2 = Interpreter()
+            run(f, intp2)
+            name = path[pathp - 1]
+            mod = Module(intp2.curr.dict, name, str(loc))
+
+        # OK, done. mod is now a module object
+        for i in path[pathp:]:
+            if i != "*":
+                try:
+                    mod = mod.get(i)
+                    name = i
+                except KeyError:
+                    raise ImportError("Module %s not found" % ".".join(path))
+            else:
+                for i in mod.dict:
+                    self.curr[i] = OrObject.from_py(mod.dict.get(i))
+                return
+
+        self.curr[name] = OrObject.from_py(mod)
+
+def run(s, intp=None):
+    if intp is None:
+        intp = Interpreter()
+
     return intp.run(analyze.parse(s))
 
 builtin.builtin["eval"] = OrObject.from_py(run)
