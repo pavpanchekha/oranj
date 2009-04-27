@@ -40,6 +40,7 @@ builtin.update({
     "type": expose(lib.typeof, "type"),
 
     "dir": expose(lib.dirof, "dir"),
+    "attrs": expose(lib.attrsof, "attrs"),
     "reverse": expose(reversed),
     "sort": expose(sorted),
     "chr": expose(unichr),

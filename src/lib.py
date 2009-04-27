@@ -21,4 +21,7 @@ def typeof(x): #type
             return a.__name__
 
 def dirof(x): #dir
+    return x.dict.keys()
+
+def attrsof(x): #attrs
     return x.dict

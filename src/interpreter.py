@@ -477,7 +477,14 @@ class Interpreter(object):
     def __get_py_import(self, path):
         for i in range(len(path)):
             try:
-                val = __import__(".".join(path[:i+1]))
+                try:
+                    sys.path.append(str(files.Path(objects.about.mainpath)))
+                    val = __import__(".".join(["pystdlib"] + path[:i+1]))
+                except ImportError:
+                    sys.path.pop()
+                    val = __import__(".".join(path[:i+1]))
+                else:
+                    sys.path.pop()
             except ImportError:
                 break
         else:
@@ -493,6 +500,10 @@ class Interpreter(object):
 
         #Step 1: Get module
         try:
+            if path[0] == "py":
+                path = path[1:]
+                raise ImportError # Skip to except clause
+            
             loc = self.__get_import_loc(path)
         except ImportError:
             try:

@@ -18,7 +18,6 @@ def __mk_op(f, name, try_noconv=True):
             except TypeError:
                 if all(not hasattr(i, "ispy") or i.ispy() for i in args):
                     args = [i.topy() if i.ispy() else i for i in args]
-                    print f, args
                     return OrObject.from_py(f(*args))
                 else:
                     return NotImplemented

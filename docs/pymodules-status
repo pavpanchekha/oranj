@@ -8,6 +8,7 @@ ast         - It is probably less than useful to have an ast parser for
               Python but not one for oranj. TODO: write ast module for
               oranj. Relegate ast to pyast.
 binhex      - Module notes that it doesn't always work. I don't own a Macintosh.
+asynchat    - Blocked by Github:#8 - ability to subclass Python classes.
 
 These are the modules I specifically did check and the checks conducted:
 
@@ -18,3 +19,5 @@ atexit      - Registered a function. Testing unregister didn't work
 base64      - Example provided with module works.
 bisect      - I'm not entirely sure what this module does, but the example
               on its doc page does work.
+math        - Works perfectly. Should be rewritten and split up, per my plan
+              To have better math support in oranj.
