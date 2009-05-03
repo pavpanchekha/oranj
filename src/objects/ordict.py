@@ -1,8 +1,9 @@
 from orobject import OrObject
 
-class OrDict(dict):
+class OrDict(dict, OrObject):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
+        OrObject.__init__(self, "[anon]", OrDict)
     
     def ispy(self): return True
     def topy(self): return self

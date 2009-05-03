@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import ply.yacc as yacc
+import ply.lex as lex
 from lexer import tokens, literals
 
 import terminal
@@ -660,7 +661,7 @@ def parse(s):
 
     try:
         r = parser.parse(s, tracking=True)
-    except SyntaxError, e:
+    except (SyntaxError, lex.LexError), e:
         handle_error(e)
 
     if parser.errors: raise ParseError("Parsing error occurred")

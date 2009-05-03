@@ -364,11 +364,11 @@ class Interpreter(object):
         else:
             for i, v in enumerate(others[::3]):
                 if v == "ELIF":
-                    if self.run(tree[i + 1]):
-                        self.run(tree[i + 2])
+                    if self.run(others[i + 1]):
+                        self.run(others[i + 2])
                     return
                 else:
-                    self.run(tree[i + 1])
+                    self.run(others[i + 1])
 
     def hCONTINUE(self, val=None):
         if val:
@@ -428,7 +428,7 @@ class Interpreter(object):
             if i[0] == "UNWRAPKW":
                 kw.update(self.run(i[1]))
             elif i[0] == "KW":
-                kw[self.run(i[1])] = self.run(i[2])
+                kw[i[1]] = self.run(i[2])
             elif i[0] == "UNWRAP":
                 a.extend(self.run(i[1]).topy())
             else:
@@ -479,7 +479,10 @@ class Interpreter(object):
             try:
                 try:
                     sys.path.append(str(files.Path(objects.about.mainpath)))
-                    val = __import__(".".join(["pystdlib"] + path[:i+1]))
+                    p = ".".join(["pystdlib"] + path[:i+1]) + "_or"
+                    __import__(p)
+                    val = sys.modules[p]
+                    # The _or means that a module won't import itself
                 except ImportError:
                     sys.path.pop()
                     val = __import__(".".join(path[:i+1]))

@@ -1,0 +1,22 @@
+
+#! ../oranj -r
+
+# Create && print
+>>> io << "HELLO!\n"
+HELLO!
+
+# Some basic methods
+>>> io << "ASDF".startswith("AS") << endl
+True
+>>> io << "AS DF".split() << endl
+['AS', 'DF']
+>>> io << "    asdf   ".strip() << endl
+asdf
+
+# Overloaded operators
+>>> io << ("ASDF" == "ASDF") << endl
+True
+>>> io << "A" + "B" << endl
+AB
+>>> io << "A" * 5 + "a" * 10 << endl
+AAAAAaaaaaaaaaa

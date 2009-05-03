@@ -41,7 +41,9 @@ class OrObject(object):
         return self.has("$$tags") and tag in self.get("$$tags")
 
     def get(self, key):
-        if key in self.dict:
+        if key == "$$dict":
+            return OrObject.from_py(self.__dict__)
+        elif key in self.dict:
             val = self.dict[key]
         elif self.ispy() and hasattr(self.topy(), key):
             return getattr(self.topy(), key)
@@ -128,20 +130,20 @@ class OrObject(object):
         for i in args:
             cls.overrides[i] = new
 
-    @classmethod
-    def from_py(cls, obj, rich=True):
+    @staticmethod
+    def from_py(obj, rich=True):
         """ rich means that __x__ methods will be copied """
-        if isinstance(obj, cls): return obj
+        if isinstance(obj, OrObject): return obj
 
-        if type(obj) in cls.overrides:
-            return cls.overrides[type(obj)](obj)
+        if type(obj) in OrObject.overrides:
+            return OrObject.overrides[type(obj)](obj)
 
         n = obj.__name__ if hasattr(obj, "__name__") else "[anon]"
         c = type(obj) if hasattr(obj, "__class__") else None
-        np = cls(n, c)
+        np = OrObject(n, c)
 
         if rich:
-            for i in [j for j in dir(obj) if j.startswith("__") and not hasattr(cls, j) and j not in ("__class__", "__name__", "__dict__", "__weakref__", "__getattr__", "__setattr__", "__delattr__")]:
+            for i in [j for j in dir(obj) if j.startswith("__") and not hasattr(OrObject, j) and j not in ("__class__", "__name__", "__dict__", "__weakref__", "__getattr__", "__setattr__", "__delattr__")]:
                 setattr(OrObject, i, mk_method(i))
 
         np.set("$$python", obj)

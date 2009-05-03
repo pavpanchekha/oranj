@@ -19,5 +19,7 @@ atexit      - Registered a function. Testing unregister didn't work
 base64      - Example provided with module works.
 bisect      - I'm not entirely sure what this module does, but the example
               on its doc page does work.
+bz2         - Compress and decompress works. This should test the basic
+              functionality.
 math        - Works perfectly. Should be rewritten and split up, per my plan
               To have better math support in oranj.

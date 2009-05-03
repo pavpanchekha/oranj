@@ -10,6 +10,7 @@ from objects.ordict import OrDict
 from objects.orddict import ODict
 import objects.console as console
 import objects.exception as exception
+import objects.orstring as orstring
 import types
 import lib
 

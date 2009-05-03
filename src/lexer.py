@@ -100,7 +100,7 @@ def t_NEWLINE(t):
     return t
 
 def t_error(t):
-    print "Error (line %d): Illegal character `%s`" % (t.lexer.lineno, repr(t.value)[1:-1])
+    pass
 
 # Deal with reserved words
 reserved = {}
@@ -137,7 +137,10 @@ def parse(s):
     return list(iter(lex.token, None))
 
 def isdone(s):
-    l = parse(s)
+    try:
+        l = parse(s)
+    except lex.LexError:
+        return True
 
     count = [0, 0, 0]
     for i in l:
