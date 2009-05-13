@@ -1,0 +1,4 @@
+
+There is currently no nice installation script. I'm a bit too lazy for that.
+What you *_MUST_* do is modify the src/objects/about.py file and replace mainpath
+with the directory where the main oranj script is located.

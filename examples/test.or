@@ -1,0 +1,65 @@
+
+# String literals
+a = "a"
+b = "a" + b
+multiline = "a\nb$1\t\vc\""
+
+# Inline python
+#!python {
+    print "Hello, World!"
+    if 1 == 1:
+       print "YAY!"
+#! }
+
+# Floats and operations
+io << 5 | 45.0 ^ 20.0 << endl
+
+# Test a few constants
+nil or inf or -inf or true or false
+
+# Lets do a large class with functions and stuff
+PrimeManager = class {
+    $$init = fn(self) {
+        self.plist = [2]
+        self.pmax = 2
+    }
+    
+    isprime = fn(self, val) {
+        if val > self.pmax {
+            while val > self.pmax {
+                for i in self.plist {
+                    if i | val {
+                        val++
+                        continue 2
+                    }
+                }
+                
+                self.plist.append(i)
+                val++
+            }
+            
+            return self.plist[-1] == val
+        } else {
+            return val in self.plist
+        }
+    }
+    
+    $$getindex = fn(self, index) {
+        ci = self.plist[-1] + 1
+        while index > len(self.plist) {
+            for i in self.plist {
+                if i | val {
+                    ci++
+                    continue 2
+                }
+            }
+
+            self.plist.append[i]
+            ci++
+        }
+        
+        return self.plist[index]
+    }
+}
+
+#!drop
