@@ -40,3 +40,9 @@ class InheritDict:
 
     def keys(self):
         return self.dict.keys() + sum([i.keys() for i in self.parents], [])
+
+    def values(self):
+        return self.dict.values() + sum([i.values() for i in self.parents], [])
+
+    def items(self):
+        return self.dict.items() + sum([i.items() for i in self.parents], [])
