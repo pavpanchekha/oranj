@@ -652,7 +652,11 @@ def p_error(t):
 
     handle_error(e)
 
-parser = yacc.yacc()
+import objects.about
+_p = objects.about.mainpath
+if not _p.endswith("core"):
+    _p += "core/"
+parser = yacc.yacc(outputdir=_p+"../build", debug=0)
 
 def parse(s):
     global parser
@@ -681,8 +685,6 @@ def getcol(tok):
     if l < 0:
         l = 0
     return (tok.lexpos - l) + 1
-
-yacc.yacc()
 
 def _test():
     import pprint # Because parse trees get hairy

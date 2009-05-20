@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import src.interpreter as intp
+import os, sys
+import objects.about
+
+sys.path.append(os.path.join(objects.about.mainpath, "core", "lib"))
+
+import interpreter as intp
 from optparse import OptionParser
-import sys
 import traceback
-import src.libintp
-import src.parser
+import libintp
+import parser
 
 def pydrop(i):
     import os
@@ -42,8 +46,8 @@ def import_readline():
     return readline
 
 def run_console(i):
-    import src.lexer as lexer
-    import src.analyze as analyze
+    import lexer
+    import analyze
     import_readline()
     i.consolelevel += 1
 
@@ -58,9 +62,9 @@ def run_console(i):
                 r = intp.run(t, i)
             except intp.PyDropI: raise
             except intp.DropI: raise EOFError
-            except src.parser.ParseError: pass
+            except parser.ParseError: pass
             except Exception, e:
-                src.libintp.print_exception(e, i)
+                libintp.print_exception(e, i)
             else:
                 if hasattr(r, "isnil") and not r.isnil():
                     print repr(r)
@@ -104,13 +108,13 @@ if __name__ == "__main__":
     elif opts.test:
         import_readline()
         if opts.test == "a":
-            import src.analyze as analyze
+            import analyze
             analyze._test()
         elif opts.test == "p":
-            import src.parser as parser
+            import parser
             parser._test()
         elif opts.test == "l":
-            import src.lexer as lexer
+            import lexer
             lexer._test()
     else:
         run_console(base_i)

@@ -75,7 +75,7 @@ class Interpreter(object):
         self.steplevel = [-1, -1]
         self.consolelevel = 0
 
-        self.searchpath = [files.Path("."), files.Path(objects.about.mainpath) + "stdlib", files.Path(objects.about.mainpath) + "sitelib"]
+        self.searchpath = [files.Path("."), files.Path(objects.about.mainpath) + "../stdlib", files.Path(objects.about.mainpath) + "../sitelib"]
 
         if os.name == "nt":
             # Yay windows!
@@ -478,7 +478,7 @@ class Interpreter(object):
         for i in range(len(path)):
             try:
                 try:
-                    sys.path.append(str(files.Path(objects.about.mainpath)))
+                    sys.path.append(str(files.Path(objects.about.mainpath) + ".."))
                     p = ".".join(["pystdlib"] + path[:i+1]) + "_or"
                     __import__(p)
                     val = sys.modules[p]
