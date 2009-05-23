@@ -126,7 +126,11 @@ t_EQ = r"\=\="
 
 t_ignore = " \t\f\v\r"
 
-lex.lex()
+import objects.about
+_p = objects.about.mainpath
+if not _p.endswith("core/"):
+    _p += "core/"
+lex.lex(outputdir=_p[:-6]+"/build", optimize=1)
 
 def parse(s):
     lex.lexer.lineno = 0

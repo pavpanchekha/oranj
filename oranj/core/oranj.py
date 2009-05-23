@@ -92,7 +92,7 @@ def parse_args():
 
     return opts, args, child
 
-if __name__ == "__main__":
+def main():
     intp.Interpreter.run_console = run_console
     base_i = intp.Interpreter()
     opts, args, child = parse_args()
@@ -118,3 +118,6 @@ if __name__ == "__main__":
             lexer._test()
     else:
         run_console(base_i)
+
+if __name__ == "__main__":
+    main()

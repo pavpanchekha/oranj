@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+
+import oranj.core.oranj
+oranj.core.oranj.main()

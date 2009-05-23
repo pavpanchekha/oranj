@@ -654,9 +654,9 @@ def p_error(t):
 
 import objects.about
 _p = objects.about.mainpath
-if not _p.endswith("core"):
+if not _p.endswith("core/"):
     _p += "core/"
-parser = yacc.yacc(outputdir=_p+"../build", debug=0)
+parser = yacc.yacc(tabmodule="parsetab", outputdir=_p[:-6]+"/build", debug=0, optimize=1)
 
 def parse(s):
     global parser
