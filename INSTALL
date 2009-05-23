@@ -1,4 +1,7 @@
 
-There is currently no nice installation script. I'm a bit too lazy for that.
-What you *_MUST_* do is modify the src/objects/about.py file and replace mainpath
-with the directory where the main oranj script is located.
+Installation involves only running
+
+  sudo python setup.py install
+
+Replace sudo with your favorite way of becoming root.
+Oranj should have no dependancies except python 2.6.

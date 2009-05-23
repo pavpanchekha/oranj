@@ -1,7 +1,9 @@
-Currently, mu-oranj (MicroOranj) works, in that oranj understands all
-arithmetic, conditional, and looping constructs. Soon, exceptions will be
-implemented. Functions are now implemented and as soon as I get classes done,
-I'll begin to focus on the bugs that annoy us all.
+The core of Oranj should work completely, together with small fixes for
+libraries such as numpy. You should be able to use any python modules (if you
+cannot, report it at http://github.com/pavpanchekha/oranj/issues).
+
+Work is progressing on various oranj-specific modules, such as integrating in
+the files.py library.
 
 Work is also progressing on the test suite, located in the tests subdirectory.
 These are run with the tests tool that I am developing in parallel.

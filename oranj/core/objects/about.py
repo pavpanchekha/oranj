@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import _os
+
 version = "0.5"
-mainpath = "/home/pavpan/Development/oranj/"
+mainpath = "This will be replaced"
