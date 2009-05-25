@@ -2546,7 +2546,10 @@ class LRGeneratedTable(LRTable):
         basemodulename = modulename.split(".")[-1]
         filename = os.path.join(outputdir,basemodulename) + ".py"
         try:
-            f = open(filename,"w")
+            try:
+                f = open(filename,"w")
+            except IOError:
+                return
 
             f.write("""
 # %s
