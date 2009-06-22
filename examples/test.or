@@ -2,20 +2,26 @@
 # String literals
 a = "a"
 b = "a" + b
-multiline = "a\nb$1\t\vc\""
+multiline = "a\nb$1\tc\""
+multiline2 = '''a
+b$1	c"'''
 
 # Inline python
 #!python {
     print "Hello, World!"
     if 1 == 1:
-       print "YAY!"
+        print "YAY"
+    
+    """
+    This should be in the string -- multiline strings work
+    """
 #! }
 
 # Floats and operations
 io << 5 | 45.0 ^ 20.0 << endl
 
 # Test a few constants
-nil or inf or -inf or true or false
+nil or inf and -inf in true >= false
 
 # Lets do a large class with functions and stuff
 PrimeManager = class {
