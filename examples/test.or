@@ -23,6 +23,21 @@ io << 5 | 45.0 ^ 20.0 << endl
 # Test a few constants
 nil or inf and -inf in true >= false
 
+# How about a small class
+Food = class is Edible {
+     eat = fn(self) {
+         io << "YUM!" << endl;
+     }
+}
+
+# Now, a function to try to eat things
+eat = fn(obj) {
+    if obj is `Edible {
+        obj.eat()
+    } else {
+        io << "Eww, you can't eat that!" << endl
+}
+
 # Lets do a large class with functions and stuff
 PrimeManager = class {
     $$init = fn(self) {
