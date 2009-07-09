@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from objects.orobject import OrObject
-import operator
+import operator, types
 
 def __mk_op(f, name, try_noconv=True):
     def t(*args):
@@ -47,15 +47,15 @@ uplus = __mk_op(operator.pos, "uplus")
 uminus = __mk_op(operator.neg, "uminus")
 
 def is_(obj, cls):
-    if cls.ispy() and type(cls.topy()) == type(""):
-        if hasattr(obj.get("$$class"), "has") and obj.get("$$class").has("$$tags"):
+    if hasattr(cls, "ispy") and cls.ispy():
+        cls = cls.topy()
+    
+    if type(cls) == type(""):
+        if hasattr(obj.get("$$class"), "has") and type(obj.get("$$class").has) != types.UnboundMethodType and obj.get("$$class").has("$$tags"):
             return cls.topy() in obj.get("$$class").get("$$tags")
         else:
             return False
-
-    if hasattr(cls, "ispy") and cls.ispy():
-        cls = cls.topy()
-
+    
     try:
         r = isinstance(obj, cls)
     except TypeError:

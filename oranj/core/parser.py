@@ -35,6 +35,11 @@ def p_string(p):
     else:
         p[0] = [p[1]] + p[2]
 
+def p_string_backtick(p):
+    """string : '`' IDENT"""
+
+    p[0] = [("STRING", p[2], "")]
+        
 def p_primitive(p):
     """primitive : DEC
                  | INT
