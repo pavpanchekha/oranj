@@ -1,5 +1,5 @@
 
-#!../oranj -r
+#!oranj -r
 
 # map()
 >>> io << map(fn(x) { return x + 1 }, range(10))

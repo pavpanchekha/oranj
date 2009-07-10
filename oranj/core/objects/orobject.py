@@ -111,6 +111,21 @@ class OrObject(object):
         else:
             return self.__str__()
 
+    def __eq__(self, other):
+        a = self.topy() if self.ispy() else self
+        b = other.topy() if other.ispy() else other
+
+        return a == b
+
+    def __hash__(self):
+        if self.ispy():
+            try:
+                return hash(self.topy())
+            except TypeError:
+                return id(self.topy())
+        else:
+            return id(self)
+
     def del_(self):
         if self.ispy() and hasattr(self.topy(), "__del__"):
             return self.topy().__del__

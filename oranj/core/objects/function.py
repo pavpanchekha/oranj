@@ -34,10 +34,10 @@ class Function(OrObject):
     def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
 
     def __str__(self):
-        return "<fn " + self.get("$$name") + ">"
+        return "<fn " + str(self.get("$$name")) + ">"
 
     def __repr__(self):
-        return "<fn " + self.get("$$name") + ">"
+        return str(self)
 
     def __call__(self, *args, **kwargs):
         if hasattr(self, "intp"):

@@ -1,5 +1,5 @@
 
-#!../oranj -r
+#!oranj -r
 
 ## Tests conditionals as might be used in if
 

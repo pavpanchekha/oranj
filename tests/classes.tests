@@ -1,5 +1,5 @@
 
-#!../oranj -r
+#!oranj -r
 
 # Test class methods
 >>> Car = class {nc = 0; $$init = fn(self) {Car.nc++}; gnc = fn(cls) is Class {return cls.nc}}
