@@ -28,7 +28,7 @@ def import_readline():
     try:
         import readline
     except ImportError:
-        pass
+        return None
 
     def completer(text, state=0):
         if text:

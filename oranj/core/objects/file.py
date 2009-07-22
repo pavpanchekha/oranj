@@ -43,7 +43,7 @@ class File(OrObject):
 
     def read(self, valid_f=None, coerce_f=None):
         if valid_f is None and coerce_f is None:
-            return file.read()
+            return self.file.read()
         else:
             if not self.buf:
                 a = self.file.readline()[:-1].split()

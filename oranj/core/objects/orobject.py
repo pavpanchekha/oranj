@@ -113,7 +113,7 @@ class OrObject(object):
 
     def __eq__(self, other):
         a = self.topy() if self.ispy() else self
-        b = other.topy() if other.ispy() else other
+        b = other.topy() if hasattr(other, "ispy") and other.ispy() else other
 
         return a == b
 
@@ -173,6 +173,8 @@ def mk_method(name):
         else:
             if "attr" in name: # NotImplemented stupidly evaluates to True
                 raise AttributeError("Object does not support this operation")
+            elif name == "__nonzero__":
+                return True
             else:
                 return NotImplemented
 

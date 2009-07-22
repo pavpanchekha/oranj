@@ -578,8 +578,15 @@ def p_statement(p):
     bounds = [txtp, txtp2]
     p[0] = ["STATEMENT", [i+1 for i in p.linespan(1)], bounds, code, p[1]]
 
+
+def p_newline(p):
+    """newline : newline NEWLINE
+               | NEWLINE"""
+
+    p[0] = None
+
 def p_statements_aux(p):
-    """statements_ : statements_ NEWLINE statement
+    """statements_ : statements_ newline statement
                    | statement"""
 
     if len(p) == 2:
@@ -588,19 +595,19 @@ def p_statements_aux(p):
         p[0] = p[1] + [p[3]]
 
 def p_statements2(p):
-    """statements : NEWLINE statements_ NEWLINE
-                  | NEWLINE statements_"""
+    """statements : newline statements_ newline
+                  | newline statements_"""
 
     p[0] = p[2]
 
 def p_statements1(p):
-    """statements : statements_ NEWLINE
+    """statements : statements_ newline
                   | statements_"""
 
     p[0] = p[1]
 
 def p_statements0(p):
-    """statements : NEWLINE
+    """statements : newline
                   | """
 
     p[0] = []

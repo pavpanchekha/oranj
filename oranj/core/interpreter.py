@@ -278,7 +278,7 @@ class Interpreter(object):
         for val in vals:
             body, flags = val[1:]
             if "r" not in flags:
-                body = eval('"' + body + '"')
+                body = eval('"""' + body + '"""')
             strs.append(body)
         return OrObject.from_py("".join(strs))
 
@@ -294,9 +294,9 @@ class Interpreter(object):
             if val.get("$$name") == "[anon]":
                 val.set("$$name", ident)
         elif ident[0] == "SETATTR":
-            self.run(ident[1]).set(ident[2], val)
+            self.run(ident[1]).set(self.run(ident[2]), val)
         elif ident[0] == "SETINDEX":
-            self.run(ident[1])[ident[2]] = val
+            self.run(ident[1])[self.run(ident[2])] = val
 
     def hDECLARE(self, type, (idents, vals)):
         for i in idents:
@@ -475,23 +475,38 @@ class Interpreter(object):
         raise ImportError("Module %s not found" % ".".join(path))
 
     def __get_py_import(self, path):
+        flag = False
         for i in range(len(path)):
+            sys.path.append(str(files.Path(objects.about.mainpath) + ".."))
+            p = path[0] + "_or." + ".".join(["pystdlib"] + path[1:i+1])
+            # The _or means that a module won't import itself
+            
             try:
-                try:
-                    sys.path.append(str(files.Path(objects.about.mainpath) + ".."))
-                    p = ".".join(["pystdlib"] + path[:i+1]) + "_or"
-                    __import__(p)
-                    val = sys.modules[p]
-                    # The _or means that a module won't import itself
-                except ImportError:
-                    sys.path.pop()
-                    val = __import__(".".join(path[:i+1]))
-                else:
-                    sys.path.pop()
+                __import__(p)
             except ImportError:
+                sys.path.pop()
                 break
-        else:
-            return val, i + 1
+            else:
+                val = sys.modules[p]
+                sys.path.pop()
+                flag = True
+
+        if flag:
+            return val, i
+
+        flag = False
+        for i in range(len(path)):
+            p = ".".join(path[:i+1])
+            try:
+                __import__(p)
+            except ImportError, e:
+                break
+            else:
+                val = sys.modules[p]
+                flag = True
+
+        if flag:
+            return val, i
         
         if i == 0:
             raise ImportError("Module %s not found" % ".".join(path))
@@ -518,11 +533,11 @@ class Interpreter(object):
                 mod = Module.from_py(v)
         else:
             pathp = 0
-            while pathp < len(path) and path[pathp] in loc:
+            while pathp < len(path) and (loc + path[pathp]).exists():
                 loc += path[pathp]
                 pathp += 1
 
-            if pathp < len(path) and path[pathp] + ".or" in loc:
+            if pathp < len(path) and (loc + (path[pathp] + ".or")).exists():
                 loc += path[pathp] + ".or"
                 pathp += 1
 

@@ -20,20 +20,24 @@ def clear_screen():
         # Fallback for other operating systems.
         print '\n' * 100
 
-def print_exception(e, i):
-    msg = __term.render("${RED}%s${NORMAL}" % type(e).__name__ + \
-        ("" if not e.args else (": " + " ".join(map(str, e.args)))))
 
-    print >> sys.stderr, msg
+def str_exception(e, i):
+    output = []
+    output.append("${RED}%s${NORMAL}" % type(e).__name__ + \
+        ("" if not e.args else (": " + str(e))))
 
     if i.opts["logger"] and i.opts["logger"].messages:
-        print >> sys.stderr, str(i.opts["logger"])
+        output.append(str(i.opts["logger"]))
         i.opts["logger"].clear()
-        print >> sys.stderr, ""
+        output.append("")
 
     for q in i.stmtstack:
-        print >> sys.stderr, "Line %d%s (cols %d-%d): %s" % (q[0][0], q[0][1] if q[0][1] != q[0][0] else "", \
-            q[1][0] + 1, q[1][1] + 1, q[2])
+        output.append("Line %d%s (cols %d-%d): %s" % (q[0][0], q[0][1] if q[0][1] != q[0][0] else "", \
+            q[1][0] + 1, q[1][1] + 1, q[2]))
 
-    print >> sys.stderr, msg
-    i.stmtstack = []
+    i.stmtstack = []        
+    output.append(output[0])
+    return "\n".join(output)
+
+def print_exception(e, i):
+    print >> sys.stderr, __term.render(str_exception(e, i))

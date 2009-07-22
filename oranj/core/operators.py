@@ -76,11 +76,11 @@ def call(obj, *args, **kwargs):
     try:
         return OrObject.from_py(obj.get("$$call")(*args, **kwargs))
     except (AttributeError, TypeError):
-        if all(not hasattr(i, "ispy") or i.ispy() for i in args) and all(not hasattr(i, "ispy") or i.ispy() for k, i in kwargs.items()) and obj.ispy():
+        if all(not hasattr(i, "ispy") or i.ispy() for i in args) and all(not hasattr(i, "ispy") or i.ispy() for k, i in kwargs.items()):
             args = [i.topy() if i.ispy() else i for i in args]
             for i in kwargs:
                 kwargs[i] = kwargs[i].topy() if kwargs[i].ispy() else kwargs[i]
-            obj = obj.topy()
+            obj = obj.topy() if obj.ispy() else obj
 
             return OrObject.from_py(obj(*args, **kwargs))
         else:

@@ -92,7 +92,7 @@ class Path:
         del self.path[key]
 
     def __contains__(self, key):
-        return self + key
+        return (self + key).exists()
 
     def __str__(self):
         return Path.join(self.path)
