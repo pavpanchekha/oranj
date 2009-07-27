@@ -324,6 +324,17 @@ def p_import_s(p):
             raise SyntaxError("Can only use 'import ... as ...' with single variable")
         p[0] = [p[1].upper(), p[2], p[4]]
 
+def p_import_with_s(p):
+    """import_s : IMPORT import_items WITH many_lvalues
+                | IMPORT import_items WITH many_lvalues AS IDENT"""
+
+    if len(p) == 5:
+        p[0] = [p[1].upper(), p[2], "", p[4]]
+    else:
+        if p[2][-1] == "*":
+            raise SyntaxError("Can only use 'import ... as ...' with single variable")
+        p[0] = [p[1].upper(), p[2], p[6], p[4]]
+
 def p_import_items(p):
     """import_items : import_items '.' IDENT
                     | import_items '.' '*'

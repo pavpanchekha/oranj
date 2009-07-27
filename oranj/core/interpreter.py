@@ -454,7 +454,7 @@ class Interpreter(object):
             for i, v in enumerate(catches[1::4]):
                 if any(operators.is_(e, self.run(j)) for j in v) or not v:
                     if catches[3*i+2]:
-                        self.curr[catches[3*i+2][1]] = OrObject.from_py(e)
+                        self.curr[catches[3*i+2]] = OrObject.from_py(e)
                     self.run(catches[3*i+3])
                     return
 
@@ -476,23 +476,25 @@ class Interpreter(object):
 
     def __get_py_import(self, path):
         flag = False
+        sys.path.append(str(files.Path(objects.about.mainpath) + ".."))
+        
         for i in range(len(path)):
-            sys.path.append(str(files.Path(objects.about.mainpath) + ".."))
-            p = path[0] + "_or." + ".".join(["pystdlib"] + path[1:i+1])
-            # The _or means that a module won't import itself
+            p = path[0] + "_or." + ".".join(["pystdlib"] + path[:i+1])
             
             try:
                 __import__(p)
             except ImportError:
-                sys.path.pop()
                 break
             else:
                 val = sys.modules[p]
-                sys.path.pop()
                 flag = True
-
+        else:
+            i += 1
+        
+        sys.path.pop()
+        
         if flag:
-            return val, i
+            return val, i+1
 
         flag = False
         for i in range(len(path)):
@@ -504,6 +506,8 @@ class Interpreter(object):
             else:
                 val = sys.modules[p]
                 flag = True
+        else:
+            i += 1
 
         if flag:
             return val, i
@@ -514,7 +518,7 @@ class Interpreter(object):
             return val, i
 
     @autoblock
-    def hIMPORT(self, path):
+    def hIMPORT(self, path, fname="", vars=[]):
 
         #Step 1: Get module
         try:
@@ -543,6 +547,10 @@ class Interpreter(object):
 
             f = loc.get().open().read()
             intp2 = Interpreter()
+            
+            for i in vars:
+                intp2.curr[i[2]] = self.curr[i[2]]
+                
             run(f, intp2)
             name = path[pathp - 1]
             mod = Module(intp2.curr.dict, name, str(loc))
@@ -560,11 +568,16 @@ class Interpreter(object):
                     self.curr[i] = OrObject.from_py(mod.dict.get(i))
                 return
 
+        fname = fname if fname else name
+
         self.curr[name] = OrObject.from_py(mod)
 
-def run(s, intp=None):
+def run(s, intp=None, **kwargs):
     if intp is None:
         intp = Interpreter()
+
+    for i in kwargs:
+        intp.curr[i] = kwargs[i]
 
     return intp.run(analyze.parse(s))
 
