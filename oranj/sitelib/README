@@ -1,0 +1,3 @@
+This directory holds any site-specific modules. Modules should be installed here
+if they are not installed from a package-manager of some sort (which includes
+python's setup.py)
