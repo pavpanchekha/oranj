@@ -211,7 +211,7 @@ class Interpreter(object):
 
     def hPROCDIR(self, cmd, args=""):
         if cmd in self.procdirs:
-            return self.procdirs[cmd](args, i, globals())
+            return self.procdirs[cmd](args, self, globals())
         elif cmd == "set":
             args = args.split()
             if len(args) != 2:
@@ -537,7 +537,13 @@ class Interpreter(object):
                 loc += path[pathp] + ".or"
                 pathp += 1
 
-            f = loc.get().open().read()
+            if "file" in type(loc):
+                f = loc.get().open().read()
+            elif "$$init.or" in loc:
+                f = (log+"$$init.or").get().open()
+            else:
+                f = ""
+                
             intp2 = Interpreter()
             
             for i in vars:

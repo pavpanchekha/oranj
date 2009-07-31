@@ -6,7 +6,7 @@
 def drop(args, i, glob={}):
     i.level += 1
     print "Dropping to oranj shell. Use C-d or #!undrop to undrop"
-    glob["Interpreter"].run_console(i.curr)
+    glob["Interpreter"].run_console(i)
     i.level -= 1
 
 def undrop(args, i, glob={}):
