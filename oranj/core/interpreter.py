@@ -63,6 +63,7 @@ class Interpreter(object):
             g = InheritDict(builtin.builtin)
 
         self.cntx = [g, InheritDict(g)]
+        self.curr["intp"] = OrObject.from_py(self)
         self.types = {}
 
         self.opts = {
@@ -100,6 +101,10 @@ class Interpreter(object):
 
         g["globals"] = globals
         g["locals"] = locals
+
+        import libproc
+        self.procblocks = libproc.blocks
+        self.procdirs = libproc.dirs
 
     def set_option(self, opt, val):
         if opt == "ec": # Turn activity log on or off
@@ -205,31 +210,18 @@ class Interpreter(object):
             raise NameError("Variable %s does not exist" % var)
 
     def hPROCDIR(self, cmd, args=""):
-        if cmd == "drop":
-            self.level += 1
-            print "Dropping into oranj shell; use #!undrop to undrop"
-            Interpreter.run_console(self)
-            self.level -= 1
-        elif cmd == "undrop":
-            raise DropI
-        elif cmd == "clear":
-            libintp.clear_screen()
-        elif cmd == "exit":
-            sys.exit()
-        elif cmd == "pydrop":
-            raise PyDropI
-        elif cmd == "pyerror":
-            import traceback
-            traceback.print_exc()
+        if cmd in self.procdirs:
+            return self.procdirs[cmd](args, i, globals())
         elif cmd == "set":
             args = args.split()
             if len(args) != 2:
                 raise SyntaxError("#!set requires two arguments")
 
-            self.set_option(args[0], args[1])
+            return self.set_option(args[0], args[1])
         elif cmd == "debug":
             self.steplevel[0] = self.consolelevel
-            self.steplevel[1] = self.level # the -1 is black magic
+            self.steplevel[1] = self.level
+            return
         elif cmd == "step":
             self.steplevel[1] += 1
             if args.startswith("in"):
@@ -252,25 +244,17 @@ class Interpreter(object):
                 type = "message"
                 val = args
             
-            self.opts["logger"].write(val, type)
+            return self.opts["logger"].write(val, type)
+
+        # Hmm, we still haven't been run
+        raise SyntaxError("Processing directive not available")
 
     def hPROCBLOCK(self, type, body):
-        if type[0] == "python":
-            glob = globals()
-            glob["intp"] = self
-            return eval(body, glob)
-        elif type[0] == "output":
-            self.curr["io"].write(body)
-        elif type[0] == "nil":
-            return
-        elif type[0] == "xml":
-            try:
-                import elementtree
-            except ImportError:
-                import xml.etree.ElementTree as elementtree
-            
-            return elementtree.fromstring(body)
-
+        if type[0] in self.procdirs:
+            return self.procdirs[type[0]](type[1:], body, self, globals())
+        else:
+            raise SyntaxError("Proccessing block not available")
+        
     def hPRIMITIVE(self, val, *others):
         if val[0] in ("DEC", "INT"):
             return objects.number.Number(*val[1:])
