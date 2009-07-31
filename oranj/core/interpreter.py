@@ -23,7 +23,7 @@ class PyDropI(Exception): pass
 class DropI(Exception): pass
 
 def str_to_bool(s):
-    return s.lower() not in ("false", "off", "no", "bad", "never", "death", "evil")
+    return s.lower() not in ("false", "off", "no", "bad", "never", "death", "evil", "red", "door")
 
 def flatten_tuples(s, l=None):
     if l is None:
@@ -123,7 +123,7 @@ class Interpreter(object):
                 if self.steplevel[1] > self.level and self.steplevel[0] >= self.consolelevel \
                         and i[0] == "STATEMENT" and i[4][0] not in ("FOR", "FOR2", "WHILE", \
                         "WHILE2", "IF", "WHILE", "WHILE2", "CLASS"):
-                    print "Next line (%d):" % i[1][0], i[3]
+                    print "(%d):" % i[1][0], i[3]
                     Interpreter.start_console(self)
 
                 j = self.run(i)
@@ -241,27 +241,35 @@ class Interpreter(object):
 
             raise DropI("Stepping")
         elif cmd == "ec":
-            if not args or not self.opts["logger"]:
+            if not self.opts["logger"]:
                 return
-            if len(args) >= 4 and args[:4] == "data" and args[4].isspace():
+            elif not args:
+                return OrObject.from_py(self.opts["logger"])
+            elif len(args) >= 4 and args[:4] == "data" and args[4].isspace():
                 type = "data"
                 val = args[4:].strip()
             else:
                 type = "message"
                 val = args
+            
             self.opts["logger"].write(val, type)
-        elif cmd == "ecsave":
-            if not args:
-                raise SyntaxError("#ecsave requires variable name as argument")
-            else:
-                self.curr[args] = OrObject.from_py(self.opts["logger"])
 
     def hPROCBLOCK(self, type, body):
-        glob = globals()
-        glob["intp"] = self
-
         if type[0] == "python":
-            exec body in glob, {}
+            glob = globals()
+            glob["intp"] = self
+            return eval(body, glob)
+        elif type[0] == "output":
+            self.curr["io"].write(body)
+        elif type[0] == "nil":
+            return
+        elif type[0] == "xml":
+            try:
+                import elementtree
+            except ImportError:
+                import xml.etree.ElementTree as elementtree
+            
+            return elementtree.fromstring(body)
 
     def hPRIMITIVE(self, val, *others):
         if val[0] in ("DEC", "INT"):

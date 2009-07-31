@@ -97,7 +97,7 @@ def main():
     base_i = intp.Interpreter()
     opts, args, child = parse_args()
 
-    if child:
+    if child and not opts.test:
         intp.run(open(child[0]).read(), base_i)
         if "$$main" in base_i.curr:
             main = base_i.curr["$$main"]
@@ -109,13 +109,13 @@ def main():
         import_readline()
         if opts.test == "a":
             import analyze
-            analyze._test()
+            analyze._test(child[0] if len(child) > 0 else None)
         elif opts.test == "p":
             import parser
-            parser._test()
+            parser._test(child[0] if len(child) > 0 else None)
         elif opts.test == "l":
             import lexer
-            lexer._test()
+            lexer._test(child[0] if len(child) > 0 else None)
     else:
         run_console(base_i)
 

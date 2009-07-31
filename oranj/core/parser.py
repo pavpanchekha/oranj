@@ -573,9 +573,7 @@ def p_statement(p):
                  | flow_s
                  | import_s
                  | assert_s
-                 | block_s
-                 | PROCDIR
-                 | PROCBLOCK"""
+                 | block_s"""
 
     txtp = p.lexspan(1)[0]
     while txtp > -1 and parser.txt[txtp] != "\n":
@@ -629,7 +627,9 @@ def p_kernel(p): # MUST go on bottom to resolve r/r conflict correctly
               | dict
               | lvalue
               | fn
-              | class"""
+              | class
+              | PROCDIR
+              | PROCBLOCK"""
 
     p[0] = p[1]
 
@@ -709,17 +709,20 @@ def getcol(tok):
         l = 0
     return (tok.lexpos - l) + 1
 
-def _test():
+def _test(f):
     import pprint # Because parse trees get hairy
 
-    try:
-        while True:
-            try:
-                pprint.pprint(parse(raw_input("parse> ") + "\n"))
-            except ParseError:
-                pass
-    except (KeyboardInterrupt, EOFError):
-        print
+    if not f:
+        try:
+            while True:
+                try:
+                    pprint.pprint(parse(raw_input("parse> ") + "\n"))
+                except ParseError:
+                    pass
+        except (KeyboardInterrupt, EOFError):
+            print
+    else:
+        pprint.pprint(parse(open(f).read()))
 
 if __name__ == "__main__":
     _test()

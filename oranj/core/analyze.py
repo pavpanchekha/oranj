@@ -78,12 +78,15 @@ def _test_run(s):
     global errors
     pprint.pprint(parse(s))
 
-def _test():
-    try:
-        while True:
-            _test_run(raw_input("analyze> ") + "\n")
-    except (EOFError, KeyboardInterrupt):
-        print
+def _test(f):
+    if not f:
+        try:
+            while True:
+                _test_run(raw_input("analyze> ") + "\n")
+        except (EOFError, KeyboardInterrupt):
+            print
+    else:
+        _test_run(open(f).read())
 
 if __name__ == "__main__":
     _test()

@@ -73,15 +73,15 @@ def t_IDENT(t):
 
     return t
 
+def t_PROCBLOCK(t):
+    r"\#![a-zA-Z]+(\s[^\{\}]*)?\{" r"(.|\n)*?" r"\#![ \t]*\}"
+
+    t.value = liblex.hPROCBLOCK(t.value)
+    return t
+
 def t_PROCDIR(t):
     r"\#![a-zA-Z0-9]+(\s.*)?"
     t.value = liblex.hPROCDIR(t.value)
-    return t
-
-def t_PROCBLOCK(t):
-    r"\#![a-zA-Z]+(\s[^\{\}]*)?\{" r"(.|\n)*" r"\#![ \t]*\}"
-
-    t.value = liblex.hPROCBLOCK(t.value)
     return t
 
 def t_COMMENT(t):
@@ -160,17 +160,26 @@ def isdone(s):
         or re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*", s) \
         and not re.search("\#![a-zA-Z0-9 \t]*\{(.|\n)*\#![ \t]*\}", s)
 
-def _test():
-    try:
-        while True:
-            lex.input(raw_input("lex> ").replace("!\\n", "\n") + "\n")
-            for tok in iter(lex.token, None):
-                if len(tok.type) == 1:
-                    print "'" + tok.type + "'",
-                else:
-                    print "|" + tok.type + "|",
+def _test(f):
+    if not f:
+        try:
+            while True:
+                lex.input(raw_input("lex> ").replace("!\\n", "\n") + "\n")
+                for tok in iter(lex.token, None):
+                    if len(tok.type) == 1:
+                        print "'" + tok.type + "'",
+                    else:
+                        print "|" + tok.type + ((": " + repr(tok.value)) if type(tok.value) != type("") else "") + "|",
+                print
+        except (KeyboardInterrupt, EOFError):
             print
-    except (KeyboardInterrupt, EOFError):
+    else:
+        lex.input(open(f).read())
+        for tok in iter(lex.token, None):
+            if len(tok.type) == 1:
+                print "'" + tok.type + "'",
+            else:
+                print "|" + tok.type + ": " + repr(tok.value) + "|",
         print
 
 if __name__ == "__main__":
