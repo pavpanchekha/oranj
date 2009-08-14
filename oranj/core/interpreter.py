@@ -275,6 +275,7 @@ class Interpreter(object):
         return OrObject.from_py("".join(strs))
 
     def hASSIGN(self, idents, vals):
+        vals = [["VALUE", self.run(val)] for val in vals]
         for i, v in zip(idents, vals):
             self.hASSIGN1(i, v)
 
@@ -569,6 +570,9 @@ class Interpreter(object):
         fname = fname if fname else name
 
         self.curr[name] = OrObject.from_py(mod)
+
+    def hVALUE(self, val):
+        return val
 
 def run(s, intp=None, **kwargs):
     if intp is None:
