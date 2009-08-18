@@ -71,7 +71,7 @@ class Interpreter(object):
             }
 
         self.stmtstack = []
-        self.cstmt = [(0, 0), (0, 0), ""]
+        self.cstmt = [(0, 0), (0, 0), ""] # Default
         self.level = 0
         self.steplevel = [-1, -1]
         self.consolelevel = 0
@@ -195,19 +195,12 @@ class Interpreter(object):
         return OrObject.from_py(slice(*[self.run(i).topy() for i in stops]))
 
     def hIDENT(self, var):
-        try:
+        if var in self.curr:
             return self.curr[var]
-        except:
-            for c in self.cntx:
-                try:
-                    i = c[var]
-                except KeyError:
-                    pass
 
-        try:
-            return i
-        except NameError:
-            raise NameError("Variable %s does not exist" % var)
+        for c in self.cntx[:-1:-1]:
+            if var in c:
+                return c[var]
 
     def hPROCDIR(self, cmd, args=""):
         if cmd in self.procdirs:

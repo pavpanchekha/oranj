@@ -1,19 +1,6 @@
 # -*- coding: utf-8 -*-
 # The definition of an OrObject
 
-class OverIterator:
-    def __init__(self, overiterator):
-        self.over = overiterator
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return OrObject.from_py(next(self.over))
-
-    def next(self):
-        return self.__next__()
-
 class OrObject(object):
     overrides = {}
 
@@ -134,7 +121,7 @@ class OrObject(object):
 
     def __iter__(self):
         if self.ispy() and hasattr(self.topy(), "__iter__"):
-            return OverIterator(self.topy().__iter__())
+            return self.topy().__iter__()
         elif self.has("$$iter"):
             return self.get("$$iter")()
         else:

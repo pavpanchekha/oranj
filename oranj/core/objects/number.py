@@ -130,20 +130,12 @@ def add_func(i):
     def t(*args):
         c = i
 
-        if any(type(x) not in convtypes for x in args):
-            return NotImplemented
-
-        argf = []
-        for x in args:
-            if hasattr(x, "_val"):
-                argf.append(x._val)
-            else:
-                argf.append(Number(x)._val)
-
+        argf = [x._val if type(x) == Number else x for x in args]
+        
         if c in __builtins__:
             fn = __builtins__[c]
         else:
-            if not hasattr(operator, c):
+            if hasattr(operator, c + "_"):
                 c += "_"
             try:
                 fn = getattr(operator, c)
