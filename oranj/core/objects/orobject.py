@@ -140,14 +140,34 @@ class OrObject(object):
         else:
             return AttributeError("Iteration not supported by %s" % repr(self))
 
+    def __nonzero__(self):
+        if self.ispy():
+            return bool(self.topy())
+        elif self.has("$$bool"):
+            return self.get("$$bool")
+        else:
+            return True
+    
+    def __getattr__(self, key):
+        if key.startswith("__") and key not in ("__class__", "__name__",
+            "__dict__", "__weakref__", "__getattr__", "__setattr__",
+            "__delattr__"):
+            setattr(OrObject, key, mk_method(key))
+            
+            def wrap_method(*args, **kwargs):
+                return getattr(OrObject, key)(self, *args, **kwargs)
+            
+            return wrap_method
+        else:
+            raise AttributeError
+
     @classmethod
     def register(cls, new, *args):
         for i in args:
             cls.overrides[i] = new
 
     @staticmethod
-    def from_py(obj, rich=True):
-        """ rich means that __x__ methods will be copied """
+    def from_py(obj):
         if isinstance(obj, OrObject): return obj
 
         if type(obj) in OrObject.overrides:
@@ -156,10 +176,6 @@ class OrObject(object):
         n = obj.__name__ if hasattr(obj, "__name__") else "[anon]"
         c = type(obj) if hasattr(obj, "__class__") else None
         np = OrObject(n, c)
-
-        if rich:
-            for i in [j for j in dir(obj) if j.startswith("__") and not hasattr(OrObject, j) and j not in ("__class__", "__name__", "__dict__", "__weakref__", "__getattr__", "__setattr__", "__delattr__")]:
-                setattr(OrObject, i, mk_method(i))
 
         np.set("$$python", obj)
         return np

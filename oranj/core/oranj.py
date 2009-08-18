@@ -12,17 +12,15 @@ import traceback
 import libintp
 import parser
 
-def pydrop(i):
+def pydrop(i, glob):
     import os
-    global undrop
-    global curr
-    curr = i
-
     os.environ["PYTHONINSPECT"] = "1"
 
     def undrop():
-        run_console(i)
+        run_console(i, glob)
 
+    glob["undrop"] = undrop
+    glob["intp"] = i
 
 def import_readline():
     try:
@@ -45,7 +43,7 @@ def import_readline():
     readline.parse_and_bind("tab: complete")
     return readline
 
-def run_console(i):
+def run_console(i, glob):
     import lexer
     import analyze
     import_readline()
@@ -75,7 +73,7 @@ def run_console(i):
         sys.exit()
     except intp.PyDropI:
         print "Dropping down to python console. Call undrop() to return."
-        pydrop(i)
+        pydrop(i, glob)
 
     i.consolelevel -= 1
 
@@ -92,17 +90,19 @@ def parse_args():
 
     return opts, args, child
 
-def main():
+def main(glob):
     intp.Interpreter.run_console = run_console
     base_i = intp.Interpreter()
     opts, args, child = parse_args()
 
     if child and not opts.test:
-        intp.run(open(child[0]).read(), base_i)
-        if "$$main" in base_i.curr:
-            main = base_i.curr["$$main"]
-            passargs = intp.OrObject.from_py(child)
-            main(passargs)
+        text = open(child[0]).read()
+        if text.strip() != "":
+            intp.run(text, base_i)
+            if "$$main" in base_i.curr:
+                main = base_i.curr["$$main"]
+                passargs = intp.OrObject.from_py(child)
+                main(passargs)
     elif opts.readin:
         intp.run(sys.stdin.read())
     elif opts.test:
@@ -117,7 +117,7 @@ def main():
             import lexer
             lexer._test(child[0] if len(child) > 0 else None)
     else:
-        run_console(base_i)
+        run_console(base_i, glob)
 
 if __name__ == "__main__":
     main()

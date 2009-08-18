@@ -118,12 +118,9 @@ class Interpreter(object):
             self.searchpath.append(files.Path(val))
 
     def run(self, tree):
-        if not tree: return
-
-        if type(tree[0]) == type("") and hasattr(self, "h" + tree[0]):
-            return getattr(self, "h" + tree[0])(*tree[1:])
-
-        if type(tree[0]) == type([]):
+        if type(tree[0]) == type(""):
+            return Interpreter.__dict__["h" + tree[0]](self, *tree[1:])
+        else:
             for i in tree:
                 if self.steplevel[1] > self.level and self.steplevel[0] >= self.consolelevel \
                         and i[0] == "STATEMENT" and i[4][0] not in ("FOR", "FOR2", "WHILE", \
@@ -198,11 +195,14 @@ class Interpreter(object):
         return OrObject.from_py(slice(*[self.run(i).topy() for i in stops]))
 
     def hIDENT(self, var):
-        for c in self.cntx:
-            try:
-                i = c[var]
-            except KeyError:
-                pass
+        try:
+            return self.curr[var]
+        except:
+            for c in self.cntx:
+                try:
+                    i = c[var]
+                except KeyError:
+                    pass
 
         try:
             return i
@@ -331,6 +331,9 @@ class Interpreter(object):
         else:
             raise AssertionError(self.run(doc))
 
+    def hOP1(self, op, v1, v2):
+        return OrObject.from_py(operators.op_names[op](self.run(v1), self.run(v2)))
+        
     def hOP(self, op, *args):
         if op in ("--", "++"):
             v = self.run(args[0])
@@ -345,10 +348,7 @@ class Interpreter(object):
         except TypeError:
             raise
 
-        if not isinstance(r, OrObject):
-            return OrObject.from_py(r)
-        else:
-            return r
+        return OrObject.from_py(r)
 
     @autoblock
     def hIF(self, cond, body, *others):

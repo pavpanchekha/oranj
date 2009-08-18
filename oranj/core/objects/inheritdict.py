@@ -10,6 +10,8 @@ class InheritDict:
     def __getitem__(self, key):
         if key in self.dict:
             return self.dict[key]
+        elif len(self.parents) == 1:
+            return self.parents[0][key]
         else:
             for i in self.parents:
                 try:
@@ -17,11 +19,11 @@ class InheritDict:
                 except (KeyError, TypeError):
                     pass
 
-            try:
-#                self[key] = a # Cache lookup
-                return a
-            except NameError:
-                raise KeyError("Key not in InheritDict: " + str(key))
+        try:
+            self[key] = a # Cache lookup
+            return a
+        except NameError:
+            raise KeyError("Key not in InheritDict: " + str(key))
 
     def __setitem__(self, key, value):
         self.dict[key] = value

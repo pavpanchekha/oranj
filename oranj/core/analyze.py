@@ -27,9 +27,15 @@ def get_augass(tree):
         elif i[0] == "=":
             i[0] = "ASSIGN"
 
-        if type(tree) == type([]):
-            get_augass(i)
+        get_augass(i)
     return
+
+def op_op1(tree):
+    for id, i in enumerate(tree):
+        if type(i) != type([]) or len(i) == 0: continue
+        if i[0] == "OP" and len(i) == 4:
+            i[0] = "OP1"
+        op_op1(i)
 
 def check_break_continue(tree, lstack=[]):
     if len(tree) == 0 or type(tree) != type([]): return
@@ -68,6 +74,7 @@ def parse(t):
     p = parser.parse(t)
 
     get_augass(p)
+    op_op1(p)
     check_break_continue(p)
 
     return p
