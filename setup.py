@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 
-setup(name="Oranj",
+setup(name="oranj",
       version="0.5",
       description="Oranj Programming Language",
       author="Pavel Panchekha",
