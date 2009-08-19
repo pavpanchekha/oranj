@@ -531,7 +531,7 @@ class Interpreter(object):
                 loc += path[pathp] + ".or"
                 pathp += 1
 
-            if "file" in type(loc):
+            if "file" in loc.type():
                 f = loc.get().open().read()
             elif "$$init.or" in loc:
                 f = (log+"$$init.or").get().open()
