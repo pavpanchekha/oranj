@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name="oranj",
-      version="0.5",
+      version="0.6",
       description="Oranj Programming Language",
       author="Pavel Panchekha",
       author_email="pavpanchekha@gmail.com",

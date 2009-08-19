@@ -17,3 +17,6 @@ debian/oranj/
 debian/pycompat
 debian/stamp-patched
 python-build-stamp-2.6
+
+dist
+MANIFEST
