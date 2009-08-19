@@ -1,0 +1,17 @@
+Source: oranj
+Section: interpreters
+Priority: extra
+Maintainer: Pavel Panchekha <pavpanchekha@gmail.com>
+Build-Depends: cdbs (>=0.4.49), debhelper (>= 7), python-support (>= 0.5.3)
+Standards-Version: 3.8.0
+Homepage: http://pavpanchekha.github.com/oranj/
+
+Package: oranj
+Architecture: any
+Depends: ${python:Depends}, python-ply (>= 2.5)
+XB-Python-Version: ${python:Versions}
+Description: A pythonic, dynamic programming language
+ A new dynamic, interpreted programming language, with
+ a focus on GUI and web development. It makes programming
+ enjoyable and easy, and makes enabling advanced features
+ direct and fast.

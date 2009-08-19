@@ -1,0 +1,29 @@
+This package was debianized by Pavel Panchekha <pavpanchekha@gmail.com> on
+Wed, 19 Aug 2009 12:33:50 -0400.
+
+It was downloaded from <http://pavpanchekha.github.com/oranj/>
+
+Upstream Author(s):
+
+    Pavel Panchekha <pavpanchekha@gmail.com>
+
+Copyright:
+
+    <Copyright (C) 2009 Pavel Panchekha>
+
+License:
+
+    You are free to distribute the software under the terms of the
+    GNU General Public License. On Debian systems, the complete text
+    of the GNU General Public License can be found in the file
+    `/usr/share/common-licenses/GPL`.
+
+The Debian packaging is copyright 2009, Pavel Panchekha <pavpanchekha@gmail.com> and
+is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
+
+This package includes the `odict` python library, which is
+
+    Copyright (C) 2005 Nicola Larosa, Michael Foord
+
+and is distributed under the terms of the BSD license. On Debian Systems, the
+full text of this license can be found in the file `/usr/share/common-licenses/BSD`.
