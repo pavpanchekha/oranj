@@ -10,6 +10,7 @@ Package: oranj
 Architecture: any
 Depends: ${python:Depends}, python-ply (>= 2.5)
 XB-Python-Version: ${python:Versions}
+XS-Python-Version: current, >=2.6
 Description: A pythonic, dynamic programming language
  A new dynamic, interpreted programming language, with
  a focus on GUI and web development. It makes programming
