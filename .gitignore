@@ -7,3 +7,13 @@ parsetab.py
 */.directory
 .directory
 build
+
+debian/files
+debian/oranj.debhelper.log
+debian/oranj.postinst.debhelper
+debian/oranj.prerm.debhelper
+debian/oranj.substvars
+debian/oranj/
+debian/pycompat
+debian/stamp-patched
+python-build-stamp-2.6

@@ -12,7 +12,7 @@ import objects.console as console
 import objects.exception as exception
 import objects.orstring as orstring
 import types
-import lib
+import libbuiltin
 
 def expose(r, n=""):
     v = OrObject.from_py(r)
@@ -22,7 +22,7 @@ def expose(r, n=""):
 
 builtin = InheritDict()
 builtin.update({
-    "int": expose(lib.toint),
+    "int": expose(libbuiltin.toint),
     "num": expose(Number),
     "dict": expose(OrDict),
     "odict": expose(ODict),
@@ -36,12 +36,12 @@ builtin.update({
     "endl": expose("\n"),
 
     "repr": expose(repr),
-    "join": expose(lib.join),
+    "join": expose(libbuiltin.join),
     "range": expose(range),
-    "type": expose(lib.typeof, "type"),
+    "type": expose(libbuiltin.typeof, "type"),
 
-    "dir": expose(lib.dirof, "dir"),
-    "attrs": expose(lib.attrsof, "attrs"),
+    "dir": expose(libbuiltin.dirof, "dir"),
+    "attrs": expose(libbuiltin.attrsof, "attrs"),
     "reverse": expose(reversed),
     "sort": expose(sorted),
     "chr": expose(unichr),
