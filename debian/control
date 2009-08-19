@@ -8,7 +8,7 @@ Homepage: http://pavpanchekha.github.com/oranj/
 
 Package: oranj
 Architecture: any
-Depends: ${python:Depends}, python-ply (>= 2.5)
+Depends: ${python:Depends}
 XB-Python-Version: ${python:Versions}
 XS-Python-Version: current, >=2.6
 Description: A pythonic, dynamic programming language
