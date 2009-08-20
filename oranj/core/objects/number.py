@@ -8,6 +8,11 @@ defaults.prec = 28
 defaults.rounding = decimal.ROUND_HALF_EVEN
 defaults.capitals = 0
 
+if not hasattr(decimal, "_NaN"): # python 2.5
+    decimal._NaN = decimal.Decimal("NaN")
+    decimal._Infinity = decimal.Decimal("Infinity")
+    decimal._NegativeInfinity = decimal.Decimal("-Infinity")
+
 class Number(OrObject):
     class_name = "num"
 

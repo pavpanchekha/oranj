@@ -379,7 +379,7 @@ class Dir(FSObject):
         r.sort()
         return r
 
-    def create(self, mode=0o777):
+    def create(self, mode=int("777", 8)): # Required for python 2.5 compatibility
         os.makedirs(str(self.path), mode)
 
     def delete(self):
