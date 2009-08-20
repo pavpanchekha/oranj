@@ -16,6 +16,7 @@ from objects.orobject import OrObject
 from objects.inheritdict import InheritDict
 from objects.module import Module
 import objects.number
+import objects.constants
 
 class ContinueI(Exception): pass
 class BreakI(Exception): pass
@@ -256,7 +257,7 @@ class Interpreter(object):
         elif val[0] == "NIL":
             return OrObject.from_py(None)
         elif val[0] == "INF":
-            return objects.number.inf
+            return objects.constants.inf
 
     def hSTRING(self, vals):
         strs = []

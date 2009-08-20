@@ -158,7 +158,7 @@ def input(*args, **kwargs):
     return io.read(*args, **kwargs)
 
 def output(*args, **kwargs):
-    return io.write(*args, **kwargs)
+    io.write(*args, **kwargs)
 
 def error(*args, **kwargs):
-    return io.error(*args, **kwargs)
+    io.error(*args, **kwargs)

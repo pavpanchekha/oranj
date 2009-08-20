@@ -165,6 +165,4 @@ for i in ["abs", "add", "and", "divmod", "float", "floordiv", "index", \
 
     setattr(Number, "__%s__" % i, add_func(i))
 
-inf = Number("Infinity")
-
 OrObject.register(Number, type(1), type(1L), decimal.Decimal, type(0.1))

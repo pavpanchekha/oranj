@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from objects.function import Function, ReturnI
-from objects.number import inf
 import sys
 
 import terminal
