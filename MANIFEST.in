@@ -1,0 +1,4 @@
+include LICENSE.txt STATUS.txt
+recursive-include oranj/core/lib *.py
+recursive-include docs *.html *.css *.png
+recursive-include examples *.or

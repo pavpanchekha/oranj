@@ -1,0 +1,28 @@
+
+# The interpreter object `intp` is a special variable
+# that contains the actual interpreter running the
+# program.
+io << "I'm `intp`: " << intp << endl
+
+# You can use `intp.register` to register new processing
+# blocks and directives
+
+intp.register("dir", "hello", fn(args, i, glob) {
+    # `args` is a list of arguments passed to the directive
+    # `i` is the interpreter object intp
+    # `glob` is a dictionary of global variables in the
+    # interpreter.py file (advanced usage)
+
+    io << "Hello from processing directive!" << endl
+})
+
+intp.register("block", "print", fn (args, body, i, glob) {
+    output(body)
+}) # Actually, there's a builtin block called `output` that
+# does the same thing
+
+#!hello
+
+#!print {
+Hello from processing block!
+#! }

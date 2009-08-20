@@ -1,0 +1,11 @@
+The core of Oranj should work completely, together with small fixes for
+libraries such as numpy. You should be able to use any python modules (if you
+cannot, report it at http://github.com/pavpanchekha/oranj/issues).
+
+Work is progressing on various oranj-specific modules, such as integrating in
+the files.py library.
+
+Work is also progressing on the test suite, located in the tests subdirectory.
+These are run with the tests tool that I am developing in parallel.
+
+Lastly, an effort to document Oranj will begin as soon as mu-oranj is complete.
