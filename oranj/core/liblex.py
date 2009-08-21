@@ -62,7 +62,8 @@ def hIDENT(t):
         return t
 
 def hPROCDIR(t):
-    return ["PROCDIR"] + t[2:].split(None, 1)
+    import shlex
+    return ["PROCDIR",  shlex.split(t[2:])]
 
 def __process_procblock(s):
     if s and s[0] == "\n":
@@ -81,11 +82,12 @@ def __process_procblock(s):
     return s
 
 def hPROCBLOCK(t):
+    import shlex
     pstart = t.find("{")
     pend = t.rfind("#!", 2)
 
     header = t[2:pstart].strip()
     body = t[pstart+1:pend]
 
-    return ["PROCBLOCK", header.split(None, 1), __process_procblock(body)]
+    return ["PROCBLOCK", shlex.split(header), __process_procblock(body)]
 

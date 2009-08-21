@@ -12,5 +12,23 @@ setup(name="oranj",
       package_dir={"oranj.core": "oranj/core", "oranj": "oranj"},
       package_data={"oranj.core": ["lib/errorcontext.py", "lib/odict.py", "lib/files.py", "lib/terminal.py", "lib/ply/lex.py", "lib/ply/yacc.py", "lib/ply/__init__.py"], "oranj": ["build/parsetab.py", "stdlib/*", "sitelib/*"]},
       scripts=["scripts/oranj"],
-#      requires=["ply (>=3.1)", "files (>=1.0)"],
+      classifiers=[
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Topic :: Software Development :: Interpreters",
+        ],
+      long_description = """\
+A pythonic, dynamic programming language
+----------------------------------------
+
+A new dynamic, interpreted programming language, with
+a focus on GUI and web development. It makes programming
+enjoyable and easy, and makes enabling advanced features
+direct and fast.
+"""
       )

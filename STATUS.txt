@@ -8,4 +8,4 @@ the files.py library.
 Work is also progressing on the test suite, located in the tests subdirectory.
 These are run with the tests tool that I am developing in parallel.
 
-Lastly, an effort to document Oranj will begin as soon as mu-oranj is complete.
+Lastly, an effort to document Oranj will begin soon.

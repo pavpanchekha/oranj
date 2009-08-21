@@ -2,9 +2,9 @@ from number import Number
 from orobject import OrObject
 
 inf = Number("Infinity")
-true = OrObject(True)
-false = OrObject(False)
-nil = OrObject(None)
+true = OrObject.from_py(True)
+false = OrObject.from_py(False)
+nil = OrObject.from_py(None)
 
 true.__str__ = lambda: "true"
 true.__repr__ = lambda: "true"

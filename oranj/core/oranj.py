@@ -91,7 +91,7 @@ def parse_args():
     return opts, args, child
 
 def main(glob):
-    intp.Interpreter.run_console = run_console
+    intp.Interpreter.run_console = lambda x: run_console(x, glob)
     base_i = intp.Interpreter()
     opts, args, child = parse_args()
 

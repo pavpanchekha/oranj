@@ -74,7 +74,7 @@ def t_IDENT(t):
     return t
 
 def t_PROCBLOCK(t):
-    r"\#![a-zA-Z]+(\s[^\{\}]*)?\{" r"(.|\n)*?" r"\#![ \t]*\}"
+    r"\#![a-zA-Z]+(\s[^\n\{\}]*)?\{" r"(.|\n)*?" r"\#![ \t]*\}"
 
     t.value = liblex.hPROCBLOCK(t.value)
     return t

@@ -59,6 +59,24 @@ class Interpreter(object):
         except (EOFError, DropI, PyDropI):
             return
 
+    def register(self, t, name, function):
+        if str(t).lower() in ("procdir", "dir", "directive", "processing directive"):
+            self.procdirs[str(name)] = function
+        else:
+            self.procblocks[str(name)] = function
+
+    def run_code(self, code):
+        if type(code) == type(""):
+            return run(code, self)
+        else:
+            return self.run(code)
+
+    def __str__(self):
+        return "<Interpreter intp>"
+
+    def __repr__(self):
+        return str(self)
+    
     def __init__(self, g=None):
         if not g:
             g = InheritDict(builtin.builtin)
@@ -203,11 +221,13 @@ class Interpreter(object):
             if var in c:
                 return c[var]
 
-    def hPROCDIR(self, cmd, args=""):
+    def hPROCDIR(self, cmd):
+        args = cmd[1:]
+        cmd = cmd[0]
+        
         if cmd in self.procdirs:
-            return self.procdirs[cmd](args, self, globals())
+            return OrObject.from_py(self.procdirs[cmd](args, self, globals()))
         elif cmd == "set":
-            args = args.split()
             if len(args) != 2:
                 raise SyntaxError("#!set requires two arguments")
 
@@ -218,11 +238,11 @@ class Interpreter(object):
             return
         elif cmd == "step":
             self.steplevel[1] += 1
-            if args.startswith("in"):
+            if args[0] == "in":
                 self.steplevel[1] += 2
-            elif args.startswith("out"):
+            elif args[0] == "out":
                 self.steplevel[1] -= 2
-            elif args.startswith("end"):
+            elif args[0] == "end":
                 self.steplevel[1] = -1
 
             raise DropI("Stepping")
@@ -231,23 +251,24 @@ class Interpreter(object):
                 return
             elif not args:
                 return OrObject.from_py(self.opts["logger"])
-            elif len(args) >= 4 and args[:4] == "data" and args[4].isspace():
+            elif len(args) >= 1 and args[0] == "data":
                 type = "data"
-                val = args[4:].strip()
+                val = " ".join(args[1:])
             else:
                 type = "message"
-                val = args
+                val = " ".join(args)
             
             return self.opts["logger"].write(val, type)
 
         # Hmm, we still haven't been run
-        raise SyntaxError("Processing directive not available")
+        raise SyntaxError("Processing directive not available: " + cmd)
 
     def hPROCBLOCK(self, type, body):
-        if type[0] in self.procdirs:
-            return self.procdirs[type[0]](type[1:], body, self, globals())
+        if type[0] in self.procblocks:
+            fn = self.procblocks[type[0]]
+            return OrObject.from_py(fn(type[1:], body, self, globals()))
         else:
-            raise SyntaxError("Proccessing block not available")
+            raise SyntaxError("Proccessing block not available: " + type[0])
         
     def hPRIMITIVE(self, val, *others):
         if val[0] in ("DEC", "INT"):
