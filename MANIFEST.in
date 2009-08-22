@@ -1,4 +1,5 @@
 include LICENSE.txt STATUS.txt
 recursive-include oranj/core/lib *.py
 recursive-include doc *.html *.css *.png
+include doc/mkdoc.py
 recursive-include examples *.or

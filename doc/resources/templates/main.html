@@ -1,0 +1,32 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>$title | oranj documentation</title>
+    <script type="text/javascript" src="resources/libraries/jquery.js"></script>
+    <script type="text/javascript" src="resources/scripts/main.js"></script>
+    <script type="text/javascript" src="resources/libraries/toc.js"></script>
+    <script type="text/javascript" src="resources/libraries/shjs.js"></script>
+    <script type="text/javascript" src="resources/libraries/lang/sh_oranj.js"></script>
+    <script type="text/javascript" src="resources/libraries/lang/sh_python.js"></script>
+    <script type="text/javascript" src="resources/libraries/lang/sh_cpp.js"></script>
+    <script type="text/javascript" src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <link type="text/css" rel="stylesheet" href="resources/styles/tripoli.simple.css" />
+    <!--[if IE]><link rel="stylesheet" type="text/css" href="resources/styles/tripolit.simple.ie.css"><![endif]-->
+    <link type="text/css" rel="stylesheet" href="resources/styles/main.css" />
+    <link type="text/css" rel="stylesheet" href="resources/libraries/css/sh_mine.css" />
+  </head>
+  <body onload="sh_highlightDocument();">
+    <div id="floating-header" class="content">
+      <h1>oranj - A pythonic, dynamic programming language</h1>
+      <h2>$title</h2>
+      <hr />
+    </div>  
+    <div class="content main">
+      <section py:for="section in sections">
+        <h2>${section.title}</h2>
+        <p py:for="block in section.blocks" py:replace="Markup(render(block))">
+        </p>
+      </section>
+    </div>
+  </body>
+</html>

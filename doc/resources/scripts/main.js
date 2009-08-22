@@ -18,7 +18,13 @@ function pageSection() {
     });
 
     var pages = $("<ul id='pages'></ul>");
-    var elem = $("<li><a href='./'>&#8613; To Parent</a></li>");
+    
+    if (window.location.pathname.match(/index.html$|\/$/)) {
+        var elem = $("<li><a href='../'>&#8613; To Parent</a></li>");
+    } else {
+        var elem = $("<li><a href='./'>&#8613; To Parent</a></li>");
+    }
+    
     pages.append(elem);
     
     for(var i=0; i < sections.length; i++) {
