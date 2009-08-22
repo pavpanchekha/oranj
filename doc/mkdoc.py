@@ -29,7 +29,7 @@ Block = namedtuple("Block", ["type", "content"])
 def render_block(block):
     if block.type == "p":
         return u"        <p>%s</p>\n" % block.content.replace("\n", " ")
-    elif block.type in ("oranj", "python", "cpp"):
+    elif block.type in ("oranj", "python", "cpp", "sh"):
         content = block.content
         content = content.replace("&", "&amp;")
         content = content.replace("<", "&lt;")
@@ -73,6 +73,10 @@ def parse(stream):
             if buffer: blocks.append(Block(ctype, "".join(buffer)))
             buffer = []
             ctype = "cpp"
+        elif l == "::sh::\n":
+            if buffer: blocks.append(Block(ctype, "".join(buffer)))
+            buffer = []
+            ctype = "sh"
         elif l == "::comment::\n":
             if buffer: blocks.append(Block(ctype, "".join(buffer)))
             buffer = []
