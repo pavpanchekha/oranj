@@ -188,6 +188,10 @@ for i in 20 {io << i^2 << endl}
 This works because any integer can work as a list, returning the same
 values as would a <code>range()</code> of itself.
 
+
+
+
+
 Functions
 ---------
 
@@ -231,7 +235,7 @@ specify the action so that someone reading your code knows what the
 function does.
 
 ::oranj::
-io << (2 ! sub(4)) << endl # Output: -2<
+io << (2 ! sub(4)) << endl # Output: -2
 
 In this case, the <strong>first</strong> argument is
 <code>2</code>, not the second. When using the alternative
@@ -255,8 +259,8 @@ this function-of-functions?
 
 ::oranj::
 add10 = adder(10)
-io &lt;&lt; add10(7) &lt;&lt; endl # Outputs 17
-io &lt;&lt; adder(2)(15) &lt;&lt; endl # Outputs 17
+io << add10(7) << endl # Outputs 17
+io << adder(2)(15) << endl # Outputs 17
 
 Remember that there's nothing really strange going on; you’re just
 creating a function, which you can then assign to a variable or call
@@ -283,7 +287,7 @@ apply_and_print = fn "Apply function to elements of a list" (l, f) {
     for el in l {
         io << f(el) << " "
     }
-
+    
     io << endl
 }
 
