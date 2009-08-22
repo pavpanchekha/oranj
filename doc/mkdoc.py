@@ -1,5 +1,12 @@
 import os
 import sys
+
+if "-h" in sys.argv:
+    print "USAGE: python mkdoc.py [-s] [-o outdir]"
+    print "    -s  Silent mode"
+    print "    -o  Output directory. Relative or absolute"
+    sys.exit()
+
 import codecs
 from collections import namedtuple
 
@@ -88,13 +95,34 @@ def parse(stream):
     
     return Doc(title, sections)
 
-for obj in [obj for obj in os.listdir(os.path.dirname(os.path.abspath(__file__))) if obj.endswith(".doc")]:
+if "-o" in sys.argv:
+    if sys.argv[-1] == "-o":
+        print "Error: No output directory specified"
+        sys.exit(1)
+    else:
+        outdir = sys.argv[sys.argv.index("-o") + 1]
+else:
+    outdir = "./"
 
-    if "-v" not in sys.argv:
-        print obj, "->", obj[:-4] + ".html"
+for root, dirs, files in os.walk("."):
+    if "resources" in dirs:
+        dirs.remove("resources")
+
+    for dir in dirs:
+        if not os.path.exists(os.path.join(outdir, root)):
+            os.mkdir(os.path.join(outdir, root))
     
-    doc = parse(codecs.open(obj, "r", "utf-8"))
+    for obj in [os.path.join(root, obj) for obj in files if obj.endswith(".doc")]:
+        if "-s" not in sys.argv:
+            print obj, "->", os.path.join(outdir, obj[:-4] + ".html")
+    
+            doc = parse(codecs.open(obj, "r", "utf-8"))
+            
+            outfile = open(os.path.join(outdir, obj[:-4] + ".html"), "w")
+            outfile.write(loader.load("main.html").generate(title=doc.title, sections=doc.sections, render=render_block).render("html", doctype="html"))
+            outfile.close()
 
-    outfile = open(obj[:-4] + ".html", "w")
-    outfile.write(loader.load("main.html").generate(title=doc.title, sections=doc.sections, render=render_block).render("html", doctype="html"))
-    outfile.close()
+if not os.path.samefile(".", outdir):
+    import shutil
+    shutil.rmtree(os.path.join(outdir, "resources"))
+    shutil.copytree(os.path.join(".", "resources"), os.path.join(outdir, "resources"))
