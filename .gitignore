@@ -20,3 +20,7 @@ python-build-stamp-2.6
 
 dist
 MANIFEST
+
+bin
+include
+lib

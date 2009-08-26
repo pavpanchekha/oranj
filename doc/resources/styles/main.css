@@ -1,5 +1,5 @@
 div.main {
-    margin-left: -370px;
+    margin-left: -390px;
     padding: 1em 3em;
     width: 700px;
     background: #EEEEEC;
@@ -19,7 +19,7 @@ div.main {
     width: 700px;
     top: 0px;
     left: 50%;
-    margin-left: -370px;
+    margin-left: -390px;
     padding: 2em 3em 1em 3em;
     border-left: 3px solid #D3D7CF;
     border-right: 3px solid #D3D7CF;
@@ -41,7 +41,7 @@ pre {
     position: fixed;
     top: 5px;
     left: 50%;
-    margin-left: 420px;
+    margin-left: 400px;
 }
 
 #innertoc span {
