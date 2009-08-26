@@ -30,5 +30,6 @@ A new dynamic, interpreted programming language, with
 a focus on GUI and web development. It makes programming
 enjoyable and easy, and makes enabling advanced features
 direct and fast.
-"""
+""",
+      requires=["ply"],
       )

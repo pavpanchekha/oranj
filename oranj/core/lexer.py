@@ -130,7 +130,15 @@ import objects.about
 _p = objects.about.mainpath
 if not _p.endswith("core/"):
     _p += "core/"
+
+# Stupid workaround
+import sys
+__ = sys.stderr
+class Dummy:
+    write = lambda x: None
+sys.stderr = Dummy
 lex.lex(outputdir=_p[:-6]+"/build", optimize=1)
+sys.stderr = __
 
 def parse(s):
     lex.lexer.lineno = 0
