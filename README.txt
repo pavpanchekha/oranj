@@ -5,7 +5,7 @@ a focus on GUI and web development. It makes programming
 enjoyable and easy, and makes enabling advanced features
 direct and fast.
 
-For installation instructions, see the file INSTALL
+For installation instructions, see the file INSTALL.txt
 Visit http://pavpanchekha.github.com/oranj/ for more.
 
 oranj is open-source and community-driven. Please do

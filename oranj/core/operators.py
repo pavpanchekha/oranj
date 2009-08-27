@@ -93,10 +93,10 @@ def getattr_(x, y):
         return OrObject.from_py(x.get(y))
 
 def indexer(x, y):
-    if type(x) in map(type, ((), [], {})):
-        return map(lambda y: x[y], y)
-
-    return x[y]
+    if type(y) in map(type, ((), [], {})):
+        return map(lambda t: x[t], y)
+    else:
+        return x[y]
 
 getindex_ = __mk_op(indexer, "getindex")
 

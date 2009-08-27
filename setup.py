@@ -2,6 +2,9 @@
 
 from distutils.core import setup
 
+# Generate lex and parse tables
+import oranj.core.parser
+
 setup(name="oranj",
       version="0.6",
       description="Oranj Programming Language",

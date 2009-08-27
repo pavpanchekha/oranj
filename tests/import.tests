@@ -5,10 +5,10 @@
 
 # Import python module
 >>> import py.math
->>> io << math
+>>> math
 <module math>
 
 # From python module import object
->>> import py.pygments.formatters.HtmlFormatter
->>> io << HtmlFormatter
-<class 'pygments.formatters.html.HtmlFormatter'>
+>>> import py.math.factorial
+>>> factorial
+<fn factorial>

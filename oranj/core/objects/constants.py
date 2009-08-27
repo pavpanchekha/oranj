@@ -6,12 +6,12 @@ true = OrObject.from_py(True)
 false = OrObject.from_py(False)
 nil = OrObject.from_py(None)
 
-true.__str__ = lambda: "true"
-true.__repr__ = lambda: "true"
-false.__str__ = lambda: "false"
-false.__repr__ = lambda: "false"
-nil.__str__ = lambda: "nil"
-nil.__repr__ = lambda: "nil"
+true.set("$$str", lambda: "true")
+true.set("$$repr", lambda: "true")
+false.set("$$str", lambda: "false")
+false.set("$$repr", lambda: "false")
+nil.set("$$str", lambda: "nil")
+nil.set("$$repr", lambda: "nil")
 
 OrObject.register(lambda x: true if x else false, type(True))
 OrObject.register(lambda x: nil, type(None))

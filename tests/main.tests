@@ -3,27 +3,29 @@
 
 ## Test input and output fascilities
 
-# output() function
->>> output(5 ^ 15)
-30517578125
+## These require me to somehow capture the results of input and output.
+## Will figure out a way soon enough
 
-# io variable
->>> io << 5 ^ 15
-30517578125
+### output() function
+##>>> output(5 ^ 15)
+##30517578125
+
+### io variable
+##>>> io << 5 ^ 15
+##30517578125
 
 # while loop
 >>> a = 0
 >>> while a < 10 {a = a + 1}
->>> io << a
+>>> a
 10
 
 # break
->>> a = 0
 >>> while 1 {break}
->>> io << "DONE\n"
-DONE
+>>> true
+true
 
 # while forever
 >>> while {break}
->>> io << "DONE\n"
-DONE
+>>> true
+true

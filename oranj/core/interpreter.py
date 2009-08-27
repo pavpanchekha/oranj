@@ -137,6 +137,8 @@ class Interpreter(object):
             self.searchpath.append(files.Path(val))
 
     def run(self, tree):
+        if len(tree) == 0:
+            0/0
         if type(tree[0]) == type(""):
             return Interpreter.__dict__["h" + tree[0]](self, *tree[1:])
         else:
@@ -302,7 +304,7 @@ class Interpreter(object):
             if val.get("$$name") == "[anon]":
                 val.set("$$name", ident)
         elif ident[0] == "SETATTR":
-            self.run(ident[1]).set(self.run(ident[2]), val)
+            self.run(ident[1]).set(ident[2], val)
         elif ident[0] == "SETINDEX":
             self.run(ident[1])[self.run(ident[2])] = val
 
@@ -474,7 +476,7 @@ class Interpreter(object):
     @autoblock
     def hCLASS(self, doc, parents, tags, block):
         from objects.orclass import OrClass
-        return OrClass(self, map(self.run, parents), tags, block, self.run(doc))
+        return OrClass(self, map(self.run, parents), tags, block, self.run(doc) if doc else "")
 
     def __get_import_loc(self, path):
         for loc in self.searchpath:

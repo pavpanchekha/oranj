@@ -69,10 +69,10 @@ class OrObject(object):
         return key in self.dict or hasattr(self.topy(), key)
 
     def __str__(self):
-        if self.ispy():
-            return str(self.topy())
-        elif self.has("$$str"):
+        if self.has("$$str"):
             return str(self.get("$$str")())
+        elif self.ispy():
+            return str(self.topy())
         else:
             s = "<"
 
@@ -91,10 +91,10 @@ class OrObject(object):
             return s + ">"
 
     def __repr__(self):
-        if self.ispy():
-            return repr(self.topy())
-        elif self.has("$$repr"):
+        if self.has("$$repr"):
             return str(self.get("$$repr")())
+        elif self.ispy():
+            return repr(self.topy())
         else:
             return self.__str__()
 
@@ -121,7 +121,8 @@ class OrObject(object):
 
     def __iter__(self):
         if self.ispy() and hasattr(self.topy(), "__iter__"):
-            return self.topy().__iter__()
+            import itertools
+            return itertools.imap(OrObject.from_py, self.topy().__iter__())
         elif self.has("$$iter"):
             return self.get("$$iter")()
         else:

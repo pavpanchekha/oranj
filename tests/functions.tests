@@ -3,31 +3,23 @@
 
 ## Functions are fun
 
-# Basic function
->>> a = fn {}
-
-# Running
->>> a = fn {io << "YAY"}
->>> a()
-YAY
-
 # Return
 >>> a = fn {return "YAY"}
->>> io << a()
-YAY
+>>> a()
+'YAY'
 
 # Global vars
 >>> a = 2
 >>> b = fn {return a}
->>> io << b()
+>>> b()
 2
 
 # Arguments
 >>> a = fn (i) {return i ^ 17}
->>> io << a(2)
+>>> a(2)
 131072
 
 # Documentation
 >>> a = fn "YAY" {}
->>> io << a.$$doc
-YAY
+>>> a.$$doc
+'YAY'
