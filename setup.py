@@ -13,7 +13,7 @@ setup(name="oranj",
       url="http://panchekha.no-ip.com:8080/pavpan/oranj/",
       packages=["oranj", "oranj.core", "oranj.pystdlib", "oranj.core.objects", "oranj.support"],
       package_dir={"oranj.core": "oranj/core", "oranj": "oranj"},
-      package_data={"oranj.core": ["lib/errorcontext.py", "lib/odict.py", "lib/files.py", "lib/terminal.py", "lib/ply/lex.py", "lib/ply/yacc.py", "lib/ply/__init__.py"], "oranj": ["build/parsetab.py", "stdlib/*", "sitelib/*"]},
+      package_data={"oranj.core": ["lib/errorcontext.py", "lib/odict.py", "lib/files.py", "lib/terminal.py", "lib/ply/lex.py", "lib/ply/yacc.py", "lib/ply/__init__.py"], "oranj": ["build/parsetab.py", "build/lextab.py", "stdlib/*", "sitelib/*"]},
       scripts=["scripts/oranj"],
       classifiers=[
         "Development Status :: 4 - Beta",
