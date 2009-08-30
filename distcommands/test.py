@@ -1,15 +1,15 @@
-#!/usr/bin/env python
+from distutils.cmd import Command
+from distutils.errors import *
 
-import sys, os
 from oranj.core.interpreter import Interpreter
 import traceback
+import os, sys
 
 class Test(object):
-    def __init__(self, tests=None, desc="", tool="python"):
+    def __init__(self, tests=None, desc=""):
         if not tests: tests = [["", ""]] # Stupid evaluate-once arguments
         self.desc = desc
         self.tests = tests
-        self.tool = tool
         
         self.intp = Interpreter()
 
@@ -21,8 +21,6 @@ class Test(object):
         for i in self.tests:
             i[0] = i[0].strip()
             i[1] = i[1].strip()
-            
-        self.tool = self.tool.strip()
 
     def run(self, quiet=False):
         if not self.tests: return 0
@@ -60,23 +58,19 @@ class Test(object):
                 
             return len(failed)
 
-def parsetests(strtests, deftool="python"):
+def parsetests(strtests):
     tests = []
-    curr = Test(tool=deftool)
+    curr = Test()
     
     for s in strtests.split("\n"):
         if len(s) == 0: continue
 
-        if s[0] == "#" and s[1] == "!":
-            s = s[2:]
-            tests.append(curr)
-            curr = Test(tool=s.strip())
-        elif s[:2] == "##":
+        if s[:2] == "##":
             continue
         elif s[:2] == "# ":
             if curr.tests[-1][0]:
                 tests.append(curr)
-                curr = Test(desc=s[2:].strip(), tool=curr.tool)
+                curr = Test(desc=s[2:].strip())
             else:
                 curr.desc += "\n" + s[1:].strip()
         elif s[:4] == ">>> ":
@@ -133,24 +127,29 @@ def run_file(f, quiet=False, deftool="python"):
         return t
     else:
         f = open(f)
-        return run(parsetests(f.read(), deftool), quiet)
+        return run(parsetests(f.read()), quiet)
+
+class RunTests(Command):
+    description = "Run tests for project"
+    user_options = [("tests=", "t", "Comma-separated list of tests to run")]
+    
+    def initialize_options(self):
+        self.tests = [os.path.join(os.getcwd(), "tests")]
+    
+    def finalize_options(self):
+        if type(self.tests) == type(""):
+            self.tests = [os.path.join(os.getcwd(), "tests", test + ".tests")
+                      for test in self.tests.split(",")]
+    
+    def run(self):
+        for i in self.tests:
+            run_file(i)
 
 if __name__ == "__main__":
     args = sys.argv
 
     if len(args) == 1:
-        try:
-            run_file(".")
-        except (KeyboardInterrupt, EOFError):
-            pass
+        run_file(".")
     else:
-        if "-t" in args:
-            x = args.index("-t")
-            if x+1 < len(args):
-                tool = args[x + 1]
-                del args[x:x + 2]
-        else:
-            tool = "python"
-        
         for i in sys.argv[1:]:
-            run_file(i, deftool=tool)
+            run_file(i)

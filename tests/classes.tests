@@ -1,6 +1,4 @@
 
-#!oranj -r
-
 # Test class methods
 >>> Car = class {
 >>>     nc = 0

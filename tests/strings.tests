@@ -1,6 +1,4 @@
 
-#! oranj -r
-
 # Some basic methods
 >>> "ASDF".startswith("AS")
 true

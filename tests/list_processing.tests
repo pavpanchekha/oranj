@@ -1,6 +1,4 @@
 
-#!oranj -r
-
 # Indexing
 >>> a = range(5)
 >>> a[3]
