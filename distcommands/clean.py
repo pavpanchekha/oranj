@@ -4,6 +4,7 @@ from distutils.errors import *
 import os
 
 class Clean(Command):
+    description = "Delete unneeded temporary files"
     user_options = []
 
     def initialize_options(self):

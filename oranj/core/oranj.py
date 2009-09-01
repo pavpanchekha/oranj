@@ -92,16 +92,19 @@ def parse_args():
 
     return kwargs
 
+def run_file(base_i, child):
+    text = open(child[0]).read()
+    if text.strip() != "":
+        intp.run(text, base_i)
+        cli.run(base_i, child[1:])
+
 def main(glob):
     intp.Interpreter.run_console = lambda x: run_console(x, glob)
     base_i = intp.Interpreter()
     kwargs = parse_args()
 
     if len(kwargs["child"]) and "test" not in kwargs:
-        text = open(kwargs["child"][0]).read()
-        if text.strip() != "":
-            intp.run(text, base_i)
-            cli.run(base_i, kwargs["child"][1:])
+        run_file(base_i, child)
     elif "readin" in kwargs:
         intp.run(sys.stdin.read())
     elif "test" in kwargs:

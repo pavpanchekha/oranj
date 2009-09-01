@@ -2,6 +2,7 @@
 
 from distutils.core import setup
 import distcommands.html, distcommands.test, distcommands.clean
+import distcommands.profile
 
 # Generate lex and parse tables
 import oranj.core.parser
@@ -41,5 +42,6 @@ direct and fast.
         "html": distcommands.html.MakeDoc,
         "test": distcommands.test.RunTests,
         "clean": distcommands.clean.Clean,
+        "profile": distcommands.profile.Profile,
     }
 )
