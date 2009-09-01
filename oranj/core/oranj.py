@@ -12,6 +12,8 @@ import traceback
 import libintp
 import parser
 
+import cli
+
 def pydrop(i, glob):
     import os
     os.environ["PYTHONINSPECT"] = "1"
@@ -78,44 +80,41 @@ def run_console(i, glob):
     i.consolelevel -= 1
 
 def parse_args():
-    parser = OptionParser()
-    parser.add_option("-r", "--readin", action="store_true", help="Read input from stdin until EOF, then execute it", default=False)
-    parser.add_option("-t", "--test", help="Test a component (parser, lexer, analyzer). oranj -t p|l|a", default="")
-    opts, args = parser.parse_args()
-    child = []
+    args = cli.CLIArgs()
+    args.mandatory = ["self", "child"]
+    args.long = {"readin": "bool", "test": "str", "self": "str"}
+    args.short = {"r": "readin", "t": "test"}
+    args.dump = "child"
+    
+    kwargs = cli.parseargs(sys.argv, args)
+    
+    kwargs = dict((k, v.topy()) for (k, v) in kwargs.items())
 
-    if args:
-        child = sys.argv[sys.argv.index(args[0]):]
-        opts = parser.parse_args(sys.argv[:sys.argv.index(args[0])])[0]
-
-    return opts, args, child
+    return kwargs
 
 def main(glob):
     intp.Interpreter.run_console = lambda x: run_console(x, glob)
     base_i = intp.Interpreter()
-    opts, args, child = parse_args()
+    kwargs = parse_args()
 
-    if child and not opts.test:
-        text = open(child[0]).read()
+    if len(kwargs["child"]) and "test" not in kwargs:
+        text = open(kwargs["child"][0]).read()
         if text.strip() != "":
             intp.run(text, base_i)
-            if "$$main" in base_i.curr:
-                main = base_i.curr["$$main"]
-                passargs = intp.OrObject.from_py(child)
-                main(passargs)
-    elif opts.readin:
+            cli.run(base_i, kwargs["child"][1:])
+    elif "readin" in kwargs:
         intp.run(sys.stdin.read())
-    elif opts.test:
+    elif "test" in kwargs:
         import_readline()
-        if opts.test == "a":
+        if kwargs["test"] == "a":
             import analyze
-            analyze._test(child[0] if len(child) > 0 else None)
-        elif opts.test == "p":
+            analyze._test(kwargs["child"][0] if len(kwargs["child"]) > 0 else None)
+        elif kwargs["test"] == "p":
             import parser
-            parser._test(child[0] if len(child) > 0 else None)
-        elif opts.test == "l":
+            parser._test(kwargs["child"][0] if len(kwargs["child"]) > 0 else None)
+        elif kwargs["test"] == "l":
             import lexer
-            lexer._test(child[0] if len(child) > 0 else None)
+            lexer._test(kwargs["child"][0] if len(kwargs["child"]) > 0 else None)
     else:
         run_console(base_i, glob)
 

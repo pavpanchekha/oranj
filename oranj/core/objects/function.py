@@ -114,9 +114,10 @@ class Function(OrObject):
             raise TypeError("Wrong number of arguments")
             # TODO: make less stupid error message
 
-        # TODO: keyword arguments
-
-        cntx["block"] = self
+        actualargs = map(lambda x: x[1], self.arglist)
+        for k, v in kwargs.items():
+            if k in actualargs:
+                cntx[k] = v
 
         if self.intp.opts["logger"]:
             summary = ": " + str(self.get("$$doc"))
