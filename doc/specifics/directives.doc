@@ -1,0 +1,190 @@
+Directives and Inline Blocks
+============================
+
+Directives
+----------
+
+Oranj directives are special commands to the interpreter. There are no
+fundamental differences between directives and other statements; its just
+that directives usually represent code that causes the interpreter to do
+something special.
+
+The critical point is that processing directives 1) can be modified within the
+program (in fact, you can add your own) and 2) are not guaranteed to work
+across oranj runtimes. Which directives to include varies across runtimes because
+some may be extremely difficult to implement on a particular runtime (for example,
+a compiler for oranj would not, most likely, allow the <code>#!drop</code>
+directive, as that would require adding the whole of oranj into your executable).
+
+All directives take the form:
+
+::oranj::
+#!name [arg arg arg ...]
+
+where the arguments are parsed according to shell command syntax. Thus,
+
+::oranj::
+#!ec data "Hello there!"
+
+is a directive (<code>ec</code>) with two arguments.
+
+Directives return values. Thus, the following is a perfectly valid command:
+
+::oranj::
+my_ec = #!ec
+
+The following directives are implemented:
+
+::heading::
+<code>#!clear</code>
+
+Clears the screen. Particularly useful in the interactive console. PLEASE
+do not use as a method of clearing the screen within your program; its meant
+only as a convenience.
+
+::heading::
+<code>#!drop</code>
+
+Drop down to an oranj shell. This is useful to debug your scripts:
+
+::oranj::
+if bad_thing {
+    term << "Dropping down to shell. Why is bad_thing true?"
+    #!drop
+}
+
+<code>#!drop</code> can be used inside a regular shell; it'll just be rather
+strange. The result is just another, new, shell, which'll look identical to
+the one above but won't be.
+
+::heading::
+<code>#!undrop</code>
+
+End the dropped-down oranj shell and continue the external code that called
+<code>#!drop</code>.
+
+::heading::
+<code>#!pydrop</code>
+
+Drop down to a python shell. The variable <code>intp</code> is the interpreter
+instance that <code>#!pydrop</code> was called from. Usefull to debug the oranj
+interpreter and perhaps from deep debugging of oranj source code.
+
+::heading::
+<code>#!pyerror</code>
+
+Print out the python stack trace of the last exception. Mostly useful for debugging
+the oranj interpreter itself.
+
+::heading::
+<code>#!set variable value</code>
+
+Set a global interpreter option. Options:
+<dl>
+    <dt>ec</dt>
+    <dd>Set to on to enable context logging, off to disable</dd>
+</dl>
+
+::heading::
+<code>#!debug</code> and <code>#!step [cmd]</code>
+
+<code>#!debug</code> starts up the built-in debugger, thus acting much like a
+breakpoint in most IDEs. Before any line of code is executed,
+it will be printed to the console and an oranj shell will be launched, where you
+can do more or less anything to the running program (check the values of variables,
+change those values, run other directives).
+
+<code>#!step</code> is used to control the debugging process. If called without
+arguments, it simply steps one statement forward through the code. The commands
+out and in will dictate whether you will “go into” functions. Each <code>#!step
+in</code> increases how many function calls in the debugger will go, and each
+<code>#!step out</code> decreases it.
+
+One can also stop the debugger (and let the program finish running as normal)
+with <code>#!step end</code>. Note that the real reason for having these commands
+is to make it easy for IDEs to include graphical debuggers. Most likely, an IDE
+will provide a much more convenient way to debug your program than the raw
+interpreter directives.
+
+
+::heading::
+<code>#!ec</code>
+
+Logs its arguments to the <a href="../features/error-context.html">error context</a>.
+If argument begins with <code>data</code>, rest of arguments evaluated and added
+as a data message. For example
+
+::oranj::
+#!ec Retrieving data from internet
+url_data = url_get("http://www.google.com")
+#!ec data url_data
+
+If no arguments are passed, the directive returns the error context object.
+  
+::heading::
+<code>#!exit</code>
+
+Exits the oranj program or shell. Please <em>do not</em> use it to exit from
+a program. There are better ways (for example, <code>intp.quit()</code>) that'll
+ensure portability across versions of oranj.
+
+Inline Blocks
+-------------
+Inline blocks in Oranj are a block of code that the interpreter does
+not parse, but instead executes as a unit. This is most commonly used
+to run commands in a different programming language.
+
+Just like processing directives, these are not guaranteed to work across
+oranj implementations. For example, most oranj implementations would not
+include the <code>#!python { #! }</code> directive.
+
+Also like directives, oranj processing blocks can return values, which can
+be assigned just like the results of oranj directives.
+
+All inline blocks take the form
+
+::oranj::
+#!name [arg, arg, arg, ...] {
+text ...
+#! }
+
+Where the actual code is in the space labelled text. Lines of the form
+"#!..." cannot be used within an inline block. The following block types
+are implemented:
+
+::heading::
+<code>#!python { #! }</code>
+
+This block will execute a unit of code in a python interpreter. The
+code can make use of the Interpreter object, which can be retrieved from
+the global object <code>intp</code>. To interact with variable defined within oranj,
+use <code>intp.curr</code> as a dictionary. Make sure to call
+<code>OrObject.from_py</code> on any object that is exported to the running
+oranj code. The result of the python block (typically, the value of the last
+expression evaluated) will be made into an <code>OrObject</code> for you and
+be returned to the oranj code.
+
+::heading::
+<code>#!xml { #! }</code>
+
+The contents of the block will be parsed as XML and be returned as an
+<code>xml.etree.ElementTree.ElementTree</code> object. Read the python
+documentation at <a href="http://docs.python.org/library/xml.etree.elementtree.html#xml.etree.ElementTree.ElementTree">
+http://docs.python.org/library/xml.etree.elementtree.html#xml.etree.ElementTree.ElementTree
+</a> for more.
+
+::heading::
+<code>#!nil { #! }</code>
+
+Nothing will be done with the contents of the block. Use as a multiline
+comment.
+
+::heading::
+<code>#!output { #! }</code>
+
+Contents of block outputed to whatever <code>io</code> is bound to.
+
+Custom Directives and Blocks
+----------------------------
+
+TODO: Fill in

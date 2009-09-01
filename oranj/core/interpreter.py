@@ -124,6 +124,9 @@ class Interpreter(object):
         import libproc
         self.procblocks = libproc.blocks
         self.procdirs = libproc.dirs
+    
+    def quit():
+        sys.exit()
 
     def set_option(self, opt, val):
         if opt == "ec": # Turn activity log on or off

@@ -82,8 +82,8 @@ def run_console(i, glob):
 def parse_args():
     args = cli.CLIArgs()
     args.mandatory = ["self", "child"]
-    args.long = {"readin": "bool", "test": "str", "self": "str"}
-    args.short = {"r": "readin", "t": "test"}
+    args.long = {"stdin": "bool", "test": "str", "self": "str"}
+    args.short = {"": "stdin", "t": "test"}
     args.dump = "child"
     
     kwargs = cli.parseargs(sys.argv, args)
@@ -105,7 +105,7 @@ def main(glob):
 
     if len(kwargs["child"]) and "test" not in kwargs:
         run_file(base_i, child)
-    elif "readin" in kwargs:
+    elif "stdin" in kwargs:
         intp.run(sys.stdin.read())
     elif "test" in kwargs:
         import_readline()

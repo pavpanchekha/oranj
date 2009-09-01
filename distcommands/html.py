@@ -92,11 +92,11 @@ class DocParser:
             
             for obj in [os.path.join(root, obj) for obj in files if obj.endswith(".doc")]:
                 if "-s" not in sys.argv:
-                    print obj, "->", os.path.join(outdir, obj[:-4] + ".html")
+                    print obj, "->", os.path.join(outdir, os.path.basename(obj[:-4] + ".html"))
             
                 doc = cls.parse(codecs.open(obj, "r", "utf-8"))
                 
-                outfile = open(os.path.join(outdir, obj[:-4] + ".html"), "w")
+                outfile = open(os.path.join(outdir, os.path.basename(obj[:-4] + ".html")), "w")
                 outfile.write(loader.load("main.html").generate(title=doc.title, sections=doc.sections, render=cls.render_block).render("html", doctype="html"))
                 outfile.close()
         
@@ -117,7 +117,8 @@ class MakeDoc(Command):
         self.silent = False
     
     def finalize_options(self):
-        pass
+        self.outdir = os.path.abspath(os.path.expanduser(self.outdir))
+        print self.outdir
     
     def run(self):
         global TemplateLoader

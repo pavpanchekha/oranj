@@ -5,6 +5,18 @@ from objects.number import Number
 import objects.constants as constants
 import sys
 
+overrides = {
+    "stdin": "", # oranj script -
+    "count": "q", # in `who`
+    "digits": "n", # csplit
+    "exit": "x",
+    "extract": "x",
+    "zip": "z",
+    "gzip": "z",
+    "compress": "z",
+    "literal": "N", # ls
+}
+
 class CLIArgs:
     def __init__(self):
         self.mandatory = []
@@ -13,6 +25,9 @@ class CLIArgs:
         self.dump = None
         self.kwdump = None
 
+def shortarg(arg):
+    return [arg[0], arg[0].swapcase] + (overrides[arg] if arg in overrides else [])
+
 def getargs(intp, arglist):
     args = CLIArgs()
     
@@ -20,12 +35,16 @@ def getargs(intp, arglist):
         if i[0] == "ARG":
             args.mandatory.append(i[1])
             args.long[i[1]] = "str"
-            if i[1][0] not in args.short:
-                args.short[i[1][0]] = i[1]
+            for short in shortarg(i[1]):
+                if short not in args.short:
+                    args.short[short] = i[1]
+                    break
         elif i[0] == "DEFARG":
             args.long[i[1]] = typeof(intp.run(i[2]))
-            if i[1][0] not in args.short:
-                args.short[i[1][0]] = i[1]
+            for short in shortarg(i[1]):
+                if short not in args.short:
+                    args.short[short] = i[1]
+                    break
         elif i[0] == "UNWRAPABLE":
             args.mandatory.append(i[1])
             if not args.dump:
@@ -81,7 +100,7 @@ def parseargs(args, schema):
         elif i == "--" and takingopts:
             takingopts = False
         elif i.startswith("-") and takingopts:
-            key = i[1]
+            key = i[1:2]
             val = i[2:]
             
             if key not in schema.short:

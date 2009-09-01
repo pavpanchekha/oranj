@@ -1,12 +1,12 @@
-from orobject import OrObject
-import odict
+from orobject import OrObjec
+from collections import OrderedDict
 
-class ODict(odict.OrderedDict):
+class ODict(OrderedDict):
     def __init__(self, dict=[], **kwargs):
-        if isinstance(dict, odict.OrderedDict):
+        if isinstance(dict, OrderedDict):
             dict = dict.items()
         
-        odict.OrderedDict.__init__(self, dict + kwargs.items())
+        OrderedDict.__init__(self, dict + kwargs.items())
     
     def ispy(self): return True
     def topy(self): return self
@@ -19,4 +19,4 @@ class ODict(odict.OrderedDict):
     def __repr__(self):
         return self.__str__(repr)
 
-OrObject.register(ODict, odict.OrderedDict)
+OrObject.register(ODict, OrderedDict)
