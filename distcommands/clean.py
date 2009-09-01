@@ -14,7 +14,7 @@ class Clean(Command):
                     dirs.remove(dir)
             
             for f in files:
-                if f.endswith('.pyc'):
+                if f.endswith('.pyc') or f.endswith('.pyo'):
                     self._clean_me.append(os.path.join(root, f))
         
         for f in [x for x in os.listdir("doc") if x.endswith(".html")]:
