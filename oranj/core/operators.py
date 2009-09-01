@@ -31,8 +31,8 @@ exp = __mk_op(operator.pow, "exp")
 floor = __mk_op(operator.floordiv, "floor")
 mod = __mk_op(operator.mod, "mod")
 divis = __mk_op(lambda x, y: y % x == 0, "divis")
-or_ = __mk_op(operator.or_, "or")
-and_ = __mk_op(operator.and_, "and")
+or_ = __mk_op(lambda x, y: x or y, "or")
+and_ = __mk_op(lambda x, y: x and y, "and")
 not_ = __mk_op(operator.not_, "not")
 in_ = __mk_op(lambda x, y: x in y, "in")
 lt = __mk_op(operator.lt, "lt")
@@ -45,6 +45,18 @@ input = __mk_op(lambda x, y: x.input(y), "input")
 output = __mk_op(lambda x, y: x.output(y), "output")
 uplus = __mk_op(operator.pos, "uplus")
 uminus = __mk_op(operator.neg, "uminus")
+
+bitwiseor = __mk_op(operator.or_, "bitwiseor")
+bitwiseand = __mk_op(operator.and_, "bitwiseand")
+bitwisexor = __mk_op(operator.xor, "bitwisexor")
+bitwiselshift = __mk_op(operator.lshift, "bitwisexor")
+bitwisershift = __mk_op(operator.rshift, "bitwisexor")
+bitwiseinv = __mk_op(operator.inv, "bitwiseinv")
+
+slashbang = __mk_op(lambda x, y: lambda *args, **kwargs: call(x, call(y, *args, **kwargs)),
+                    "slashbang")
+slashat = __mk_op(map, "slashat")
+slashif = __mk_op(filter, "slashif")
 
 def is_(obj, cls):
     if hasattr(cls, "ispy") and cls.ispy():
@@ -113,4 +125,9 @@ op_names = {
     "U+": uplus, "U-": uminus,
     "GETATTR": getattr_,
     "GETINDEX": getindex_,
+    
+    "~|": bitwiseor, "~^": bitwisexor, "~&": bitwiseand, "~<<": bitwiselshift,
+    "~>>": bitwisershift, "~~": bitwiseinv,
+    
+    "/!": slashbang, "/@": slashat, "/?": slashif,
 }

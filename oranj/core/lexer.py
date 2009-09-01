@@ -8,7 +8,10 @@ import re
 tokens = [
     "STRING", "DEC", "INT", "BOOL", "NIL", "IDENT", "PLUSPLUS", "MINUSMINUS",
     "SLASHSLASH", "GE", "LE", "NE", "EQ", "LTLT", "GTGT", "DOTDOTDOT", "EQOP",
-    "NEWLINE", "PROCDIR", "PROCBLOCK", "INF", "ISNT", "ASSIGN"
+    "NEWLINE", "PROCDIR", "PROCBLOCK", "INF", "ISNT", "ASSIGN",
+    
+    "FUNCTIONAL", "BITWISEAND", "BITWISEOR", "BITWISEXOR", "BITWISESHIFT",
+    "BITWISETILDE"
 ]
 
 # WARNING: t_STRING ***must*** be first in the list of functions.
@@ -123,6 +126,13 @@ t_LE = r"\<\=|\=\<"
 t_GE = r"\>\=|\=\>"
 t_NE = r"\!\="
 t_EQ = r"\=\="
+
+t_FUNCTIONAL = r"\/[\@\?\!]"
+t_BITWISEOR = r"~\|"
+t_BITWISEXOR = r"~\^"
+t_BITWISEAND = r"~&"
+t_BITWISESHIFT = r"~(<<|>>)"
+t_BITWISETILDE = r"~~"
 
 t_ignore = " \t\f\v\r"
 

@@ -18,11 +18,17 @@ precedence = (
     ("left", "IS", "ISNT"),
     ("left", "LE", "GE", "NE", "EQ", "<", ">"),
     ("left", "LTLT", "GTGT"),
+    ("left", "BITWISEOR"),
+    ("left", "BITWISEXOR"),
+    ("left", "BITWISEAND"),
+    ("left", "BITWISESHIFT"),
     ("left", "-", "+"),
     ("left", "SLASHSLASH", "MOD", "/", "*"),
     ("left", "PLUSPLUS", "MINUSMINUS"),
     ("right", "UMINUS"),
+    ("right", "BITWISETILDE"),
     ("right", "^"),
+    ("right", "FUNCTIONAL"),
     ("left", "!"),
     ("left", ".", "(", ")", "[", "]"),
 )
@@ -65,6 +71,10 @@ def p_expr_bin(p):
             | expr GE expr
             | expr NE expr
             | expr EQ expr
+            | expr BITWISEOR expr
+            | expr BITWISEXOR expr
+            | expr BITWISEAND expr
+            | expr BITWISESHIFT expr
             | expr LTLT expr
             | expr GTGT expr
             | expr '+' expr
@@ -73,7 +83,9 @@ def p_expr_bin(p):
             | expr '/' expr
             | expr SLASHSLASH expr
             | expr MOD expr
-            | expr '^' expr"""
+            | BITWISETILDE expr
+            | expr '^' expr
+            | expr FUNCTIONAL expr"""
 
     p[0] = ["OP", p[2].upper(), p[1], p[3]]
 
