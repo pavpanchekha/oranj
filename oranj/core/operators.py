@@ -12,15 +12,15 @@ def __mk_op(f, name, try_noconv=True):
             except AttributeError:
                 args2 = [args[0]] + list(args[2:])
                 return OrObject.from_py(args[1].get("$$r_" + name)(*args2))
-        except (AttributeError, IndexError, TypeError):
+        except (AttributeError, IndexError, TypeError, NotImplementedError):
             try:
                 return OrObject.from_py(f(*args))
             except TypeError:
                 if all(not hasattr(i, "ispy") or i.ispy() for i in args):
-                    args = [i.topy() if i.ispy() else i for i in args]
+                    args = [i.topy() if hasattr(i, "ispy") else i for i in args]
                     return OrObject.from_py(f(*args))
                 else:
-                    return NotImplemented
+                    raise NotImplementedError
     return t
 
 add = __mk_op(operator.add, "add")
@@ -63,10 +63,7 @@ def is_(obj, cls):
         cls = cls.topy()
     
     if type(cls) == type(""):
-        if hasattr(obj.get("$$class"), "has") and type(obj.get("$$class").has) != types.UnboundMethodType and obj.get("$$class").has("$$tags"):
-            return cls.topy() in obj.get("$$class").get("$$tags")
-        else:
-            return False
+        return obj.tagged(cls)
     
     try:
         r = isinstance(obj, cls)
@@ -87,7 +84,7 @@ def is_(obj, cls):
 def call(obj, *args, **kwargs):
     try:
         return OrObject.from_py(obj.get("$$call")(*args, **kwargs))
-    except (AttributeError, TypeError):
+    except (AttributeError, TypeError, NotImplementedError):
         if all(not hasattr(i, "ispy") or i.ispy() for i in args) and all(not hasattr(i, "ispy") or i.ispy() for k, i in kwargs.items()):
             args = [i.topy() if i.ispy() else i for i in args]
             for i in kwargs:

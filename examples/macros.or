@@ -1,0 +1,33 @@
+
+# Macros are functions that take not regular values, but the actual
+# abstract syntax trees (ASTs) as input. A few examples will make this clear:
+
+AST = fn(src) is Macro {
+    return src
+}
+
+# AST is the simplest of all functions. Note the magic `Macro tag: this is
+# what makes AST a macro.
+
+AST(12, 14, i)
+
+# Output: [['PRIMITIVE', ('INT', '12', 10)], ['PRIMITIVE', ('INT', '14', 10)], 
+# ['IDENT', 'i']]
+#
+# Ignore the parenthesized (as opposed to bracketed) list there, it'll work
+# just like a regular list. Now, what's all this crap it created out of
+# a simple "12, 14, i"?
+# Well, that's the AST oranj itself uses to run your code, so it shouldn't be
+# surprising that its rather low-level. In the future, oranj might "prettify"
+# the AST it gives your macros, but for now, you get the real deal -- the actual,
+# completely low-level AST.
+
+# Now, what's the point?
+
+FOR = fn(src) is Macro {
+    var = src[0][1]
+    start = intp.run(val[1])
+    end = intp.run(val[2])
+    fn = intp.run(val[3])
+    
+    for i in range(

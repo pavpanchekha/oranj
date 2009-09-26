@@ -30,8 +30,8 @@ def pyerror(args, i, glob={}):
 dirs = {"drop": drop, "undrop": undrop, "clear": clear, "exit": exit, "pydrop": pydrop, "pyerror": pyerror}
 
 def python(args, body, i, glob={}):
-    glob["intp"] = self
-    return eval(body, glob)
+    glob["intp"] = i
+    exec body in glob
 
 def output(args, body, i, glob={}):
     i.curr["io"].write(body)

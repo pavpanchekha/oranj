@@ -47,6 +47,10 @@ builtin.update({
     "chr": expose(unichr),
 
     "Exception": expose(Exception),
+    
+    "hasattr": expose(OrObject.has, "hasattr"),
+    "getattr": expose(OrObject.get, "getattr"),
+    "setattr": expose(OrObject.set, "setattr"),
 })
 
 stolen_builtins = [

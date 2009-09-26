@@ -45,6 +45,17 @@ def import_readline():
     readline.parse_and_bind("tab: complete")
     return readline
 
+def wrap(fn, i, glob):
+    try:
+        fn()
+    except intp.PyDropI:
+        print "Dropping down to python console. Call undrop() to return."
+        pydrop(i, glob)
+    except intp.DropI:
+        run_console(i, glob)
+    except Exception, e:
+        libintp.print_exception(e, i)    
+
 def run_console(i, glob):
     import lexer
     import analyze
@@ -92,11 +103,11 @@ def parse_args():
 
     return kwargs
 
-def run_file(base_i, child):
+def run_file(base_i, child, glob):
     text = open(child[0]).read()
     if text.strip() != "":
-        intp.run(text, base_i)
-        cli.run(base_i, child[1:])
+        wrap(lambda: intp.run(text, base_i), base_i, glob)
+        cli.run(base_i, child[1:], wrap)
 
 def main(glob):
     intp.Interpreter.run_console = lambda x: run_console(x, glob)
@@ -104,9 +115,9 @@ def main(glob):
     kwargs = parse_args()
 
     if len(kwargs["child"]) and "test" not in kwargs:
-        run_file(base_i, child)
+        run_file(base_i, kwargs["child"], glob)
     elif "stdin" in kwargs:
-        intp.run(sys.stdin.read())
+        wrap(lambda: intp.run(sys.stdin.read(), base_i), base_i, glob)
     elif "test" in kwargs:
         import_readline()
         if kwargs["test"] == "a":
@@ -122,4 +133,4 @@ def main(glob):
         run_console(base_i, glob)
 
 if __name__ == "__main__":
-    main()
+    main(globals())

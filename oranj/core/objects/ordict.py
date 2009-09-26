@@ -9,9 +9,15 @@ class OrDict(dict, OrObject):
     def topy(self): return self
     
     def __repr__(self):
-        return "[" + dict(self).__repr__()[1:-1] + "]"
+        if len(self):
+            return "[" + dict(self).__repr__()[1:-1] + "]"
+        else:
+            return "[:]"
     
     def __str__(self):
-        return "[" + dict(self).__str__()[1:-1] + "]"
+        if len(self):
+            return "[" + dict(self).__str__()[1:-1] + "]"
+        else:
+            return "[:]"
 
 OrObject.register(OrDict, type({}))

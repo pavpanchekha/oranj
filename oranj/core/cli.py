@@ -180,7 +180,8 @@ def run_main(intp, args):
         kwargs = parseargs(args, schema)
         main(**kwargs)
 
-def run(intp, args):
+def run(intp, args, wrapfn=lambda fn, i, glob: fn()):
     if "$$main" in intp.curr:
+        #wrapfn(lambda: run_main(intp, args), intp, globals())
         run_main(intp, args)
     return

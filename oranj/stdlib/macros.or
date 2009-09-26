@@ -1,0 +1,52 @@
+Interpreter = class {
+    $$init = fn(self, intp) {
+        self.intp = intp
+    }
+
+    set = fn(self, var, val, depth=1) {
+        self.intp.cntx[-depth-1][var] = val
+    }
+
+    run = fn(self, tree) {
+        return self.intp.run(tree)
+    }
+}
+
+val = class is Extractor {
+    $$init = fn(self, name) {
+        self.name = name
+    }
+
+    $$repr = fn(self) {
+        return "??" + self.name
+    }
+
+    $$output = fn(self, val) {
+        return val
+    }
+}
+
+match = fn(pattern, tree) {
+    treep = 0
+    ret = dict()
+    
+    for elem in pattern {
+        if elem is `Extractor {
+            ret[elem.name] = elem << tree[treep]
+        } elif type(elem) == "list" {
+            ret.update(match(elem, tree[treep]))
+        } else { 
+            assert tree[treep] == elem, "Error in matching tree"
+        }
+        
+        treep++
+    }
+
+    return ret
+}
+
+$_gensymid = 0
+
+gensym = fn() {
+    return "!!" + str($_gensymid++)
+}

@@ -380,12 +380,12 @@ def p_if_s(p):
     p[0] = p[1] + p[2] + p[3]
 
 def p_if_if(p):
-    """if_if : IF expr block"""
+    """if_if : IF expr expr"""
 
     p[0] = ["IF", p[2], p[3]]
 
 def p_if_elif(p):
-    """if_elifs : ELIF expr block if_elifs
+    """if_elifs : ELIF expr expr if_elifs
                 | """
 
     if len(p) == 1:
@@ -394,7 +394,7 @@ def p_if_elif(p):
         p[0] = ["ELIF", p[2], p[3]] + p[4]
 
 def p_else(p):
-    """else : ELSE block
+    """else : ELSE expr
             | """
 
     if len(p) == 1:
@@ -408,8 +408,8 @@ def p_block(p):
     p[0] = p[2]
 
 def p_while_s(p):
-    """while_s : WHILE expr block else
-               | WHILE block else"""
+    """while_s : WHILE expr expr else
+               | WHILE expr else"""
 
     if len(p) == 5:
         p[0] = ["WHILE", p[2], p[3]] + p[4]
@@ -417,7 +417,7 @@ def p_while_s(p):
         p[0] = ["WHILE", None, p[2]] + p[3]
 
 def p_for_s(p):
-    """for_s : FOR many_lvalues IN many_exprs block else"""
+    """for_s : FOR many_lvalues IN many_exprs expr else"""
 
     vars = map(h_loc, p[2])
 
@@ -429,14 +429,14 @@ def p_try_s(p):
     p[0] = p[1] + p[2] + p[3] + p[4]
 
 def p_try_try(p):
-    """try_try : TRY block"""
+    """try_try : TRY expr"""
 
     p[0] = ["TRY", p[2]]
 
 def p_try_catch(p):
-    """try_catch : CATCH many_exprs block try_catch
-                 | CATCH many_exprs AS lvalue block try_catch
-                 | CATCH block try_catch
+    """try_catch : CATCH many_exprs expr try_catch
+                 | CATCH many_exprs AS lvalue expr try_catch
+                 | CATCH expr try_catch
                  | """
 
     if len(p) == 1:
@@ -450,7 +450,7 @@ def p_try_catch(p):
         p[0] = ["CATCH", [], None, p[2]] + p[3]
 
 def p_try_finally(p):
-    """try_finally : FINALLY block
+    """try_finally : FINALLY expr
                    | """
 
     if len(p) == 1:
@@ -534,12 +534,12 @@ def p_arg_def_kwmult(p):
 # class : CLASS [string] ['(' [many_exprs] ')'] [IS many_idents] block
 
 def p_class(p):
-    """class : CLASS '(' many_exprs ')' IS many_idents block
-             | CLASS '(' ')' IS many_idents block
-             | CLASS IS many_idents block
-             | CLASS '(' many_exprs ')' block
-             | CLASS '(' ')' block
-             | CLASS block"""
+    """class : CLASS '(' many_exprs ')' IS many_idents expr
+             | CLASS '(' ')' IS many_idents expr
+             | CLASS IS many_idents expr
+             | CLASS '(' many_exprs ')' expr
+             | CLASS '(' ')' expr
+             | CLASS expr"""
 
     if len(p) == 8:
         p[0] = ["CLASS", "", p[3], p[6], p[7]]
@@ -556,12 +556,12 @@ def p_class(p):
         p[0] = ["CLASS", "", [], [], p[2]]
 
 def p_class_doc(p):
-    """class : CLASS string '(' many_exprs ')' IS many_idents block
-             | CLASS string '(' ')' IS many_idents block
-             | CLASS string IS many_idents block
-             | CLASS string '(' many_exprs ')' block
-             | CLASS string '(' ')' block
-             | CLASS string block"""
+    """class : CLASS string '(' many_exprs ')' IS many_idents expr
+             | CLASS string '(' ')' IS many_idents expr
+             | CLASS string IS many_idents expr
+             | CLASS string '(' many_exprs ')' expr
+             | CLASS string '(' ')' expr
+             | CLASS string expr"""
 
     if len(p) == 9:
         p[0] = ["CLASS", p[2], p[4], p[7], p[8]]
@@ -577,15 +577,20 @@ def p_class_doc(p):
     else:
         p[0] = ["CLASS", p[2], [], [], p[3]]
 
+def p_expr_statements(p):
+    """kernel : assignment
+              | del_s
+              | extern_s
+              | flow_s
+              | import_s
+              | assert_s
+              | block_s
+              | block"""
+
+    p[0] = p[1]
+
 def p_statement(p):
-    """statement : expr
-                 | assignment
-                 | del_s
-                 | extern_s
-                 | flow_s
-                 | import_s
-                 | assert_s
-                 | block_s"""
+    """statement : expr newline"""
 
     txtp = p.lexspan(1)[0]
     while txtp > -1 and parser.txt[txtp] != "\n":
@@ -599,7 +604,6 @@ def p_statement(p):
     bounds = [txtp, txtp2]
     p[0] = ["STATEMENT", [i+1 for i in p.linespan(1)], bounds, code, p[1]]
 
-
 def p_newline(p):
     """newline : newline NEWLINE
                | NEWLINE"""
@@ -607,13 +611,13 @@ def p_newline(p):
     p[0] = None
 
 def p_statements_aux(p):
-    """statements_ : statements_ newline statement
-                   | statement"""
+    """statements_ : statements_ statement
+                   | """
 
-    if len(p) == 2:
-        p[0] = [p[1]]
+    if len(p) == 1:
+        p[0] = []
     else:
-        p[0] = p[1] + [p[3]]
+        p[0] = p[1] + [p[2]]
 
 def p_statements2(p):
     """statements : newline statements_ newline
@@ -621,11 +625,21 @@ def p_statements2(p):
 
     p[0] = p[2]
 
+def p_statements25(p):
+    """statements : newline statements_ expr"""
+
+    p[0] = p[2] + [p[3]]
+
 def p_statements1(p):
     """statements : statements_ newline
                   | statements_"""
 
     p[0] = p[1]
+
+def p_statements15(p):
+    """statements : statements_ expr"""
+
+    p[0] = p[1] + [p[2]]
 
 def p_statements0(p):
     """statements : newline
@@ -691,6 +705,7 @@ import objects.about
 _p = objects.about.mainpath
 if not _p.endswith("core/"):
     _p += "core/"
+
 parser = yacc.yacc(tabmodule="parsetab", outputdir=_p[:-6]+"/build", debug=0, optimize=1)
 
 def parse(s):

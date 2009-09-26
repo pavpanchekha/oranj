@@ -25,7 +25,12 @@ def get_augass(tree):
                 i[2][j] = ["OP", i[0][:-1], augass_dostuff(i[1][j][:]), i[2][j]]
             i[0] = "ASSIGN"
         elif i[0] == "=":
-            i[0] = "ASSIGN"
+            if len(i[1]) > 1:
+                i[0] = "ASSIGN"
+            else:
+                i[0] = "ASSIGN1"
+                i[1] = i[1][0]
+                i[2] = i[2][0]
 
         get_augass(i)
     return

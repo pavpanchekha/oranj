@@ -1,5 +1,9 @@
-from orobject import OrObjec
-from collections import OrderedDict
+from orobject import OrObject
+
+try:
+    from collections import OrderedDict
+except:
+    from odict import OrderedDict
 
 class ODict(OrderedDict):
     def __init__(self, dict=[], **kwargs):

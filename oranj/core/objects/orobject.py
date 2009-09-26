@@ -19,7 +19,7 @@ class OrObject(object):
         try:
             return self.dict["$$python"]
         except KeyError:
-            return NotImplemented
+            raise NotImplementedError
 
     def isnil(self):
         return self.ispy() and self.topy() is None
@@ -29,7 +29,7 @@ class OrObject(object):
 
     def get(self, key):
         if key == "$$dict":
-            return OrObject.from_py(self.__dict__)
+            return OrObject.from_py(self.dict)
         elif key in self.dict:
             val = self.dict[key]
         elif self.ispy() and hasattr(self.topy(), key):
@@ -66,7 +66,7 @@ class OrObject(object):
             delattr(self.topy(), key)
 
     def has(self, key):
-        return key in self.dict or hasattr(self.topy(), key)
+        return key in self.dict or self.ispy() and hasattr(self.topy(), key)
 
     def __str__(self):
         if self.has("$$str"):
@@ -91,7 +91,10 @@ class OrObject(object):
             return s + ">"
 
     def __repr__(self):
-        if self.has("$$repr"):
+        if isinstance(self.get("$$class"), OrObject) and \
+            self.get("$$class").has("$$repr"):
+            return str(self.get("$$class").get("$$repr")(self))
+        elif self.has("$$repr"):
             return str(self.get("$$repr")())
         elif self.ispy():
             return repr(self.topy())
@@ -132,20 +135,24 @@ class OrObject(object):
         if self.ispy():
             return bool(self.topy())
         elif self.has("$$bool"):
-            return self.get("$$bool")
+            return self.get("$$bool")()
         else:
             return True
     
     def __getattr__(self, key):
-        if key.startswith("__") and key not in ("__class__", "__name__",
+        if key in self.__dict__ and key.startswith("__") and \
+            key not in ("__class__", "__name__",
             "__dict__", "__weakref__", "__getattr__", "__setattr__",
             "__delattr__"):
+            
             setattr(OrObject, key, mk_method(key))
             
             def wrap_method(*args, **kwargs):
                 return getattr(OrObject, key)(self, *args, **kwargs)
             
             return wrap_method
+        elif key in self.__dict__:
+            return self.__dict__(key)
         else:
             raise AttributeError
 
@@ -175,11 +182,11 @@ def mk_method(name):
             obj = getattr(self.topy(), name)
             return obj(*args)
         else:
-            if "attr" in name: # NotImplemented stupidly evaluates to True
+            if "attr" in name:
                 raise AttributeError("Object does not support this operation")
             elif name == "__nonzero__":
                 return True
             else:
-                return NotImplemented
+                raise NotImplementedError
 
     return method_wrapper

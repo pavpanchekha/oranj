@@ -140,8 +140,6 @@ class Interpreter(object):
             self.searchpath.append(files.Path(val))
 
     def run(self, tree):
-        if len(tree) == 0:
-            0/0
         if type(tree[0]) == type(""):
             return Interpreter.__dict__["h" + tree[0]](self, *tree[1:])
         else:
@@ -158,15 +156,19 @@ class Interpreter(object):
     @autoblock
     def hFOR(self, (names, vals), block):
         vals = map(self.run, vals)
+        valpairs = zip(*vals)
 
-        for v in zip(*vals):
+        for v in valpairs:
             for n, vv in zip(names, flatten_tuples(v)):
                 self.curr[n] = OrObject.from_py(vv)
             self.run(block)
 
+        return zip(valpairs)
+
     @autoblock
     def hFOR2(self, (names, vals), block, *others):
         vals = map(self.run, vals)
+        valpairs = zip(*vals)
 
         try:
             for v in zip(*vals):
@@ -186,6 +188,8 @@ class Interpreter(object):
                 if "ELSE" in others:
                     i = others.find("ELSE")
                     self.run(others[i + 1])
+        
+        return valpairs
 
     def hSTATEMENT(self, linespan, charspan, txt, val):
         self.level += 1
@@ -196,20 +200,8 @@ class Interpreter(object):
         self.level -= 1
         return asdf
 
-    def hRAW(self, val):
-        return val
-
     def hLIST(self, vars):
         return OrObject.from_py(map(self.run, vars))
-
-    def hSET(self, vars):
-        return OrObject.from_py(set(map(self.run, r)))
-
-    def hTABLE(self, vars):
-        from objects.orddict import ODict
-
-        vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
-        return ODict(vars)
 
     def hDICT(self, vars):
         vars = map(lambda x: (self.run(x[0]), self.run(x[1])), vars)
@@ -225,6 +217,8 @@ class Interpreter(object):
         for c in self.cntx[:-1:-1]:
             if var in c:
                 return c[var]
+
+        raise NameError("`%s` is not defined" % var)
 
     def hPROCDIR(self, cmd):
         args = cmd[1:]
@@ -273,7 +267,7 @@ class Interpreter(object):
             fn = self.procblocks[type[0]]
             return OrObject.from_py(fn(type[1:], body, self, globals()))
         else:
-            raise SyntaxError("Proccessing block not available: " + type[0])
+            raise SyntaxError("Processing block not available: " + type[0])
         
     def hPRIMITIVE(self, val, *others):
         if val[0] in ("DEC", "INT"):
@@ -298,6 +292,7 @@ class Interpreter(object):
         vals = [["VALUE", self.run(val)] for val in vals]
         for i, v in zip(idents, vals):
             self.hASSIGN1(i, v)
+        return map(lambda val: val[1], vals)
 
     def hASSIGN1(self, ident, val):
         val = self.run(val)
@@ -310,12 +305,7 @@ class Interpreter(object):
             self.run(ident[1]).set(ident[2], val)
         elif ident[0] == "SETINDEX":
             self.run(ident[1])[self.run(ident[2])] = val
-
-    def hDECLARE(self, type, (idents, vals)):
-        for i in idents:
-            self.types[i] = type
-
-        self.hASSIGN((idents, vals))
+        return val
 
     def hFN(self, args, block, doc, tags):
         return libintp.Function(self, args, block, self.run(["STRING", doc]), tags)
@@ -336,6 +326,7 @@ class Interpreter(object):
             if not self.curr.parent or i not in self.curr.parent:
                 raise NameError(i + " is not a valid variable")
             self.curr[i] = self.curr.parent[i]
+        return self.curr[i]
 
     def hGETATTR(self, var, id):
         var = self.run(var)
@@ -344,7 +335,7 @@ class Interpreter(object):
     def hASSERT(self, val, doc=""):
         val = self.run(val)
         if val:
-            return
+            return val
 
         if doc:
             raise AssertionError
@@ -373,15 +364,15 @@ class Interpreter(object):
     @autoblock
     def hIF(self, cond, body, *others):
         if self.run(cond):
-            self.run(body)
+            return self.run(body)
         else:
             for i, v in enumerate(others[::3]):
                 if v == "ELIF":
                     if self.run(others[i + 1]):
-                        self.run(others[i + 2])
+                        return self.run(others[i + 2])
                     return
                 else:
-                    self.run(others[i + 1])
+                    return self.run(others[i + 1])
 
     def hCONTINUE(self, val=None):
         if val:
@@ -404,9 +395,7 @@ class Interpreter(object):
 
         while test():
             self.run(body)
-        else:
-            if others:
-                self.run(others[1])
+        return constants.objects.true
 
     @autoblock
     def hWHILE2(self, cond, body, *others):
@@ -424,35 +413,42 @@ class Interpreter(object):
                         raise ContinueI(e.args[0] - 1)
                     else:
                         continue
-            else:
-                if others:
-                    self.run(others[1])
         except BreakI, e:
             if e.args and e.args[0] > 1:
                 raise BreakI(e.args[0] - 1)
             else:
-                return
+                return objects.constants.false
+        return objects.constants.true
 
     def hCALL(self, val, *args):
-        a = []
-        kw = {}
-
-        for i in args:
-            if i[0] == "UNWRAPKW":
-                kw.update(self.run(i[1]))
-            elif i[0] == "KW":
-                kw[i[1]] = self.run(i[2])
-            elif i[0] == "UNWRAP":
-                a.extend(self.run(i[1]).topy())
-            else:
-                a.append(self.run(i))
-
         func = self.run(val)
+      
+        if func.tagged("FullMacro") or func.tagged("Macro"):
+            # Eh, don't shoot yourself in the foot
+            a = map(OrObject.from_py, args)
+            kw = {}
+        else:
+            a = []
+            kw = {}
+
+            for i in args:
+                if i[0] == "UNWRAPKW":
+                    kw.update(self.run(i[1]))
+                elif i[0] == "KW":
+                    kw[i[1]] = self.run(i[2])
+                elif i[0] == "UNWRAP":
+                    a.extend(self.run(i[1]).topy())
+                else:
+                    a.append(self.run(i))
+        
         try:
             r = operators.call(func, *a, **kw)
         finally:
             if self.level > len(self.stmtstack):
                 self.stmtstack = self.stmtstack[:self.level]
+        
+        if func.tagged("FullMacro"):
+            r = intp.run(r)
 
         if not isinstance(r, OrObject):
             return OrObject.from_py(r)
@@ -463,13 +459,14 @@ class Interpreter(object):
     def hTRY(self, block, *catches):
         try:
             self.run(block)
+            return objects.constants.true
         except Exception, e:
             for i, v in enumerate(catches[1::4]):
                 if any(operators.is_(e, self.run(j)) for j in v) or not v:
                     if catches[3*i+2]:
                         self.curr[catches[3*i+2]] = OrObject.from_py(e)
                     self.run(catches[3*i+3])
-                    return
+                    return objects.constants.false
 
             if catches[-2] == "FINALLY":
                 self.run(catches[-1])
@@ -561,7 +558,7 @@ class Interpreter(object):
             if "file" in loc.type():
                 f = loc.get().open().read()
             elif "$$init.or" in loc:
-                f = (log+"$$init.or").get().open()
+                f = (loc+"$$init.or").get().open()
             else:
                 f = ""
                 
@@ -590,6 +587,7 @@ class Interpreter(object):
         fname = fname if fname else name
 
         self.curr[name] = OrObject.from_py(mod)
+        return self.curr[name]
 
     def hVALUE(self, val):
         return val
@@ -603,4 +601,5 @@ def run(s, intp=None, **kwargs):
 
     return intp.run(analyze.parse(s))
 
-builtin.builtin["eval"] = OrObject.from_py(run)
+builtin.builtin["eval"] = builtin.expose(run, "eval")
+
