@@ -106,6 +106,8 @@ class Function(OrObject):
                         cntx[i[1]] = args[argp]
                         argp += 1
                         extra_args -= 1
+                    else:
+                        cntx[i[1]] = self.intp.run(i[2])
                 elif i[0] == "UNWRAPPABLE":
                     cntx[i[1]] = OrObject.from_py([])
 

@@ -36,13 +36,13 @@ def t_BOOL(t):
     return t
 
 def t_NIL(t):
-    r"nil"
+    r"\bnil\b"
 
     t.value = liblex.hNIL(t.value)
     return t
 
 def t_INF(t):
-    r"inf"
+    r"\binf\b"
 
     t.value = liblex.hINF(t.value)
     return t

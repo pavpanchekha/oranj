@@ -31,7 +31,19 @@ precedence = (
     ("right", "FUNCTIONAL"),
     ("left", "!"),
     ("left", ".", "(", ")", "[", "]"),
+    ("left", "COMMA"),
+    ("left", "MANYEXPRSCOMMA")
 )
+
+# Needs to be here to resolve RR conflict
+def p_many_exprs(p):
+    """many_exprs : many_exprs ',' expr %prec MANYEXPRSCOMMA
+                  | expr"""
+
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[3]]
 
 def p_string(p):
     """string : STRING string
@@ -111,7 +123,7 @@ def p_lvalue_call(p):
     p[0] = ["CALL", p[1]] + p[3]
 
 def p_arglist(p):
-    """arglist : arglist ',' arg
+    """arglist : arglist ',' arg %prec COMMA
                | arg
                | """
 
@@ -124,11 +136,13 @@ def p_arglist(p):
 
 def p_arg_expr(p):
     """arg : expr"""
-    p[0] = p[1]
 
-def p_arg_kw(p):
-    """arg : IDENT ASSIGN expr"""
-    p[0] = ["KW", p[1], p[3]]
+    if p[1][0] == "=":
+        p[0] = ["KW", p[1][1][0], p[1][2][0]]
+    elif "=" in p[1][0]:
+        raise SyntaxError("What are you doing in the argument here?!")
+    else:
+        p[0] = p[1]
 
 def p_arg_mult(p):
     """arg : '*' expr"""
@@ -145,7 +159,7 @@ def p_lvalue_index(p):
     p[0] = ["OP", "GETINDEX", p[1], p[3]]
 
 def p_index(p):
-    """index : index ',' indice
+    """index : index ',' indice %prec COMMA
              | indice"""
 
     if len(p) == 2:
@@ -262,14 +276,6 @@ def h_loc(p):
     else:
         raise SyntaxError("You're assigning that to WHAT?!")
 
-def p_many_exprs(p):
-    """many_exprs : many_exprs ',' expr
-                  | expr"""
-
-    if len(p) == 2:
-        p[0] = [p[1]]
-    else:
-        p[0] = p[1] + [p[3]]
 
 def p_many_lvalues(p):
     """many_lvalues : many_lvalues ',' lvalue
