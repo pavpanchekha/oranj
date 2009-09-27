@@ -25,10 +25,9 @@ class Function(OrObject):
             self.intp = intp
             self.parcntx = self.intp.curr
 
-            argtypes = [i[0] for i in arglist]
-            self.argtypes = [argtypes.count("ARG"), argtypes.count("DEFARG"), argtypes.count("UNWRAPABLE"), argtypes.count("UNWRAPABLEKW")]
-            self.realargs = self.argtypes[0] + self.argtypes[1]
-            self.argnamelist = [i[1] for i in arglist]
+            self.argtypes = [i[0] for i in arglist]
+            self.argnames = [i[1] for i in arglist if not i[0].startswith("UNWRAPPABLE")]
+            self.simpleargs = [i[1] for i in arglist if i[0] == "ARG"]
 
     def ispy(self): return not hasattr(self, "intp")
     def topy(self): return self.fn if hasattr(self, "fn") else NotImplemented
@@ -63,61 +62,55 @@ class Function(OrObject):
         cntx = InheritDict(self.parcntx)
         self.intp.cntx.append(cntx)
 
-        argp = 0
-        if len(args) == self.realargs:
-            for i in self.arglist:
-                if i[0] == "ARG":
-                    cntx[i[-1]] = args[argp]
-                    argp += 1
-                elif i[0] == "DEFARG":
-                    cntx[i[-2]] = args[argp]
-                    argp += 1
-                if i[0] == "UNWRAPABLE":
-                    cntx[i[-1]] = OrObject.from_py([])
-                # TODO: Multiple dispatch
-        elif self.argtypes[0] <= len(args) < self.realargs:
-            # We don't have enough arguments,
-            # So we'll take defaults for the other arguments
+        extra_args = len(args) + len([i for i in kwargs if i in self.simpleargs]) - len(self.simpleargs)
+        if "UNWRAPPABLE" in self.argtypes:
+            # *args have higher priority than arg=stuff
+            # So just stick the extra args into the first
+            # UNWRAPPABLE we find
 
-            defeat = self.argtypes[1] - (self.realargs - len(args))
+            argp = 0
             for i in self.arglist:
                 if i[0] == "ARG":
-                    cntx[i[-1]] = args[argp]
-                    argp += 1
-                elif i[0] == "DEFARG":
-                    if defeat:
-                        cntx[i[-2]] = args[argp]
-                        argp += 1
-                        defeat -= 1
+                    if i[1] in kwargs:
+                        cntx[i[1]] = kwargs[i[1]]
+                        del kwargs[i[1]]
                     else:
-                        cntx[i[-2]] = self.intp.run(i[-1])
-                if i[0] == "UNWRAPABLE":
-                    cntx[i[-1]] = OrObject.from_py([])
-        elif len(args) > self.realargs and self.argtypes[2] > 0:
-            # We've got too many arguments, so we'll have to eat some
-            extra = len(args) - self.realargs
+                        cntx[i[1]] = args[argp]
+                        argp += 1
+                elif i[0] == "DEFARG":
+                    if i[1] in kwargs:
+                        cntx[i[1]] = kwargs[i[1]]
+                        del kwargs[i[1]]
+                    else:
+                        cntx[i[1]] = self.intp.run(i[2])
+                elif i[0] == "UNWRAPPABLE":
+                    if extra_args >= 0:
+                        cntx[i[1]] = OrObject.from_py(args[argp:argp+extra_args])
+                        argp += extra_args
+                        extra_args = -1
+        else:
+            argp = 0
             for i in self.arglist:
                 if i[0] == "ARG":
-                    cntx[i[-1]] = args[argp]
-                    argp += 1
-                elif i[0] == "DEFARG":
-                    cntx[i[-2]] = args[argp]
-                    argp += 1
-                elif i[0] == "UNWRAPABLE":
-                    l = []
-                    while extra > 0:
-                        l.append(args[argp])
+                    if i[1] in kwargs:
+                        cntx[i[1]] = kwargs[i[1]]
+                        del kwargs[i[1]]
+                    else:
+                        cntx[i[1]] = args[argp]
                         argp += 1
-                        extra -= 1
-                    cntx[i[-1]] = OrObject.from_py(l)
-        else:
-            raise TypeError("Wrong number of arguments")
-            # TODO: make less stupid error message
+                elif i[0] == "DEFARG":
+                    if i[1] in kwargs:
+                        cntx[i[1]] = kwargs[i[1]]
+                        del kwargs[i[1]]
+                    elif extra_args > 0:
+                        cntx[i[1]] = args[argp]
+                        argp += 1
+                        extra_args -= 1
+                elif i[0] == "UNWRAPPABLE":
+                    cntx[i[1]] = OrObject.from_py([])
 
-        actualargs = map(lambda x: x[1], self.arglist)
-        for k, v in kwargs.items():
-            if k in actualargs:
-                cntx[k] = v
+        for i in (arg[1] for arg in self.arglist if arg[0] == "UNWRAPPABLEKW"):
+            cntx[i] = kwargs.copy()
 
         if self.intp.opts["logger"]:
             summary = ": " + str(self.get("$$doc"))
@@ -130,7 +123,7 @@ class Function(OrObject):
         self.intp.level += 1
         #self.intp.stmtstack.append(self.intp.cstmt)
         try:
-            self.intp.run(self.block)
+            c = self.intp.run(self.block)
         except ReturnI, e:
             if self.intp.opts["logger"]: self.intp.opts["logger"].pop()
             
@@ -143,6 +136,7 @@ class Function(OrObject):
             if self.intp.opts["logger"]: self.intp.opts["logger"].pop(certain=False)
             self.intp.level -= 1
             self.intp.cntx.pop()
+        return OrObject.from_py(c)
 
 OrObject.register(Function, types.BuiltinFunctionType,
     types.BuiltinMethodType, types.ClassType, types.FunctionType,

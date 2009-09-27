@@ -139,7 +139,7 @@ def parseargs(args, schema):
                 takingopts = False
                 continue
             
-            passargs[kw] = evalval(schema.long[kw], kw)
+            passargs[kw] = evalval(schema.long[kw], i)
             schema.mandatory.pop(0)
     
     if schema.dump:
@@ -149,7 +149,8 @@ def parseargs(args, schema):
     
     if len(schema.mandatory) and schema.mandatory[0] != schema.dump:
         m = len(schema.mandatory) - (1 if schema.dump in schema.mandatory else 0)
-        print "ERROR: Missing %d arguments; consult --help for command sytnax" % m
+        print "Arguments Missing: " + ", ".join(map(lambda x: "`%s`"%x, schema.mandatory))
+        print "ERROR: Missing %d arguments; consult --help for command syntax" % m
         errors = True
     if setval:
         print "ERROR: Expecting value for argument `%s`" % setval
@@ -182,6 +183,6 @@ def run_main(intp, args):
 
 def run(intp, args, wrapfn=lambda fn, i, glob: fn()):
     if "$$main" in intp.curr:
-        #wrapfn(lambda: run_main(intp, args), intp, globals())
-        run_main(intp, args)
+        wrapfn(lambda: run_main(intp, args), intp, globals())
+        #run_main(intp, args)
     return

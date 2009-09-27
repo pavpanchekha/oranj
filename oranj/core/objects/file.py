@@ -12,7 +12,7 @@ class File(OrObject):
         self.set("$$output", self.output)
         self.set("read", Function(self.read))
         self.set("write", Function(self.write))
-
+        self.set("close", Function(self.close))
 
         if type(fname) == type(""):
             self.fname = fname
@@ -33,13 +33,16 @@ class File(OrObject):
             return OrObject.from_py(getattr(self.file, i))
 
     def __str__(self):
-        return "<File " + self.fname + ">"
+        return "<file " + self.fname + ">"
 
     def input(self, validator):
         return self.read(validator)
 
     def output(self, arg):
         self.write(arg, sep="", end="")
+
+    def close(self):
+        self.file.close()
 
     def read(self, valid_f=None, coerce_f=None):
         if valid_f is None and coerce_f is None:
