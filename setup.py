@@ -27,7 +27,7 @@ class post_install(install_data):
 
 setup(
     name="oranj",
-    version="0.6",
+    version="0.7",
     description="Oranj Programming Language",
     author="Pavel Panchekha",
     author_email="pavpanchekha@gmail.com",
