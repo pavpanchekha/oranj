@@ -1,0 +1,129 @@
+div.main {
+    margin-left: -390px;
+    padding: 1em 3em;
+    width: 700px;
+    background: #EEEEEC;
+    border-left: 3px solid #D3D7CF;
+    border-right: 3px solid #D3D7CF;
+    font-size: 120%;
+    position: absolute;
+    top: 13.7em;
+    bottom: 0;
+    left: 50%;
+    overflow: auto;
+}
+
+.related {
+    display: none;
+}
+
+#floating-header {
+    position: fixed;
+    background: #EEEEEC;
+    width: 700px;
+    top: 0px;
+    left: 50%;
+    margin-left: -390px;
+    padding: 2em 3em 1em 3em;
+    border-left: 3px solid #D3D7CF;
+    border-right: 3px solid #D3D7CF;
+    z-index: 5;
+}
+
+p {
+    text-align: justify;
+}
+
+pre {
+    background: #D3D7CF !important;
+    border-left: 5px solid #BABDB6;
+    padding: 10px;
+    font-size: 125%;
+}
+
+.sphinxsidebar {
+    position: fixed;
+    top: 5px;
+    left: 50%;
+    margin-left: 400px;
+    right: 10px;
+}
+
+.content .sphinxsidebar ul {
+    margin-left: 0;
+    list-style-type: none;
+    list-style-position: inside;
+}
+
+.sphinxsidebar h3 {
+    display: none;
+}
+
+
+.sphinxsidebar a {
+    display: block;
+    margin-left: 5px;
+}
+
+.sphinxsidebar a[href=''] {
+    color: black;
+    text-decoration: none;
+    cursor: default;
+    font-weight: bold;
+}
+
+.sphinxsidebar ul ul ul a {
+    margin-left: 17px;
+}
+
+.sphinxsidebar ul ul ul ul a {
+    margin-left: 32px;
+}
+
+#pages {
+    list-style-type: none;
+    clear: both;
+    height: 2em;
+    margin: 0;
+}
+
+#pages li {
+    float: left;
+    margin: .1em 5px;;
+    height: 1.6em;
+}
+
+#pages li a {
+    text-decoration: none;
+    color: black;
+    font-size: 1.2em;
+    font-weight: bold;
+    border: .3em solid #BABDB6;
+    padding: 3px;
+}
+
+#pages li a:hover, #pages li.selected a {
+    background: #D3D7CF;
+}
+
+#pages li.selected a {
+    cursor: default;
+}
+
+.section .headerlink {
+    display: none;
+}
+
+.section:hover .headerlink {
+    display: inline;
+    color: #ccc;
+    text-decoration: none;
+}
+
+.pre {
+    color: #c33;
+}
+
+.footer {
+    display: none;
+}

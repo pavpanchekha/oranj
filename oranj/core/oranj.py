@@ -7,7 +7,6 @@ import objects.about
 sys.path.append(os.path.join(objects.about.mainpath, "core", "lib"))
 
 import interpreter as intp
-from optparse import OptionParser
 import traceback
 import libintp
 import parser
@@ -22,6 +21,8 @@ def pydrop(i, glob):
         run_console(i, glob)
 
     glob["undrop"] = undrop
+    import objects.orobject
+    glob["OrObject"] = objects.orobject.OrObject
     glob["intp"] = i
 
 def import_readline():

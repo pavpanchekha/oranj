@@ -71,6 +71,9 @@ class Interpreter(object):
         else:
             return self.run(code)
 
+    def quit(self):
+        sys.exit()
+
     def __str__(self):
         return "<Interpreter intp>"
 

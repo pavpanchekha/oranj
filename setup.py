@@ -4,8 +4,9 @@
 # TODO: Add Windows, (mac?) support
 
 from distutils.core import setup
-import distcommands.html, distcommands.test, distcommands.clean
+import distcommands.test, distcommands.clean
 import distcommands.profile
+import sphinx.setup_command
 
 # Generate lex and parse tables
 import oranj.core.parser
@@ -26,36 +27,36 @@ class post_install(install_data):
         mimetypes.close()
 
 setup(
-    name="oranj",
-    version="0.7",
-    description="Oranj Programming Language",
-    author="Pavel Panchekha",
-    author_email="pavpanchekha@gmail.com",
-    url="http://panchekha.no-ip.com:8080/pavpan/oranj/",
+name="oranj",
+version="0.7",
+description="Oranj Programming Language",
+author="Pavel Panchekha",
+author_email="pavpanchekha@gmail.com",
+url="http://panchekha.no-ip.com:8080/pavpan/oranj/",
 
-    packages=["oranj", "oranj.core", "oranj.pystdlib", "oranj.core.objects", "oranj.support"],
-	package_dir={"oranj.core": "oranj/core", "oranj": "oranj"},
-    package_data={"oranj.core": ["lib/errorcontext.py", "lib/odict.py", "lib/files.py", "lib/terminal.py", "lib/ply/lex.py", "lib/ply/yacc.py", "lib/ply/__init__.py"], "oranj": ["build/parsetab.py", "build/lextab.py", "stdlib/*", "sitelib/*"]},
+packages=["oranj", "oranj.core", "oranj.pystdlib", "oranj.core.objects", "oranj.support"],
+package_dir={"oranj.core": "oranj/core", "oranj": "oranj"},
+package_data={"oranj.core": ["lib/errorcontext.py", "lib/odict.py", "lib/files.py", "lib/terminal.py", "lib/ply/lex.py", "lib/ply/yacc.py", "lib/ply/__init__.py"], "oranj": ["build/parsetab.py", "build/lextab.py", "stdlib/*", "sitelib/*"]},
 
-    scripts=["scripts/oranj"],
-	data_files=[
-        ("/usr/local/share/mime/packages", ["system/x-oranj.xml"]),
-        ("/usr/share/icons/hicolor/scalable/apps", ["system/icons/apps/oranj.svg"]),
-        ("/usr/share/icons/hicolor/scalable/mimetypes", ["system/icons/mimetypes/text-x-oranj.svg"]),
-    ],
+scripts=["scripts/oranj"],
+data_files=[
+    ("/usr/local/share/mime/packages", ["system/x-oranj.xml"]),
+    ("/usr/share/icons/hicolor/scalable/apps", ["system/icons/apps/oranj.svg"]),
+    ("/usr/share/icons/hicolor/scalable/mimetypes", ["system/icons/mimetypes/text-x-oranj.svg"]),
+],
 
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Environment :: Console",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU General Public License (GPL)",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Topic :: Software Development :: Interpreters",
-    ],
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Interpreters",
+],
 
-    long_description = """\
+long_description = """\
 A pythonic, dynamic programming language
 ----------------------------------------
 
@@ -65,12 +66,12 @@ enjoyable and easy, and makes enabling advanced features
 direct and fast.
 """,
 
-    requires=["ply"],
-    cmdclass = {
-        "html": distcommands.html.MakeDoc,
-        "test": distcommands.test.RunTests,
-        "clean": distcommands.clean.Clean,
-        "profile": distcommands.profile.Profile,
-		"install_data": post_install,
-    }
+requires=["ply"],
+cmdclass = {
+    "html": sphinx.setup_command.BuildDoc,
+    "test": distcommands.test.RunTests,
+    "clean": distcommands.clean.Clean,
+    "profile": distcommands.profile.Profile,
+    "install_data": post_install,
+}
 )
