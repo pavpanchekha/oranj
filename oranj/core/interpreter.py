@@ -40,36 +40,27 @@ def flatten_tuples(s, l=None):
 
 def autoblock(f):
     def t(self, *args, **kwargs):
-        self.steplevel[1] += 1
+        if self.opts["debugger"]:
+            self.opts["debugger"].steplevel += 1
         try:
             v = f(self, *args, **kwargs)
         finally:
-            self.steplevel[1] -= 1
-
+            if self.opts["debugger"]:
+                self.opts["debugger"].steplevel -= 1
         return v
     return t
 
 class Interpreter(object):
     curr = property(lambda self: self.cntx[-1])
-    run_console = lambda self: None
-
-    def start_console(self):
-        try:
-            self.run_console()
-        except (EOFError, DropI, PyDropI):
-            return
+    
+    repl_hook = lambda self: None
+    debug_hook = lambda self, fname, lineno, line: None
 
     def register(self, t, name, function):
         if str(t).lower() in ("procdir", "dir", "directive", "processing directive"):
             self.procdirs[str(name)] = function
         else:
             self.procblocks[str(name)] = function
-
-    def run_code(self, code):
-        if type(code) == type(""):
-            return run(code, self)
-        else:
-            return self.run(code)
 
     def quit(self):
         sys.exit()
@@ -81,34 +72,32 @@ class Interpreter(object):
         return str(self)
     
     def __init__(self, g=None):
+
+        # Set up the global contexts
         if not g:
             g = InheritDict(builtin.builtin)
-
         self.cntx = [g, InheritDict(g)]
+        self.bindcntx = self.cntx[-1]
         self.curr["intp"] = OrObject.from_py(self)
-        self.types = {}
 
-        self.opts = {
-            "logger": None
-            }
+        # Set up interpreter options
+        self.opts = {"logger": None, "debugger": None}
 
+        # Set up statement stacks and location information
         self.stmtstack = []
         self.cstmt = [(0, 0), (0, 0), ""] # Default
         self.level = 0
-        self.steplevel = [-1, -1]
         self.consolelevel = 0
 
-        self.searchpath = [files.Path("."), files.Path(objects.about.mainpath) + "../stdlib", files.Path(objects.about.mainpath) + "../sitelib"]
-
-        if os.name == "nt":
-            # Yay windows!
-            userbase = files.Path("%APPDATA%/Oranj/")
-        else:
-            userbase = files.Path("~/.local/lib/oranj/")
-
+        # Set up module search path
+        self.searchpath = [files.Path("."), files.Path(objects.about.mainpath) +
+            "../stdlib", files.Path(objects.about.mainpath) + "../sitelib"]
+        userbase = files.Path("%APPDATA%/oranj/" if os.name == "nt" else
+            "~/.local/lib/oranj")
         self.searchpath.append(userbase)
         self.searchpath.append(userbase + objects.about.version)
 
+        # A few convenience methods for dealing with variables
         @OrObject.from_py
         def vars():
             return OrObject.from_py(self.curr.dict)
@@ -121,6 +110,7 @@ class Interpreter(object):
         def locals():
             return OrObject.from_py(self.curr.dict)
 
+        g["vars"] = vars
         g["globals"] = globals
         g["locals"] = locals
 
@@ -131,6 +121,7 @@ class Interpreter(object):
     def quit():
         sys.exit()
 
+    # For setting some options
     def set_option(self, opt, val):
         if opt == "ec": # Turn activity log on or off
             if str_to_bool(val):
@@ -143,16 +134,14 @@ class Interpreter(object):
             self.searchpath.append(files.Path(val))
 
     def run(self, tree):
-        if type(tree[0]) == type(""):
+        if len(tree) and type(tree[0]) == type(""):
             return Interpreter.__dict__["h" + tree[0]](self, *tree[1:])
         else:
+            j = objects.constants.nil
             for i in tree:
-                if self.steplevel[1] > self.level and self.steplevel[0] >= self.consolelevel \
-                        and i[0] == "STATEMENT" and i[4][0] not in ("FOR", "FOR2", "WHILE", \
-                        "WHILE2", "IF", "WHILE", "WHILE2", "CLASS"):
-                    print "(%d):" % i[1][0], i[3]
-                    Interpreter.start_console(self)
-
+                if self.opts["debugger"] and self.opts["debugger"].check() and \
+                        i[0] == "STATEMENT":
+                    self.opts["debugger"].debug(i[1][0], i[3])
                 j = self.run(i)
             return j
 
@@ -235,17 +224,21 @@ class Interpreter(object):
 
             return self.set_option(args[0], args[1])
         elif cmd == "debug":
-            self.steplevel[0] = self.consolelevel
-            self.steplevel[1] = self.level
+            if not self.opts["debugger"]:
+                import debugger
+                self.opts["debugger"] = debugger.Debugger(self, ":anon:")
+
+            self.opts["debugger"].stepconsole = self.consolelevel
+            self.opts["debugger"].steplevel = self.level
             return
         elif cmd == "step":
-            self.steplevel[1] += 1
+            self.opts["debugger"].steplevel += 1
             if args[0] == "in":
-                self.steplevel[1] += 2
+                self.opts["debugger"].steplevel += 2
             elif args[0] == "out":
-                self.steplevel[1] -= 2
+                self.opts["debugger"].steplevel -= 2
             elif args[0] == "end":
-                self.steplevel[1] = -1
+                self.opts["debugger"].steplevel = -1
 
             raise DropI("Stepping")
         elif cmd == "ec":
@@ -451,7 +444,7 @@ class Interpreter(object):
                 self.stmtstack = self.stmtstack[:self.level]
         
         if func.tagged("FullMacro"):
-            r = intp.run(r)
+            r = self.run(r)
 
         if not isinstance(r, OrObject):
             return OrObject.from_py(r)

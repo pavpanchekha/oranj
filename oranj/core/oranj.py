@@ -28,23 +28,9 @@ def pydrop(i, glob):
 def import_readline():
     try:
         import readline
+        return readline
     except ImportError:
         return None
-
-    def completer(text, state=0):
-        if text:
-            m = [i for i in intp.curr.keys() if i.startswith(text)]
-        else:
-            m = intp.curr.keys()[:]
-
-        try:
-            return m[state]
-        except IndexError:
-            return None
-
-    readline.set_completer(completer)
-    readline.parse_and_bind("tab: complete")
-    return readline
 
 def wrap(fn, i, glob):
     try:
@@ -56,6 +42,10 @@ def wrap(fn, i, glob):
         run_console(i, glob)
     except Exception, e:
         libintp.print_exception(e, i)    
+
+def debug_hook(i, file, lineno, line):
+    print "%s:%d:\t%s" % (os.path.basename(file), lineno, line.split("\n")[0])
+    i.shell_hook()
 
 def run_console(i, glob):
     import lexer
@@ -107,11 +97,13 @@ def parse_args():
 def run_file(base_i, child, glob):
     text = open(child[0]).read()
     if text.strip() != "":
-        wrap(lambda: intp.run(text, base_i), base_i, glob)
+        #wrap(lambda: intp.run(text, base_i), base_i, glob)
+        intp.run(text, base_i)
         cli.run(base_i, child[1:], wrap)
 
 def main(glob):
-    intp.Interpreter.run_console = lambda x: run_console(x, glob)
+    intp.Interpreter.shell_hook = lambda x: run_console(x, glob)
+    intp.Interpreter.debug_hook = debug_hook
     base_i = intp.Interpreter()
     kwargs = parse_args()
 

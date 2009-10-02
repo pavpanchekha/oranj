@@ -2,7 +2,7 @@
 # Basic macros
 >>> AST = fn(src) is Macro {return src}
 >>> AST(12)
-[['PRIMITIVE', ('INT', '12', 10)]]
+['PRIMITIVE', ('INT', '12', 10)]
 
 # `macros` library
 >>> import macros

@@ -1,0 +1,5 @@
+This is the TODO/minor bug list for oranj.
+ * Fix parsing bug when parsing ``f(a, b)``
+ * Allow subtopics in --help option
+ * Fix imports
+ * Find better place for ``intp.quit()``

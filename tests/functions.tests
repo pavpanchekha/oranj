@@ -1,6 +1,14 @@
 
 ## Functions are fun
 
+# Stupid functions
+>>> f = fn{}
+>>> f()
+nil
+>>> f = fn{2}
+>>> f()
+2
+
 # Return
 >>> a = fn {return "YAY"}
 >>> a()
